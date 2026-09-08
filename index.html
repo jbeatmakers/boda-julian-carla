@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+    <meta name="googlebot" content="noindex, nofollow">
     <title>Julián & Carla — 18 de Diciembre de 2026</title>
+    
+    <!-- Open Graph / WhatsApp / Telegram / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://boda-julian-carla.bpm.red/">
+    <meta property="og:title" content="Julián & Carla — 18 de Diciembre de 2026">
+    <meta property="og:description" content="Invitación de Casamiento · San Pablo de Reyes, Jujuy · Confirmá tu asistencia.">
+    <meta property="og:image" content="https://boda-julian-carla.bpm.red/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Julián & Carla — 18 de Diciembre de 2026">
+    <meta name="twitter:description" content="Invitación de Casamiento · San Pablo de Reyes, Jujuy · Confirmá tu asistencia.">
+    <meta name="twitter:image" content="https://boda-julian-carla.bpm.red/og-image.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -31,7 +45,7 @@
     <style>
         body {
             background-color:#F6F2E9;
-            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.20 0 0 0 0 0.15 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.20 0 0 0 0 0.15 0 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
         }
         .smallcaps { font-family:'Montserrat',sans-serif; text-transform:uppercase; letter-spacing:.32em; font-size:11px; }
         .leafrule {
@@ -66,371 +80,464 @@
             .animate-sway, .animate-sway-alt { animation: none; }
         }
         @media print { .no-print { display:none; } }
+
+        /* Estilos para el candado de entrada */
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            background-color: #F6F2E9;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        #lockScreen svg { color: #7C8B6F; margin-bottom: 1.5rem; }
+        #lockScreen input {
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid #C9C2B0;
+            padding: 0.6rem 1rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: #2A3226;
+            text-align: center;
+            outline: none;
+            letter-spacing: 0.1em;
+        }
+        #lockScreen input:focus {
+            border-bottom-color: #2A3226;
+        }
+        #lockScreen input::placeholder {
+            color: #A79F8C;
+        }
+        #lockError {
+            color: #B0603F;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #lockError.visible { opacity: 1; }
     </style>
 </head>
 <body class="text-ink font-serif antialiased selection:bg-sage/30 overflow-x-hidden relative min-h-screen">
 
-    <!-- Defs SVG -->
-    <svg width="0" height="0" class="absolute" aria-hidden="true">
-        <defs>
-            <symbol id="bt-sprig" viewBox="0 0 120 220">
-                <g fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
-                    <path d="M60 214 C58 160 56 100 60 8" fill="none"/>
-                    <path d="M60 180 C44 176 36 166 34 152 C48 154 56 166 60 180 Z"/>
-                    <path d="M60 180 C76 176 84 166 86 152 C72 154 64 166 60 180 Z"/>
-                    <path d="M60 146 C46 142 38 133 36 120 C49 122 56 133 60 146 Z"/>
-                    <path d="M60 146 C74 142 82 133 84 120 C71 122 64 133 60 146 Z"/>
-                    <path d="M60 114 C47 110 40 102 39 90 C51 92 57 102 60 114 Z"/>
-                    <path d="M60 114 C73 110 80 102 81 90 C69 92 63 102 60 114 Z"/>
-                    <path d="M60 84 C49 80 43 73 42 62 C53 64 58 73 60 84 Z"/>
-                    <path d="M60 84 C71 80 77 73 78 62 C67 64 62 73 60 84 Z"/>
-                </g>
-            </symbol>
-            <symbol id="bt-fern" viewBox="0 0 100 240">
-                <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-                    <path d="M50 236 C48 160 48 80 50 6"/>
-                    <path d="M50 204 Q32 200 28 192"/><path d="M50 204 Q68 200 72 192"/>
-                    <path d="M50 188 Q33 184 29 176"/><path d="M50 188 Q67 184 71 176"/>
-                    <path d="M50 172 Q35 168 31 162"/><path d="M50 172 Q65 168 69 162"/>
-                    <path d="M50 156 Q36 152 32 146"/><path d="M50 156 Q64 152 68 146"/>
-                    <path d="M50 140 Q37 136 34 131"/><path d="M50 140 Q63 136 66 131"/>
-                    <path d="M50 124 Q39 120 36 116"/><path d="M50 124 Q61 120 64 116"/>
-                </g>
-            </symbol>
-            <symbol id="bt-vine" viewBox="0 0 320 60">
-                <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-                    <path d="M4 32 C60 14 110 44 160 30 C210 16 260 42 316 24" fill="none"/>
-                    <g fill="currentColor" fill-opacity=".14">
-                        <path d="M40 26 C32 18 22 15 12 17 C18 25 29 29 40 26 Z"/>
-                        <path d="M90 32 C82 24 72 21 62 23 C68 31 79 35 90 32 Z"/>
-                        <path d="M140 28 C132 20 122 17 112 19 C118 27 129 31 140 28 Z"/>
-                        <path d="M190 30 C182 22 172 19 162 21 C168 29 179 33 190 30 Z"/>
-                        <path d="M240 27 C232 19 222 16 212 18 C218 26 229 30 240 27 Z"/>
-                        <path d="M290 29 C282 21 272 18 262 20 C268 28 279 32 290 29 Z"/>
-                    </g>
-                    <g fill="#FDFBF7" stroke="#C9C2B0" stroke-width="0.8">
-                        <circle cx="65" cy="36" r="3.5"/>
-                        <circle cx="165" cy="24" r="3.5"/>
-                        <circle cx="265" cy="33" r="3.5"/>
-                    </g>
-                </g>
-            </symbol>
-            <symbol id="bt-leaf" viewBox="0 0 20 14">
-                <g stroke="currentColor" stroke-width="1" stroke-linecap="round">
-                    <path d="M2 12 C2 5 8 1 18 2 C17 9 11 13 2 12 Z" fill="currentColor" fill-opacity=".22"/>
-                    <path d="M3.5 10.5 C8 7.5 12 5 16 3.2" fill="none"/>
-                </g>
-            </symbol>
-        </defs>
-    </svg>
-
-    <!-- Follaje decorativo que acompaña el scroll con oscilación suave -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <svg class="absolute top-2 left-0 w-44 md:w-64 text-sage/60 animate-sway" aria-hidden="true"><use href="#bt-sprig"/></svg>
-        <svg class="absolute top-4 right-0 w-44 md:w-64 text-sage/60 animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-sprig"/></svg>
-        <svg class="absolute top-[28%] -left-10 w-48 text-olive/[.07] animate-sway" aria-hidden="true"><use href="#bt-fern"/></svg>
-        <svg class="absolute top-[45%] -right-10 w-48 text-olive/[.07] animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-fern"/></svg>
-        <svg class="absolute top-[68%] -left-12 w-48 text-olive/[.07] animate-sway" aria-hidden="true"><use href="#bt-sprig"/></svg>
-        <svg class="absolute bottom-8 right-2 w-44 md:w-64 text-sage/60 animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-sprig"/></svg>
+    <!-- PANTALLA DE CONTRASEÑA -->
+    <div id="lockScreen">
+        <svg class="w-16 h-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <h2 class="font-display text-3xl md:text-4xl text-ink mb-2">Invitación Exclusiva</h2>
+        <p class="smallcaps text-olive/70 mb-6">Ingresá la contraseña para acceder</p>
+        <input type="password" id="passInput" placeholder="18dic" autocomplete="off" onkeydown="if(event.key==='Enter') checkPassword()">
+        <p id="lockError">Contraseña incorrecta. Intentá nuevamente.</p>
     </div>
 
-    <!-- Filetes estructurales -->
-    <div class="fixed inset-2 md:inset-4 border border-hairline pointer-events-none z-40"></div>
-    <div class="fixed inset-3.5 md:inset-6 border border-hairline/60 pointer-events-none z-40"></div>
+    <!-- CONTENIDO DE LA TARJETA -->
+    <div id="mainContent" class="hidden">
+        
+        <!-- Defs SVG -->
+        <svg width="0" height="0" class="absolute" aria-hidden="true">
+            <defs>
+                <symbol id="bt-sprig" viewBox="0 0 120 220">
+                    <g fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                        <path d="M60 214 C58 160 56 100 60 8" fill="none"/>
+                        <path d="M60 180 C44 176 36 166 34 152 C48 154 56 166 60 180 Z"/>
+                        <path d="M60 180 C76 176 84 166 86 152 C72 154 64 166 60 180 Z"/>
+                        <path d="M60 146 C46 142 38 133 36 120 C49 122 56 133 60 146 Z"/>
+                        <path d="M60 146 C74 142 82 133 84 120 C71 122 64 133 60 146 Z"/>
+                        <path d="M60 114 C47 110 40 102 39 90 C51 92 57 102 60 114 Z"/>
+                        <path d="M60 114 C73 110 80 102 81 90 C69 92 63 102 60 114 Z"/>
+                        <path d="M60 84 C49 80 43 73 42 62 C53 64 58 73 60 84 Z"/>
+                        <path d="M60 84 C71 80 77 73 78 62 C67 64 62 73 60 84 Z"/>
+                    </g>
+                </symbol>
+                <symbol id="bt-fern" viewBox="0 0 100 240">
+                    <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+                        <path d="M50 236 C48 160 48 80 50 6"/>
+                        <path d="M50 204 Q32 200 28 192"/><path d="M50 204 Q68 200 72 192"/>
+                        <path d="M50 188 Q33 184 29 176"/><path d="M50 188 Q67 184 71 176"/>
+                        <path d="M50 172 Q35 168 31 162"/><path d="M50 172 Q65 168 69 162"/>
+                        <path d="M50 156 Q36 152 32 146"/><path d="M50 156 Q64 152 68 146"/>
+                        <path d="M50 140 Q37 136 34 131"/><path d="M50 140 Q63 136 66 131"/>
+                        <path d="M50 124 Q39 120 36 116"/><path d="M50 124 Q61 120 64 116"/>
+                    </g>
+                </symbol>
+                <symbol id="bt-vine" viewBox="0 0 320 60">
+                    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+                        <path d="M4 32 C60 14 110 44 160 30 C210 16 260 42 316 24" fill="none"/>
+                        <g fill="currentColor" fill-opacity=".14">
+                            <path d="M40 26 C32 18 22 15 12 17 C18 25 29 29 40 26 Z"/>
+                            <path d="M90 32 C82 24 72 21 62 23 C68 31 79 35 90 32 Z"/>
+                            <path d="M140 28 C132 20 122 17 112 19 C118 27 129 31 140 28 Z"/>
+                            <path d="M190 30 C182 22 172 19 162 21 C168 29 179 33 190 30 Z"/>
+                            <path d="M240 27 C232 19 222 16 212 18 C218 26 229 30 240 27 Z"/>
+                            <path d="M290 29 C282 21 272 18 262 20 C268 28 279 32 290 29 Z"/>
+                        </g>
+                        <g fill="#FDFBF7" stroke="#C9C2B0" stroke-width="0.8">
+                            <circle cx="65" cy="36" r="3.5"/>
+                            <circle cx="165" cy="24" r="3.5"/>
+                            <circle cx="265" cy="33" r="3.5"/>
+                        </g>
+                    </g>
+                </symbol>
+                <symbol id="bt-leaf" viewBox="0 0 20 14">
+                    <g stroke="currentColor" stroke-width="1" stroke-linecap="round">
+                        <path d="M2 12 C2 5 8 1 18 2 C17 9 11 13 2 12 Z" fill="currentColor" fill-opacity=".22"/>
+                        <path d="M3.5 10.5 C8 7.5 12 5 16 3.2" fill="none"/>
+                    </g>
+                </symbol>
+            </defs>
+        </svg>
 
-    <!-- Encabezado -->
-    <header class="relative z-10 max-w-3xl mx-auto px-6 pt-16 md:pt-24 pb-14 text-center">
-        <div class="flex items-center gap-4 smallcaps text-olive/80">
-            <span class="leafrule"></span>
-            <span>San Pablo de Reyes · Jujuy</span>
-            <svg class="w-4 text-sage" aria-hidden="true"><use href="#bt-leaf"/></svg>
-            <span>18 · XII · 2026</span>
-            <span class="leafrule"></span>
+        <!-- Follaje dinámico con movimiento -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <svg class="absolute top-2 left-0 w-44 md:w-64 text-sage/60 animate-sway" aria-hidden="true"><use href="#bt-sprig"/></svg>
+            <svg class="absolute top-4 right-0 w-44 md:w-64 text-sage/60 animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-sprig"/></svg>
+            <svg class="absolute top-[28%] -left-10 w-48 text-olive/[.07] animate-sway" aria-hidden="true"><use href="#bt-fern"/></svg>
+            <svg class="absolute top-[45%] -right-10 w-48 text-olive/[.07] animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-fern"/></svg>
+            <svg class="absolute top-[68%] -left-12 w-48 text-olive/[.07] animate-sway" aria-hidden="true"><use href="#bt-sprig"/></svg>
+            <svg class="absolute bottom-8 right-2 w-44 md:w-64 text-sage/60 animate-sway-alt" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-sprig"/></svg>
         </div>
 
-        <div class="relative mt-8">
-            <div class="flex items-end justify-center gap-1 text-sage">
-                <svg class="w-8 opacity-80" style="transform:scaleX(-1) rotate(-6deg)" aria-hidden="true"><use href="#bt-fern"/></svg>
-                <svg class="w-14 md:w-16" aria-hidden="true"><use href="#bt-sprig"/></svg>
-                <svg class="w-8 opacity-80" style="transform:rotate(6deg)" aria-hidden="true"><use href="#bt-fern"/></svg>
+        <!-- Filetes estructurales -->
+        <div class="fixed inset-2 md:inset-4 border border-hairline pointer-events-none z-40"></div>
+        <div class="fixed inset-3.5 md:inset-6 border border-hairline/60 pointer-events-none z-40"></div>
+
+        <!-- Encabezado -->
+        <header class="relative z-10 max-w-3xl mx-auto px-6 pt-16 md:pt-24 pb-14 text-center">
+            <div class="flex items-center gap-4 smallcaps text-olive/80">
+                <span class="leafrule"></span>
+                <span>San Pablo de Reyes · Jujuy</span>
+                <svg class="w-4 text-sage" aria-hidden="true"><use href="#bt-leaf"/></svg>
+                <span>18 · XII · 2026</span>
+                <span class="leafrule"></span>
             </div>
 
-            <p class="smallcaps text-olive mt-8">Nos casamos</p>
-
-            <h1 class="font-display text-[17vw] md:text-[8.5rem] leading-none mt-4 text-ink">
-                Julián <span class="font-serif italic text-clay text-[10vw] md:text-[4.5rem] align-middle">&</span> Carla
-            </h1>
-
-            <svg class="w-64 md:w-80 mx-auto mt-4 text-sage/80" aria-hidden="true"><use href="#bt-vine"/></svg>
-        </div>
-
-        <!-- Contador -->
-        <div class="mt-10">
-            <p class="smallcaps text-olive/70">Faltan</p>
-            <div id="countdown" class="mt-3 flex items-end justify-center divide-x divide-hairline">
-                <div class="px-4 md:px-7">
-                    <span id="days" class="block font-display text-4xl md:text-7xl">00</span>
-                    <span class="smallcaps text-olive/60 block mt-1">Días</span>
+            <div class="relative mt-8">
+                <div class="flex items-end justify-center gap-1 text-sage">
+                    <svg class="w-8 opacity-80" style="transform:scaleX(-1) rotate(-6deg)" aria-hidden="true"><use href="#bt-fern"/></svg>
+                    <svg class="w-14 md:w-16" aria-hidden="true"><use href="#bt-sprig"/></svg>
+                    <svg class="w-8 opacity-80" style="transform:rotate(6deg)" aria-hidden="true"><use href="#bt-fern"/></svg>
                 </div>
-                <div class="px-4 md:px-7">
-                    <span id="hours" class="block font-display text-4xl md:text-7xl">00</span>
-                    <span class="smallcaps text-olive/60 block mt-1">Hs</span>
-                </div>
-                <div class="px-4 md:px-7">
-                    <span id="minutes" class="block font-display text-4xl md:text-7xl">00</span>
-                    <span class="smallcaps text-olive/60 block mt-1">Min</span>
-                </div>
-                <div class="px-4 md:px-7">
-                    <span id="seconds" class="block font-display text-4xl md:text-7xl text-clay">00</span>
-                    <span class="smallcaps text-olive/60 block mt-1">Seg</span>
-                </div>
-            </div>
-        </div>
 
-        <div class="mt-12 flex flex-col sm:flex-row justify-center gap-3 no-print">
-            <a href="#rsvp" class="btn-ink smallcaps px-10 py-4 !text-[11.5px] inline-flex items-center justify-center gap-2">
-                <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
-                <span>Confirmar asistencia</span>
-            </a>
-            <a href="#regalo" class="btn-line smallcaps px-10 py-4 !text-[11.5px] inline-flex items-center justify-center gap-2">
-                <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
-                <span>Mesa de regalos</span>
-            </a>
-        </div>
-    </header>
+                <p class="smallcaps text-olive mt-8">Nos casamos</p>
 
-    <!-- Itinerario -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 py-16 md:py-20">
-        <p class="smallcaps text-clay text-center">Nº I — Nº II</p>
-        <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Ceremonia & Celebración</h2>
-        <svg class="w-52 md:w-64 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+                <h1 class="font-display text-[17vw] md:text-[8.5rem] leading-none mt-4 text-ink">
+                    Julián <span class="font-serif italic text-clay text-[10vw] md:text-[4.5rem] align-middle">&</span> Carla
+                </h1>
 
-        <div class="mt-10 grid md:grid-cols-2 md:divide-x md:divide-hairline gap-12 md:gap-0">
-            <div class="text-center md:px-10 space-y-3">
-                <p class="smallcaps text-olive/70">I · La Ceremonia</p>
-                <p class="font-display text-7xl md:text-8xl text-ink">17<span class="text-clay">:</span>00</p>
-                <p class="smallcaps text-olive/60">horas · puntual</p>
-                <p class="font-serif italic text-2xl mt-4">Santa Misa de Casamiento</p>
-                <p class="font-serif text-xl">Iglesia San Pedro y San Pablo</p>
-                <p class="text-sm md:text-base text-olive/80">Calle Carlos Figueroa · San Pablo de Reyes · Jujuy</p>
-                <a href="https://maps.google.com/?q=Iglesia+San+Pedro+y+San+Pablo,+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa en Google Maps ↗</a>
+                <svg class="w-64 md:w-80 mx-auto mt-4 text-sage/80" aria-hidden="true"><use href="#bt-vine"/></svg>
             </div>
 
-            <div class="text-center md:px-10 space-y-3">
-                <p class="smallcaps text-olive/70">II · La Celebración</p>
-                <p class="font-display text-7xl md:text-8xl text-ink">18<span class="text-clay">:</span>30</p>
-                <p class="smallcaps text-olive/60">horas</p>
-                <p class="font-serif italic text-2xl mt-4">Recepción, cena & fiesta</p>
-                <p class="font-serif text-xl">El Quincho del Predio de Reyes</p>
-                <p class="text-sm md:text-base text-olive/80">A solo 4 cuadras de la ceremonia · San Pablo de Reyes</p>
-                <a href="https://maps.google.com/?q=Complejo+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa en Google Maps ↗</a>
+            <!-- Contador -->
+            <div class="mt-10">
+                <p class="smallcaps text-olive/70">Faltan</p>
+                <div id="countdown" class="mt-3 flex items-end justify-center divide-x divide-hairline">
+                    <div class="px-4 md:px-7">
+                        <span id="days" class="block font-display text-4xl md:text-7xl">00</span>
+                        <span class="smallcaps text-olive/60 block mt-1">Días</span>
+                    </div>
+                    <div class="px-4 md:px-7">
+                        <span id="hours" class="block font-display text-4xl md:text-7xl">00</span>
+                        <span class="smallcaps text-olive/60 block mt-1">Hs</span>
+                    </div>
+                    <div class="px-4 md:px-7">
+                        <span id="minutes" class="block font-display text-4xl md:text-7xl">00</span>
+                        <span class="smallcaps text-olive/60 block mt-1">Min</span>
+                    </div>
+                    <div class="px-4 md:px-7">
+                        <span id="seconds" class="block font-display text-4xl md:text-7xl text-clay">00</span>
+                        <span class="smallcaps text-olive/60 block mt-1">Seg</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Estética Edén -->
-    <section class="relative z-10 max-w-2xl mx-auto px-6 py-16 md:py-20">
-        <p class="smallcaps text-clay text-center">Nº III — Dress Code</p>
-        <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Estética Edén</h2>
-        <svg class="w-44 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+            <div class="mt-12 flex flex-col sm:flex-row justify-center gap-3 no-print">
+                <a href="#rsvp" class="btn-ink smallcaps px-10 py-4 !text-[11.5px] inline-flex items-center justify-center gap-2">
+                    <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
+                    <span>Confirmar asistencia</span>
+                </a>
+                <a href="#regalo" class="btn-line smallcaps px-10 py-4 !text-[11.5px] inline-flex items-center justify-center gap-2">
+                    <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
+                    <span>Mesa de regalos</span>
+                </a>
+            </div>
+        </header>
 
-        <div class="plate p-7 md:p-10 mt-10 space-y-6">
-            <p class="font-serif text-xl md:text-2xl leading-relaxed text-center text-ink/90 italic">
-                Inspirado en la naturaleza al atardecer: una gala fresca, sofisticada y luminosa.
+        <!-- Itinerario -->
+        <section class="relative z-10 max-w-4xl mx-auto px-6 py-16 md:py-20">
+            <p class="smallcaps text-clay text-center">Nº I — Nº II</p>
+            <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Ceremonia & Celebración</h2>
+            <svg class="w-52 md:w-64 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+
+            <div class="mt-10 grid md:grid-cols-2 md:divide-x md:divide-hairline gap-12 md:gap-0">
+                <div class="text-center md:px-10 space-y-3">
+                    <p class="smallcaps text-olive/70">I · La Ceremonia</p>
+                    <p class="font-display text-7xl md:text-8xl text-ink">17<span class="text-clay">:</span>00</p>
+                    <p class="smallcaps text-olive/60">horas · puntual</p>
+                    <p class="font-serif italic text-2xl mt-4">Santa Misa de Casamiento</p>
+                    <p class="font-serif text-xl">Iglesia San Pedro y San Pablo</p>
+                    <p class="text-sm md:text-base text-olive/80">Calle Carlos Figueroa · San Pablo de Reyes · Jujuy</p>
+                    <a href="https://maps.google.com/?q=Iglesia+San+Pedro+y+San+Pablo,+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa en Google Maps ↗</a>
+                </div>
+
+                <div class="text-center md:px-10 space-y-3">
+                    <p class="smallcaps text-olive/70">II · La Celebración</p>
+                    <p class="font-display text-7xl md:text-8xl text-ink">18<span class="text-clay">:</span>30</p>
+                    <p class="smallcaps text-olive/60">horas</p>
+                    <p class="font-serif italic text-2xl mt-4">Recepción, cena & fiesta</p>
+                    <p class="font-serif text-xl">El Quincho del Predio de Reyes</p>
+                    <p class="text-sm md:text-base text-olive/80">A solo 4 cuadras de la ceremonia · San Pablo de Reyes</p>
+                    <a href="https://maps.google.com/?q=Complejo+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa en Google Maps ↗</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Estética Edén -->
+        <section class="relative z-10 max-w-2xl mx-auto px-6 py-16 md:py-20">
+            <p class="smallcaps text-clay text-center">Nº III — Dress Code</p>
+            <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Estética Edén</h2>
+            <svg class="w-44 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+
+            <div class="plate p-7 md:p-10 mt-10 space-y-6">
+                <p class="font-serif text-xl md:text-2xl leading-relaxed text-center text-ink/90 italic">
+                    Inspirado en la naturaleza al atardecer: una gala fresca, sofisticada y luminosa.
+                </p>
+
+                <div class="grid sm:grid-cols-2 gap-6 text-center pt-2">
+                    <div>
+                        <p class="smallcaps text-olive/80">Ellas</p>
+                        <p class="font-serif italic text-olive mt-2 text-base md:text-lg leading-relaxed">
+                            Vestido formal en paleta natural o floral noble.<br>Acentos de perlas en joyas, peinado o complementos.
+                        </p>
+                    </div>
+                    <div>
+                        <p class="smallcaps text-olive/80">Ellos</p>
+                        <p class="font-serif italic text-olive mt-2 text-base md:text-lg leading-relaxed">
+                            Traje formal impecable con corbata o moño.<br>Detalles sutiles como pañuelo de seda o prendedor.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-hairline/80">
+                    <p class="smallcaps text-clay text-center mb-2">Cómo adaptar tu vestimenta</p>
+                    <p class="font-serif text-sm md:text-base text-center text-stone-600 leading-relaxed max-w-lg mx-auto">
+                        No es necesario adquirir prendas nuevas: podés enriquecer un conjunto formal existente sumando detalles en perlas, pañuelo a tono o accesorios acordes a la celebración.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4 pt-2">
+                    <span class="leafrule"></span>
+                    <span class="smallcaps text-olive/60 whitespace-nowrap">Reserva de color: exclusivo novios</span>
+                    <span class="leafrule"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RSVP -->
+        <section id="rsvp" class="relative z-10 max-w-xl mx-auto px-6 py-16 md:py-20">
+            <p class="smallcaps text-clay text-center">Nº IV — R.S.V.P.</p>
+            <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Confirmación</h2>
+            <p class="text-center font-serif italic text-olive mt-3 text-lg">Agradecemos responder antes del 1º de diciembre</p>
+
+            <form id="rsvpForm" class="mt-12 space-y-8" onsubmit="handleRSVP(event)">
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="plate cursor-pointer p-5 text-center transition has-[:checked]:border-ink has-[:checked]:bg-parchment">
+                        <input type="radio" name="attendance" value="Sí, confirmo asistencia" checked class="sr-only" onchange="toggleAttendance(true)">
+                        <span class="font-display text-3xl block">Sí</span>
+                        <span class="smallcaps text-olive/70 block mt-1">Asistiré</span>
+                    </label>
+                    <label class="plate cursor-pointer p-5 text-center transition has-[:checked]:border-ink has-[:checked]:bg-parchment">
+                        <input type="radio" name="attendance" value="No podré asistir" class="sr-only" onchange="toggleAttendance(false)">
+                        <span class="font-display text-3xl block">No</span>
+                        <span class="smallcaps text-olive/70 block mt-1">No podré ir</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label for="fullName" class="smallcaps text-olive mb-1 block">Nombre y apellido</label>
+                    <input type="text" id="fullName" required class="field" placeholder="Tu nombre completo">
+                </div>
+
+                <div id="attendingFields" class="space-y-8">
+                    <div>
+                        <label for="guestsCount" class="smallcaps text-olive mb-1 block">Lugares a reservar</label>
+                        <select id="guestsCount" class="field">
+                            <option value="1 persona">1 persona</option>
+                            <option value="2 personas (con acompañante)">2 personas (con acompañante)</option>
+                            <option value="Grupo familiar">Grupo familiar</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="button" onclick="toggleMenuSpecial()" id="btnMenuToggle" class="text-left text-xs uppercase tracking-wider text-sage hover:text-olive transition flex items-center gap-2">
+                            <span>+ ¿Necesitás indicar alguna restricción alimentaria?</span>
+                        </button>
+                        <div id="specialMenuContainer" class="hidden mt-4 p-4 plate rounded-lg space-y-3">
+                            <label for="dietarySelect" class="smallcaps text-olive text-[10px] block">Tipo de menú especial</label>
+                            <select id="dietarySelect" class="field !text-base">
+                                <option value="">Seleccionar restricción...</option>
+                                <option value="Celíaco (sin TACC)">Menú Celíaco (Sin TACC)</option>
+                                <option value="Vegetariano">Menú Vegetariano</option>
+                                <option value="Vegano">Menú Vegano</option>
+                                <option value="Sin sal agregada">Menú Sin sal agregada</option>
+                                <option value="Otra restricción">Otra indicación médica</option>
+                            </select>
+                            <input type="text" id="dietaryDetail" class="field !text-base" placeholder="Detalle adicional (opcional)">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="songRequest" class="smallcaps text-olive mb-1 block">Canción que no puede faltar</label>
+                        <input type="text" id="songRequest" class="field" placeholder="Tema y artista (opcional)">
+                    </div>
+                </div>
+
+                <div id="declinedMessagePanel" class="hidden plate p-6 text-center space-y-4">
+                    <p class="font-serif italic text-xl text-ink">
+                        ¡Brindaremos y festejaremos teniéndote muy presente!
+                    </p>
+                    <p class="text-xs text-stone-500 font-sans tracking-wide">
+                        Si deseás acompañarnos con un presente a la distancia, podés hacerlo a través de la mesa de regalos.
+                    </p>
+                    <div class="pt-2">
+                        <span class="smallcaps text-olive/70 block text-[10px]">Alias bancario</span>
+                        <span id="aliasValDeclined" class="font-mono text-sm tracking-wider font-bold">JULIAN.Y.CARLA.BODA</span>
+                        <div class="mt-2">
+                            <button type="button" onclick="copyData('aliasValDeclined')" class="copylink">Copiar Alias</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="message" class="smallcaps text-olive mb-1 block">Dedicatoria para los novios</label>
+                    <textarea id="message" rows="2" class="field resize-none" placeholder="Unas palabras (opcional)"></textarea>
+                </div>
+
+                <button type="submit" class="btn-ink smallcaps w-full py-5 !text-[11.5px] no-print inline-flex items-center justify-center gap-2">
+                    <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
+                    <span>Enviar confirmación</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Mesa de regalos -->
+        <section id="regalo" class="relative z-10 max-w-2xl mx-auto px-6 py-16 md:py-20">
+            <p class="smallcaps text-clay text-center">Nº V — Luna de Miel</p>
+            <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Mesa de Regalos</h2>
+            <svg class="w-44 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+            <p class="text-center font-serif italic text-olive mt-3 text-xl max-w-md mx-auto">
+                Tu presencia es nuestro mejor regalo; si deseás colaborar con nuestra luna de miel:
             </p>
 
-            <div class="grid sm:grid-cols-2 gap-6 text-center pt-2">
-                <div>
-                    <p class="smallcaps text-olive/80">Ellas</p>
-                    <p class="font-serif italic text-olive mt-2 text-base md:text-lg leading-relaxed">
-                        Vestido formal en paleta natural o floral noble.<br>Acentos de perlas en joyas, peinado o complementos.
+            <div class="mt-12 space-y-8">
+                <div class="plate p-7 md:p-9 space-y-4">
+                    <div class="flex items-baseline gap-3">
+                        <h3 class="font-display text-3xl">Transferencia Bancaria</h3>
+                        <span class="leader"></span>
+                        <span class="smallcaps text-olive/60">Caja de Ahorro</span>
+                    </div>
+                    <div class="space-y-4 pt-2">
+                        <div class="flex items-baseline gap-3">
+                            <span class="smallcaps text-olive/70 shrink-0">Titulares</span>
+                            <span class="leader"></span>
+                            <span id="bankHolder" class="font-serif text-lg md:text-xl text-right">Julián Morales & Carla Quiroga</span>
+                        </div>
+                        <div class="flex items-baseline gap-3">
+                            <span class="smallcaps text-olive/70 shrink-0">Alias</span>
+                            <span class="leader"></span>
+                            <span id="aliasVal" class="font-mono text-sm md:text-base tracking-wide font-bold">JULIAN.Y.CARLA.BODA</span>
+                            <button type="button" onclick="copyData('aliasVal')" class="copylink shrink-0 no-print">Copiar</button>
+                        </div>
+                        <div class="flex items-baseline gap-3">
+                            <span class="smallcaps text-olive/70 shrink-0">CBU</span>
+                            <span class="leader"></span>
+                            <span id="cbuVal" class="font-mono text-xs md:text-sm tracking-wide truncate">0070012345678901234567</span>
+                            <button type="button" onclick="copyData('cbuVal')" class="copylink shrink-0 no-print">Copiar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plate p-7 md:p-9 text-center space-y-4">
+                    <h3 class="font-display text-3xl">Mercado Pago</h3>
+                    <p class="font-serif italic text-stone-600 text-lg">
+                        Podés colaborar con el importe que desees a través de tarjeta o saldo en cuenta:
                     </p>
-                </div>
-                <div>
-                    <p class="smallcaps text-olive/80">Ellos</p>
-                    <p class="font-serif italic text-olive mt-2 text-base md:text-lg leading-relaxed">
-                        Traje formal impecable con corbata o moño.<br>Detalles sutiles como pañuelo de seda o prendedor.
-                    </p>
+                    <div class="pt-2">
+                        <a id="mpLinkBtn" href="https://mpago.la/LINK_LIBRE" target="_blank" rel="noopener" class="btn-ink smallcaps inline-flex items-center justify-center gap-2 px-8 py-4 !text-[11px] no-print">
+                            <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
+                            <span>Colaborar con Mercado Pago</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-hairline/80">
-                <p class="smallcaps text-clay text-center mb-2">Cómo adaptar tu vestimenta</p>
-                <p class="font-serif text-sm md:text-base text-center text-stone-600 leading-relaxed max-w-lg mx-auto">
-                    No es necesario adquirir prendas nuevas: podés enriquecer un conjunto formal existente sumando detalles en perlas, pañuelo a tono o accesorios acordes a la celebración.
-                </p>
-            </div>
+            <p id="toastSuccess" class="hidden text-center smallcaps text-olive mt-6 border border-hairline py-3">✓ Copiado al portapapeles</p>
+        </section>
 
-            <div class="flex items-center gap-4 pt-2">
+        <!-- Pie -->
+        <footer class="relative z-10 max-w-3xl mx-auto px-6 pb-24 text-center">
+            <div class="flex items-end justify-center gap-2 text-sage">
+                <svg class="w-9" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-fern"/></svg>
+                <svg class="w-11 -mb-1" aria-hidden="true"><use href="#bt-sprig"/></svg>
+                <svg class="w-9" aria-hidden="true"><use href="#bt-fern"/></svg>
+            </div>
+            <p class="font-display text-4xl mt-6">Julián & Carla</p>
+            <svg class="w-52 mx-auto mt-2 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
+            <div class="flex items-center gap-4 smallcaps text-olive/70 mt-4">
                 <span class="leafrule"></span>
-                <span class="smallcaps text-olive/60 whitespace-nowrap">Reserva de color: exclusivo novios</span>
+                <span>18 de Diciembre de 2026 · San Pablo de Reyes · Jujuy</span>
                 <span class="leafrule"></span>
             </div>
-        </div>
-    </section>
-
-    <!-- RSVP -->
-    <section id="rsvp" class="relative z-10 max-w-xl mx-auto px-6 py-16 md:py-20">
-        <p class="smallcaps text-clay text-center">Nº IV — R.S.V.P.</p>
-        <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Confirmación</h2>
-        <p class="text-center font-serif italic text-olive mt-3 text-lg">Agradecemos responder antes del 1º de diciembre</p>
-
-        <form id="rsvpForm" class="mt-12 space-y-8" onsubmit="handleRSVP(event)">
-            <div class="grid grid-cols-2 gap-4">
-                <label class="plate cursor-pointer p-5 text-center transition has-[:checked]:border-ink has-[:checked]:bg-parchment">
-                    <input type="radio" name="attendance" value="Sí, confirmo asistencia" checked class="sr-only" onchange="toggleAttendance(true)">
-                    <span class="font-display text-3xl block">Sí</span>
-                    <span class="smallcaps text-olive/70 block mt-1">Asistiré</span>
-                </label>
-                <label class="plate cursor-pointer p-5 text-center transition has-[:checked]:border-ink has-[:checked]:bg-parchment">
-                    <input type="radio" name="attendance" value="No podré asistir" class="sr-only" onchange="toggleAttendance(false)">
-                    <span class="font-display text-3xl block">No</span>
-                    <span class="smallcaps text-olive/70 block mt-1">No podré ir</span>
-                </label>
-            </div>
-
-            <div>
-                <label for="fullName" class="smallcaps text-olive mb-1 block">Nombre y apellido</label>
-                <input type="text" id="fullName" required class="field" placeholder="Tu nombre completo">
-            </div>
-
-            <div id="attendingFields" class="space-y-8">
-                <div>
-                    <label for="guestsCount" class="smallcaps text-olive mb-1 block">Lugares a reservar</label>
-                    <select id="guestsCount" class="field">
-                        <option value="1 persona">1 persona</option>
-                        <option value="2 personas (con acompañante)">2 personas (con acompañante)</option>
-                        <option value="Grupo familiar">Grupo familiar</option>
-                    </select>
-                </div>
-
-                <!-- Toggle discreto para menú especial -->
-                <div class="pt-2">
-                    <button type="button" onclick="toggleMenuSpecial()" id="btnMenuToggle" class="text-left text-xs uppercase tracking-wider text-sage hover:text-olive transition flex items-center gap-2">
-                        <span>+ ¿Necesitás indicar alguna restricción alimentaria?</span>
-                    </button>
-                    <div id="specialMenuContainer" class="hidden mt-4 p-4 plate rounded-lg space-y-3">
-                        <label for="dietarySelect" class="smallcaps text-olive text-[10px] block">Tipo de menú especial</label>
-                        <select id="dietarySelect" class="field !text-base">
-                            <option value="">Seleccionar restricción...</option>
-                            <option value="Celíaco (sin TACC)">Menú Celíaco (Sin TACC)</option>
-                            <option value="Vegetariano">Menú Vegetariano</option>
-                            <option value="Vegano">Menú Vegano</option>
-                            <option value="Sin sal agregada">Menú Sin sal agregada</option>
-                            <option value="Otra restricción">Otra indicación médica</option>
-                        </select>
-                        <input type="text" id="dietaryDetail" class="field !text-base" placeholder="Detalle adicional (opcional)">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="songRequest" class="smallcaps text-olive mb-1 block">Canción que no puede faltar</label>
-                    <input type="text" id="songRequest" class="field" placeholder="Tema y artista (opcional)">
-                </div>
-            </div>
-
-            <!-- Panel cuando no asisten -->
-            <div id="declinedMessagePanel" class="hidden plate p-6 text-center space-y-4">
-                <p class="font-serif italic text-xl text-ink">
-                    ¡Brindaremos y festejaremos teniéndote muy presente!
-                </p>
-                <p class="text-xs text-stone-500 font-sans tracking-wide">
-                    Si deseás acompañarnos con un presente a la distancia, podés hacerlo a través de la mesa de regalos.
-                </p>
-                <div class="pt-2">
-                    <span class="smallcaps text-olive/70 block text-[10px]">Alias bancario</span>
-                    <span id="aliasValDeclined" class="font-mono text-sm tracking-wider font-bold">JULIAN.Y.CARLA.BODA</span>
-                    <div class="mt-2">
-                        <button type="button" onclick="copyData('aliasValDeclined')" class="copylink">Copiar Alias</button>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <label for="message" class="smallcaps text-olive mb-1 block">Dedicatoria para los novios</label>
-                <textarea id="message" rows="2" class="field resize-none" placeholder="Unas palabras (opcional)"></textarea>
-            </div>
-
-            <button type="submit" class="btn-ink smallcaps w-full py-5 !text-[11.5px] no-print inline-flex items-center justify-center gap-2">
-                <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
-                <span>Enviar confirmación por WhatsApp</span>
-            </button>
-        </form>
-    </section>
-
-    <!-- Mesa de regalos -->
-    <section id="regalo" class="relative z-10 max-w-2xl mx-auto px-6 py-16 md:py-20">
-        <p class="smallcaps text-clay text-center">Nº V — Luna de Miel</p>
-        <h2 class="font-display text-5xl md:text-6xl text-center mt-2">Mesa de Regalos</h2>
-        <svg class="w-44 mx-auto mt-3 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
-        <p class="text-center font-serif italic text-olive mt-3 text-xl max-w-md mx-auto">
-            Tu presencia es nuestro mejor regalo; si deseás colaborar con nuestra luna de miel:
-        </p>
-
-        <div class="mt-12 space-y-8">
-            <!-- Transferencia bancaria -->
-            <div class="plate p-7 md:p-9 space-y-4">
-                <div class="flex items-baseline gap-3">
-                    <h3 class="font-display text-3xl">Transferencia Bancaria</h3>
-                    <span class="leader"></span>
-                    <span class="smallcaps text-olive/60">Caja de Ahorro</span>
-                </div>
-                <div class="space-y-4 pt-2">
-                    <div class="flex items-baseline gap-3">
-                        <span class="smallcaps text-olive/70 shrink-0">Titulares</span>
-                        <span class="leader"></span>
-                        <span class="font-serif text-lg md:text-xl text-right">Julián Morales & Carla Quiroga</span>
-                    </div>
-                    <div class="flex items-baseline gap-3">
-                        <span class="smallcaps text-olive/70 shrink-0">Alias</span>
-                        <span class="leader"></span>
-                        <span id="aliasVal" class="font-mono text-sm md:text-base tracking-wide font-bold">JULIAN.Y.CARLA.BODA</span>
-                        <button type="button" onclick="copyData('aliasVal')" class="copylink shrink-0 no-print">Copiar</button>
-                    </div>
-                    <div class="flex items-baseline gap-3">
-                        <span class="smallcaps text-olive/70 shrink-0">CBU</span>
-                        <span class="leader"></span>
-                        <span id="cbuVal" class="font-mono text-xs md:text-sm tracking-wide truncate">0070012345678901234567</span>
-                        <button type="button" onclick="copyData('cbuVal')" class="copylink shrink-0 no-print">Copiar</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mercado Pago monto libre -->
-            <div class="plate p-7 md:p-9 text-center space-y-4">
-                <h3 class="font-display text-3xl">Mercado Pago</h3>
-                <p class="font-serif italic text-stone-600 text-lg">
-                    Podés colaborar con el importe que desees a través de tarjeta o saldo en cuenta:
-                </p>
-                <div class="pt-2">
-                    <a href="https://mpago.la/LINK_LIBRE" target="_blank" rel="noopener" class="btn-ink smallcaps inline-flex items-center justify-center gap-2 px-8 py-4 !text-[11px] no-print">
-                        <svg class="w-4" aria-hidden="true"><use href="#bt-leaf"/></svg>
-                        <span>Colaborar con Mercado Pago</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <p id="toastSuccess" class="hidden text-center smallcaps text-olive mt-6 border border-hairline py-3">✓ Copiado al portapapeles</p>
-    </section>
-
-    <!-- Pie -->
-    <footer class="relative z-10 max-w-3xl mx-auto px-6 pb-24 text-center">
-        <div class="flex items-end justify-center gap-2 text-sage">
-            <svg class="w-9" style="transform:scaleX(-1)" aria-hidden="true"><use href="#bt-fern"/></svg>
-            <svg class="w-11 -mb-1" aria-hidden="true"><use href="#bt-sprig"/></svg>
-            <svg class="w-9" aria-hidden="true"><use href="#bt-fern"/></svg>
-        </div>
-        <p class="font-display text-4xl mt-6">Julián & Carla</p>
-        <svg class="w-52 mx-auto mt-2 text-sage/70" aria-hidden="true"><use href="#bt-vine"/></svg>
-        <div class="flex items-center gap-4 smallcaps text-olive/70 mt-4">
-            <span class="leafrule"></span>
-            <span>18 de Diciembre de 2026 · San Pablo de Reyes · Jujuy</span>
-            <span class="leafrule"></span>
-        </div>
-    </footer>
+        </footer>
+    </div>
 
     <script>
+        const CONFIG_KEY = "boda_julian_carla_config";
+        const GUESTS_KEY = "boda_julian_carla_guests";
+        const ACCESS_KEY = "boda_julian_carla_access";
+
+        function getConfig() {
+            const saved = localStorage.getItem(CONFIG_KEY);
+            return saved ? JSON.parse(saved) : {
+                phone: "5491112345678",
+                webhookUrl: "",
+                alias: "JULIAN.Y.CARLA.BODA",
+                cbu: "0070012345678901234567",
+                mpUrl: "https://mpago.la/LINK_LIBRE"
+            };
+        }
+
+        // Verificar acceso al cargar
+        document.addEventListener("DOMContentLoaded", () => {
+            if (sessionStorage.getItem(ACCESS_KEY) === "granted") {
+                unlockPage();
+            }
+        });
+
+        function checkPassword() {
+            const input = document.getElementById("passInput").value.trim().toLowerCase();
+            if (input === "18dic") {
+                sessionStorage.setItem(ACCESS_KEY, "granted");
+                unlockPage();
+            } else {
+                document.getElementById("lockError").classList.add("visible");
+            }
+        }
+
+        function unlockPage() {
+            document.getElementById("lockScreen").style.display = "none";
+            document.getElementById("mainContent").classList.remove("hidden");
+            updateTimer();
+        }
+
         const targetDate = new Date("2026-12-18T17:00:00-03:00").getTime();
         function updateTimer() {
             const diff = targetDate - Date.now();
@@ -445,7 +552,7 @@
             set("minutes", Math.floor(diff % 3600000 / 60000));
             set("seconds", Math.floor(diff % 60000 / 1000));
         }
-        setInterval(updateTimer, 1000); updateTimer();
+        setInterval(updateTimer, 1000);
 
         function toggleAttendance(attending) {
             const attFields = document.getElementById("attendingFields");
@@ -478,6 +585,33 @@
                 confetti({ particleCount: 75, spread: 60, origin: { y: .65 }, colors: ['#7C8B6F','#4A5844','#B0603F','#C9C2B0'] });
             }
 
+            const guestRecord = {
+                id: Date.now().toString(),
+                name: name,
+                attendance: att,
+                places: att.includes("confirmo") ? cnt : "-",
+                diet: dietarySel ? (dietaryDet ? `${dietarySel} (${dietaryDet})` : dietarySel) : "",
+                song: song,
+                notes: msg,
+                date: new Date().toISOString().split("T")[0]
+            };
+
+            try {
+                let existing = JSON.parse(localStorage.getItem(GUESTS_KEY) || "[]");
+                existing.unshift(guestRecord);
+                localStorage.setItem(GUESTS_KEY, JSON.stringify(existing));
+            } catch(err) {}
+
+            const cfg = getConfig();
+            if (cfg.webhookUrl && cfg.webhookUrl.startsWith("http")) {
+                fetch(cfg.webhookUrl, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(guestRecord)
+                }).catch(err => console.log("Webhook dispatch error:", err));
+            }
+
             let t = `*Confirmación de Boda — Julián & Carla*\n\n`;
             t += `👤 *Nombre:* ${name}\n`;
             t += `📍 *Asistencia:* ${att}\n`;
@@ -491,8 +625,8 @@
             }
             if (msg) t += `💌 *Mensaje:* ${msg}\n`;
 
-            const phone = "5491112345678"; // Reemplazar por el número de WhatsApp receptor
-            setTimeout(() => window.open(`https://wa.me/${phone}?text=${encodeURIComponent(t)}`, "_blank"), 400);
+            const targetPhone = cfg.phone || "5491112345678";
+            setTimeout(() => window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(t)}`, "_blank"), 400);
         }
 
         function copyData(id) {

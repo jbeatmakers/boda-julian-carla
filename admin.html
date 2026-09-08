@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+    <title>Panel de Control — Boda Julián & Carla</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Italiana"', 'serif'],
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                        caps: ['"Montserrat"', 'sans-serif'],
+                    },
+                    colors: {
+                        ink: '#2A3226',
+                        olive: '#4A5844',
+                        sage: '#7C8B6F',
+                        paper: '#F6F2E9',
+                        parchment: '#EFE9DB',
+                        clay: '#B0603F',
+                        hairline: '#C9C2B0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F6F2E9;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.20 0 0 0 0 0.15 0 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .smallcaps { font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: .25em; font-size: 11px; }
+        .plate { border: 1px solid #C9C2B0; background: rgba(255, 255, 255, 0.75); }
+    </style>
+</head>
+<body class="text-ink font-sans antialiased min-h-screen">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="plate p-8 md:p-12 rounded-2xl max-w-md w-full shadow-lg border border-hairline text-center space-y-6">
+            <div class="space-y-2">
+                <span class="smallcaps text-clay font-semibold">Acceso Privado</span>
+                <h1 class="font-display text-4xl text-ink">Julián & Carla</h1>
+                <p class="text-xs text-stone-500 font-serif italic text-base">Administración de Invitados y Boda</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Usuario</label>
+                    <input type="text" id="userInput" required placeholder="julianycarla" class="w-full px-4 py-2.5 rounded-lg border border-hairline bg-white/80 text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Contraseña</label>
+                    <input type="password" id="passInput" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-hairline bg-white/80 text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div id="loginError" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded border border-red-200 text-center font-medium">
+                    Usuario o contraseña incorrectos.
+                </div>
+                <button type="submit" class="w-full py-3 bg-ink text-paper rounded-lg smallcaps font-semibold hover:bg-olive transition flex items-center justify-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    <span>Ingresar al Panel</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardScreen" class="hidden min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+        
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-hairline">
+            <div>
+                <div class="flex items-center gap-2 text-xs text-clay font-medium uppercase tracking-wider">
+                    <span>Panel de Control</span>
+                    <span>•</span>
+                    <span>18 de Diciembre, 2026</span>
+                </div>
+                <h1 class="font-display text-4xl text-ink">Boda Julián & Carla</h1>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="index.html" target="_blank" class="px-4 py-2 bg-white text-ink border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50 flex items-center gap-1.5 transition">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    <span>Ver Invitación</span>
+                </a>
+                <button onclick="exportToCSV()" class="px-4 py-2 bg-sage/20 text-olive border border-sage/40 rounded-lg text-xs font-medium hover:bg-sage/30 flex items-center gap-1.5 transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Exportar CSV</span>
+                </button>
+                <button onclick="openConfigModal()" class="px-4 py-2 bg-white text-olive border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50 flex items-center gap-1.5 transition">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                    <span>WhatsApp & Ajustes</span>
+                </button>
+                <button onclick="handleLogout()" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-medium hover:bg-red-100 flex items-center gap-1.5 transition">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>Salir</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
+                <div class="flex items-center justify-between text-stone-500 text-xs">
+                    <span>Total Confirmados</span>
+                    <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i>
+                </div>
+                <p id="kpiConfirmed" class="text-3xl font-display text-emerald-800 font-bold">0</p>
+                <p class="text-[10px] text-stone-400">Respuestas positivas</p>
+            </div>
+            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
+                <div class="flex items-center justify-between text-stone-500 text-xs">
+                    <span>Lugares / Personas</span>
+                    <i data-lucide="users" class="w-4 h-4 text-olive"></i>
+                </div>
+                <p id="kpiPlaces" class="text-3xl font-display text-ink font-bold">0</p>
+                <p class="text-[10px] text-stone-400">Cubiertos a reservar</p>
+            </div>
+            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
+                <div class="flex items-center justify-between text-stone-500 text-xs">
+                    <span>No Asisten</span>
+                    <i data-lucide="user-x" class="w-4 h-4 text-stone-400"></i>
+                </div>
+                <p id="kpiDeclined" class="text-3xl font-display text-stone-500 font-bold">0</p>
+                <p class="text-[10px] text-stone-400">Acompañan a la distancia</p>
+            </div>
+            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
+                <div class="flex items-center justify-between text-stone-500 text-xs">
+                    <span>Menús Especiales</span>
+                    <i data-lucide="utensils" class="w-4 h-4 text-clay"></i>
+                </div>
+                <p id="kpiSpecialDiet" class="text-3xl font-display text-clay font-bold">0</p>
+                <p class="text-[10px] text-stone-400">Celíaco / Vegano / etc.</p>
+            </div>
+        </div>
+
+        <!-- Lista de Compras / Calculadora -->
+        <div class="plate rounded-2xl border border-hairline overflow-hidden shadow-sm">
+            <div class="p-4 md:p-6 border-b border-hairline bg-white/40">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl text-ink flex items-center gap-2">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 text-olive"></i>
+                            <span>Calculadora de Lista & Compras</span>
+                        </h2>
+                        <p class="text-[11px] text-stone-400">Estimá costos de catering, bebidas o detalles por invitado.</p>
+                    </div>
+                    <button onclick="addShoppingRow()" class="px-4 py-2 bg-olive/10 text-olive border border-olive/30 rounded-lg text-xs font-medium hover:bg-olive/20 transition flex items-center gap-1.5 self-start sm:self-auto">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Agregar Ítem</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 bg-white/30 space-y-3" id="shoppingListContainer">
+                <!-- Shopping rows injected here -->
+            </div>
+
+            <div class="p-4 md:p-6 bg-parchment/50 border-t border-hairline grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Subtotal Estimado</span>
+                    <span id="shopSubtotal" class="font-display text-2xl text-ink font-bold block mt-1">$ 0</span>
+                </div>
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Por Invitado</span>
+                    <span id="shopPerGuest" class="font-display text-2xl text-olive font-bold block mt-1">$ 0</span>
+                </div>
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Catering / Menús</span>
+                    <span id="shopCatering" class="font-display text-2xl text-emerald-700 font-bold block mt-1">$ 0</span>
+                </div>
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Extras</span>
+                    <span id="shopExtras" class="font-display text-2xl text-clay font-bold block mt-1">$ 0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banner de configuración rápida -->
+        <div class="plate p-4 rounded-xl border border-hairline flex flex-col sm:flex-row items-center justify-between gap-3 text-xs bg-white/60">
+            <div class="flex items-center gap-2">
+                <i data-lucide="phone-call" class="w-4 h-4 text-emerald-600"></i>
+                <span><strong>WhatsApp receptor actual:</strong> <span id="currentPhoneDisplay" class="font-mono text-emerald-800 font-semibold">Cargando...</span></span>
+            </div>
+            <button onclick="openConfigModal()" class="text-clay hover:text-ink font-medium underline flex items-center gap-1">
+                <span>Cambiar número o webhook</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+
+        <!-- Table & Actions Section -->
+        <div class="plate rounded-2xl border border-hairline overflow-hidden shadow-sm">
+            <div class="p-4 md:p-6 border-b border-hairline flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/40">
+                <div class="flex flex-1 items-center gap-3">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-stone-400"></i>
+                        <input type="text" id="searchInput" oninput="renderTable()" placeholder="Buscar por nombre o canción..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-hairline bg-white text-xs focus:outline-none focus:border-olive">
+                    </div>
+                    <select id="filterStatus" onchange="renderTable()" class="px-3 py-2 rounded-lg border border-hairline bg-white text-xs text-stone-600 focus:outline-none focus:border-olive">
+                        <option value="all">Todos los estados</option>
+                        <option value="confirmed">Confirmados</option>
+                        <option value="declined">No asisten</option>
+                        <option value="diet">Con Menú Especial</option>
+                    </select>
+                </div>
+                <button onclick="openAddGuestModal()" class="px-4 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Agregar Invitado Manual</span>
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-parchment/60 border-b border-hairline text-stone-600 uppercase tracking-wider text-[10px] font-semibold">
+                        <tr>
+                            <th class="p-4">Invitado</th>
+                            <th class="p-4">Estado</th>
+                            <th class="p-4">Lugares</th>
+                            <th class="p-4">Menú Especial</th>
+                            <th class="p-4">Canción</th>
+                            <th class="p-4">Mensaje / Dedicatoria</th>
+                            <th class="p-4">Fecha</th>
+                            <th class="p-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guestTableBody" class="divide-y divide-hairline bg-white/50"></tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="hidden p-12 text-center space-y-3">
+                <i data-lucide="inbox" class="w-10 h-10 text-stone-300 mx-auto"></i>
+                <p class="font-serif italic text-lg text-stone-500">Aún no hay confirmaciones registradas</p>
+                <p class="text-xs text-stone-400">Los invitados que confirmen en la web o los que agregues manualmente aparecerán acá.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIGURACIÓN GENERAL -->
+    <div id="configModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="plate p-6 md:p-8 rounded-2xl max-w-lg w-full bg-white shadow-xl border border-hairline space-y-5">
+            <div class="flex items-center justify-between border-b border-hairline pb-3">
+                <div>
+                    <h3 class="font-display text-2xl text-ink">Ajustes de la Boda</h3>
+                    <p class="text-[11px] text-stone-400">Configurá el número receptor y la conexión de la app</p>
+                </div>
+                <button onclick="closeConfigModal()" class="text-stone-400 hover:text-stone-700">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="configForm" onsubmit="saveConfig(event)" class="space-y-4">
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Número de WhatsApp receptor</label>
+                    <input type="text" id="cfgPhone" required placeholder="Ej: 5493881234567" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm font-mono focus:outline-none focus:border-olive">
+                    <span class="text-[10px] text-stone-400">Formato internacional sin signos.</span>
+                </div>
+
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">URL de la App / Webhook</label>
+                    <input type="url" id="cfgWebhook" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
+                    <span class="text-[10px] text-stone-400">Opcional. Cada confirmación enviará datos aquí además de WhatsApp.</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="smallcaps text-olive block mb-1 text-[10px]">Alias Bancario</label>
+                        <input type="text" id="cfgAlias" placeholder="JULIAN.Y.CARLA.BODA" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
+                    </div>
+                    <div>
+                        <label class="smallcaps text-olive block mb-1 text-[10px]">CBU Bancario</label>
+                        <input type="text" id="cfgCbu" placeholder="0070012345678901234567" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Link de Mercado Pago</label>
+                    <input type="url" id="cfgMpUrl" placeholder="https://mpago.la/LINK_LIBRE" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-hairline">
+                    <button type="button" onclick="closeConfigModal()" class="px-4 py-2 border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: AGREGAR / EDITAR INVITADO -->
+    <div id="guestModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="plate p-6 md:p-8 rounded-2xl max-w-lg w-full bg-white shadow-xl border border-hairline space-y-4">
+            <div class="flex items-center justify-between border-b border-hairline pb-3">
+                <h3 id="modalTitle" class="font-display text-2xl text-ink">Agregar Invitado</h3>
+                <button onclick="closeGuestModal()" class="text-stone-400 hover:text-stone-700">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="guestModalForm" onsubmit="saveGuest(event)" class="space-y-4">
+                <input type="hidden" id="editGuestId">
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Nombre Completo</label>
+                    <input type="text" id="modalName" required class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="smallcaps text-olive block mb-1 text-[10px]">Asistencia</label>
+                        <select id="modalAttendance" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs focus:outline-none focus:border-olive">
+                            <option value="Sí, confirmo asistencia">Sí, confirmo asistencia</option>
+                            <option value="No podré asistir">No podré asistir</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="smallcaps text-olive block mb-1 text-[10px]">Lugares</label>
+                        <select id="modalPlaces" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs focus:outline-none focus:border-olive">
+                            <option value="1 persona">1 persona</option>
+                            <option value="2 personas (con acompañante)">2 personas</option>
+                            <option value="Grupo familiar">Grupo familiar (3+)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Menú Especial (opcional)</label>
+                    <input type="text" id="modalDiet" placeholder="Ej: Celíaco, Vegetariano..." class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Canción sugerida</label>
+                    <input type="text" id="modalSong" placeholder="Canción y artista" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="smallcaps text-olive block mb-1 text-[10px]">Dedicatoria / Notas</label>
+                    <textarea id="modalNotes" rows="2" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-hairline">
+                    <button type="button" onclick="closeGuestModal()" class="px-4 py-2 border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const AUTH_USER = "julianycarla";
+        const AUTH_PASS = "5pamplona";
+        const STORAGE_KEY = "boda_julian_carla_guests";
+        const CONFIG_KEY = "boda_julian_carla_config";
+        const SHOPPING_KEY = "boda_julian_carla_shopping";
+
+        let guests = [];
+        let shoppingItems = [];
+
+        function loadConfig() {
+            const raw = localStorage.getItem(CONFIG_KEY);
+            return raw ? JSON.parse(raw) : {
+                phone: "5491112345678",
+                webhookUrl: "",
+                alias: "JULIAN.Y.CARLA.BODA",
+                cbu: "0070012345678901234567",
+                mpUrl: "https://mpago.la/LINK_LIBRE"
+            };
+        }
+
+        function loadShopping() {
+            const raw = localStorage.getItem(SHOPPING_KEY);
+            if (raw) {
+                try { shoppingItems = JSON.parse(raw); } catch (e) { shoppingItems = []; }
+            } else {
+                shoppingItems = [
+                    { id: "s1", name: "Catering / Cena Principal", costPerGuest: 25000, category: "catering" },
+                    { id: "s2", name: "Barra Libre & Bebidas", costPerGuest: 8000, category: "catering" },
+                    { id: "s3", name: "Detalles & Recuerdos", costPerGuest: 3000, category: "extras" }
+                ];
+                saveShopping();
+            }
+        }
+
+        function saveShopping() {
+            localStorage.setItem(SHOPPING_KEY, JSON.stringify(shoppingItems));
+            renderShopping();
+        }
+
+        function addShoppingRow() {
+            shoppingItems.push({
+                id: Date.now().toString(),
+                name: "Nuevo ítem",
+                costPerGuest: 0,
+                category: "extras"
+            });
+            saveShopping();
+        }
+
+        function deleteShoppingRow(id) {
+            shoppingItems = shoppingItems.filter(i => i.id !== id);
+            saveShopping();
+        }
+
+        function updateShoppingItem(id, field, value) {
+            const idx = shoppingItems.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                if (field === "costPerGuest") {
+                    shoppingItems[idx][field] = parseFloat(value) || 0;
+                } else {
+                    shoppingItems[idx][field] = value;
+                }
+            }
+            saveShopping();
+        }
+
+        function renderShopping() {
+            const container = document.getElementById("shoppingListContainer");
+            container.innerHTML = "";
+            
+            let totalConfirmed = parseInt(document.getElementById("kpiPlaces").innerText) || 0;
+            if (totalConfirmed === 0) totalConfirmed = 1;
+
+            let total = 0;
+            let cateringTotal = 0;
+            let extrasTotal = 0;
+
+            shoppingItems.forEach(item => {
+                const row = document.createElement("div");
+                row.className = "flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-lg border border-hairline bg-white/60";
+                row.innerHTML = `
+                    <div class="flex-1">
+                        <input type="text" value="${item.name}" onchange="updateShoppingItem('${item.id}', 'name', this.value)" class="w-full bg-transparent border-0 border-b border-transparent focus:border-olive outline-none text-sm font-medium text-ink placeholder:text-stone-400">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-stone-400">$</span>
+                        <input type="number" value="${item.costPerGuest}" min="0" step="100" onchange="updateShoppingItem('${item.id}', 'costPerGuest', this.value)" class="w-24 px-2 py-1 rounded border border-hairline bg-white text-xs font-mono focus:outline-none focus:border-olive text-right">
+                        <span class="text-[10px] text-stone-400">/ persona</span>
+                    </div>
+                    <div>
+                        <select onchange="updateShoppingItem('${item.id}', 'category', this.value)" class="px-2 py-1 rounded border border-hairline bg-white text-xs text-stone-600 focus:outline-none focus:border-olive">
+                            <option value="catering" ${item.category === 'catering' ? 'selected' : ''}>Catering</option>
+                            <option value="extras" ${item.category === 'extras' ? 'selected' : ''}>Extras</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-stone-500 font-mono w-20 text-right">$ ${(item.costPerGuest * totalConfirmed).toLocaleString('es-AR')}</span>
+                        <button onclick="deleteShoppingRow('${item.id}')" class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+
+                total += item.costPerGuest;
+                if (item.category === "catering") cateringTotal += item.costPerGuest;
+                else extrasTotal += item.costPerGuest;
+            });
+
+            document.getElementById("shopSubtotal").innerText = "$ " + (total * totalConfirmed).toLocaleString('es-AR');
+            document.getElementById("shopPerGuest").innerText = "$ " + total.toLocaleString('es-AR');
+            document.getElementById("shopCatering").innerText = "$ " + (cateringTotal * totalConfirmed).toLocaleString('es-AR');
+            document.getElementById("shopExtras").innerText = "$ " + (extrasTotal * totalConfirmed).toLocaleString('es-AR');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (sessionStorage.getItem("boda_admin_logged") === "true") {
+                showDashboard();
+            } else {
+                showLogin();
+            }
+            if (window.lucide) lucide.createIcons();
+        });
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById("userInput").value.trim().toLowerCase();
+            const p = document.getElementById("passInput").value.trim();
+
+            if (u === AUTH_USER && p === AUTH_PASS) {
+                sessionStorage.setItem("boda_admin_logged", "true");
+                document.getElementById("loginError").classList.add("hidden");
+                showDashboard();
+            } else {
+                document.getElementById("loginError").classList.remove("hidden");
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem("boda_admin_logged");
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById("loginScreen").classList.remove("hidden");
+            document.getElementById("dashboardScreen").classList.add("hidden");
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showDashboard() {
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("dashboardScreen").classList.remove("hidden");
+            const cfg = loadConfig();
+            document.getElementById("currentPhoneDisplay").innerText = "+" + cfg.phone;
+            loadGuests();
+            renderTable();
+            updateKPIs();
+            loadShopping();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadGuests() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try { guests = JSON.parse(raw); } catch (e) { guests = []; }
+            } else {
+                guests = [];
+                saveToStorage();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
+            updateKPIs();
+            renderShopping();
+        }
+
+        function updateKPIs() {
+            let confirmed = 0;
+            let places = 0;
+            let declined = 0;
+            let specialDiet = 0;
+
+            guests.forEach(g => {
+                if (g.attendance.includes("Sí") || g.attendance.includes("confirmo")) {
+                    confirmed++;
+                    if (g.places.includes("2")) places += 2;
+                    else if (g.places.includes("familiar")) places += 4;
+                    else places += 1;
+
+                    if (g.diet && g.diet.trim() !== "") specialDiet++;
+                } else {
+                    declined++;
+                }
+            });
+
+            document.getElementById("kpiConfirmed").innerText = confirmed;
+            document.getElementById("kpiPlaces").innerText = places;
+            document.getElementById("kpiDeclined").innerText = declined;
+            document.getElementById("kpiSpecialDiet").innerText = specialDiet;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("guestTableBody");
+            const empty = document.getElementById("emptyState");
+            const search = document.getElementById("searchInput").value.toLowerCase();
+            const filter = document.getElementById("filterStatus").value;
+
+            tbody.innerHTML = "";
+
+            const filtered = guests.filter(g => {
+                const matchesSearch = g.name.toLowerCase().includes(search) || (g.song && g.song.toLowerCase().includes(search));
+                if (!matchesSearch) return false;
+
+                if (filter === "confirmed") return g.attendance.includes("Sí") || g.attendance.includes("confirmo");
+                if (filter === "declined") return g.attendance.includes("No");
+                if (filter === "diet") return g.diet && g.diet.trim() !== "";
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                empty.classList.remove("hidden");
+            } else {
+                empty.classList.add("hidden");
+                filtered.forEach(g => {
+                    const isAtt = g.attendance.includes("Sí") || g.attendance.includes("confirmo");
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-white/80 transition";
+                    tr.innerHTML = `
+                        <td class="p-4 font-semibold text-ink">${g.name}</td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${isAtt ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-600 border border-stone-200'}">
+                                ${isAtt ? 'Confirmado' : 'No Asiste'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-stone-600">${isAtt ? (g.places || '1 persona') : '-'}</td>
+                        <td class="p-4">
+                            ${g.diet ? `<span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-200 text-[10px]">${g.diet}</span>` : '<span class="text-stone-300">-</span>'}
+                        </td>
+                        <td class="p-4 text-stone-500 italic">${g.song || '-'}</td>
+                        <td class="p-4 text-stone-600 max-w-xs truncate" title="${g.notes || ''}">${g.notes || '-'}</td>
+                        <td class="p-4 text-stone-400 text-[10px]">${g.date || '-'}</td>
+                        <td class="p-4 text-right space-x-1">
+                            <button onclick="editGuest('${g.id}')" class="p-1.5 text-stone-500 hover:text-ink hover:bg-stone-100 rounded transition" title="Editar">
+                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteGuest('${g.id}')" class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition" title="Eliminar">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openConfigModal() {
+            const cfg = loadConfig();
+            document.getElementById("cfgPhone").value = cfg.phone || "";
+            document.getElementById("cfgWebhook").value = cfg.webhookUrl || "";
+            document.getElementById("cfgAlias").value = cfg.alias || "";
+            document.getElementById("cfgCbu").value = cfg.cbu || "";
+            document.getElementById("cfgMpUrl").value = cfg.mpUrl || "";
+            document.getElementById("configModal").classList.remove("hidden");
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeConfigModal() {
+            document.getElementById("configModal").classList.add("hidden");
+        }
+
+        function saveConfig(e) {
+            e.preventDefault();
+            const cleanPhone = document.getElementById("cfgPhone").value.replace(/\D/g, "");
+            const newCfg = {
+                phone: cleanPhone,
+                webhookUrl: document.getElementById("cfgWebhook").value.trim(),
+                alias: document.getElementById("cfgAlias").value.trim(),
+                cbu: document.getElementById("cfgCbu").value.trim(),
+                mpUrl: document.getElementById("cfgMpUrl").value.trim()
+            };
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(newCfg));
+            document.getElementById("currentPhoneDisplay").innerText = "+" + newCfg.phone;
+            alert("Ajustes guardados correctamente.");
+            closeConfigModal();
+        }
+
+        function openAddGuestModal() {
+            document.getElementById("editGuestId").value = "";
+            document.getElementById("modalTitle").innerText = "Agregar Invitado";
+            document.getElementById("guestModalForm").reset();
+            document.getElementById("guestModal").classList.remove("hidden");
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeGuestModal() {
+            document.getElementById("guestModal").classList.add("hidden");
+        }
+
+        function editGuest(id) {
+            const g = guests.find(item => item.id === id);
+            if (!g) return;
+            document.getElementById("editGuestId").value = g.id;
+            document.getElementById("modalTitle").innerText = "Editar Invitado";
+            document.getElementById("modalName").value = g.name;
+            document.getElementById("modalAttendance").value = g.attendance;
+            document.getElementById("modalPlaces").value = g.places || "1 persona";
+            document.getElementById("modalDiet").value = g.diet || "";
+            document.getElementById("modalSong").value = g.song || "";
+            document.getElementById("modalNotes").value = g.notes || "";
+            document.getElementById("guestModal").classList.remove("hidden");
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function saveGuest(e) {
+            e.preventDefault();
+            const id = document.getElementById("editGuestId").value;
+            const newGuest = {
+                id: id || Date.now().toString(),
+                name: document.getElementById("modalName").value.trim(),
+                attendance: document.getElementById("modalAttendance").value,
+                places: document.getElementById("modalPlaces").value,
+                diet: document.getElementById("modalDiet").value.trim(),
+                song: document.getElementById("modalSong").value.trim(),
+                notes: document.getElementById("modalNotes").value.trim(),
+                date: new Date().toISOString().split("T")[0]
+            };
+
+            if (id) {
+                const idx = guests.findIndex(item => item.id === id);
+                if (idx !== -1) guests[idx] = newGuest;
+            } else {
+                guests.unshift(newGuest);
+            }
+
+            saveToStorage();
+            closeGuestModal();
+            renderTable();
+        }
+
+        function deleteGuest(id) {
+            if (confirm("¿Seguro que deseas eliminar este invitado de la lista?")) {
+                guests = guests.filter(item => item.id !== id);
+                saveToStorage();
+                renderTable();
+            }
+        }
+
+        function exportToCSV() {
+            if (guests.length === 0) {
+                alert("No hay invitados para exportar.");
+                return;
+            }
+            let csv = "Nombre,Estado,Lugares,Menu Especial,Cancion,Dedicatoria,Fecha\n";
+            guests.forEach(g => {
+                csv += `"${g.name}","${g.attendance}","${g.places || ''}","${g.diet || ''}","${g.song || ''}","${(g.notes || '').replace(/"/g, '""')}","${g.date || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `invitados_boda_julian_y_carla_${new Date().toISOString().split("T")[0]}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
