@@ -1,0 +1,42 @@
+{
+  "couple": "Julián & Carla",
+  "date": "2026-12-18",
+  "dateDisplay": "18 de Diciembre de 2026",
+  "dateDisplayShort": "18 · XII · 2026",
+  "locationDisplay": "San Pablo de Reyes · Jujuy",
+  "ceremony": {
+    "time": "17:00",
+    "title": "Santa Misa de Casamiento",
+    "place": "Iglesia San Pedro y San Pablo",
+    "address": "Calle Carlos Figueroa · San Pablo de Reyes · Jujuy",
+    "gpsUrl": "https://maps.google.com/?q=Iglesia+San+Pedro+y+San+Pablo,+San+Pablo+de+Reyes,+Jujuy"
+  },
+  "celebration": {
+    "time": "18:30",
+    "title": "Recepción, cena & fiesta",
+    "place": "El Quincho del Predio de Reyes",
+    "address": "A 4 cuadras de la ceremonia · San Pablo de Reyes",
+    "gpsUrl": "https://maps.google.com/?q=Complejo+San+Pablo+de+Reyes,+Jujuy"
+  },
+  "dressCode": {
+    "title": "Estética Edén",
+    "concept": "Inspirado en la naturaleza al atardecer: una gala fresca, sofisticada y luminosa.",
+    "women": "Vestido formal en paleta natural o floral noble. Acentos de perlas en joyas, peinado o complementos.",
+    "men": "Traje formal con corbata o moño. Pañuelo de seda o prendedor sutil.",
+    "note": "No hace falta comprar de nuevo: se puede elevar un conjunto formal con perlas, pañuelo o accesorios a tono.",
+    "colorReservation": "Reserva de color: exclusivo novios"
+  },
+  "ticket": {
+    "enabled": true,
+    "price": 35000,
+    "currency": "ARS",
+    "title": "Tarjeta de Casamiento",
+    "description": "Para acompañarnos en la celebración, podés transferir el valor de la tarjeta ($35.000 por persona) hasta el 1º de diciembre."
+  },
+  "bank": {
+    "holder": "Julián Morales & Carla Quiroga",
+    "alias": "JULIAN.Y.CARLA.BODA",
+    "cbu": "0070012345678901234567",
+    "mpUrl": "https://mpago.la/LINK_LIBRE"
+  }
+}

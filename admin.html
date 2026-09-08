@@ -3,162 +3,356 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
-<title>Panel — Boda Julián & Carla</title>
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Admin — Julián & Carla</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
 <script>tailwind.config={theme:{extend:{fontFamily:{display:['"Italiana"','serif'],serif:['"Cormorant Garamond"','serif'],caps:['"Montserrat"','sans-serif']},colors:{ink:'#2A3226',olive:'#4A5844',sage:'#7C8B6F',paper:'#F6F2E9',parchment:'#EFE9DB',clay:'#B0603F',hairline:'#C9C2B0'}}}}</script>
-<style>body{background:#F6F2E9}.smallcaps{font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.25em;font-size:11px}.plate{border:1px solid #C9C2B0;background:rgba(255,255,255,.75)}.tab-btn{padding:.55rem .9rem;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid #C9C2B0;background:#fff;color:#4A5844}.tab-btn.active{background:#2A3226;color:#F6F2E9;border-color:#2A3226}.inp{width:100%;padding:.45rem .6rem;border:1px solid #C9C2B0;background:#fff;font-size:12px;outline:none}</style>
+<style>
+body{background-color:#F6F2E9}
+.smallcaps{font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.25em;font-size:10px}
+.plate{border:1px solid #C9C2B0;background:rgba(255,255,255,.65)}
+.inp{width:100%;background:white;border:1px solid #C9C2B0;padding:.45rem .6rem;font-size:.85rem;color:#2A3226;outline:none}
+.inp:focus{border-color:#2A3226}
+.tab-btn{font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.15em;font-size:11px;padding:.6rem 1rem;color:#4A5844;border-bottom:2px solid transparent}
+.tab-btn.active{color:#2A3226;border-bottom-color:#2A3226;font-weight:600}
+</style>
 </head>
-<body class="text-ink font-caps antialiased min-h-screen">
+<body class="text-ink font-sans antialiased min-h-screen">
+
 <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-<div class="plate p-8 max-w-md w-full text-center space-y-6">
-<span class="smallcaps text-clay font-semibold">Acceso privado</span>
-<h1 class="font-display text-4xl">Julián & Carla</h1>
-<form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-<label class="smallcaps text-olive text-[10px]">Usuario</label><input id="userInput" required class="inp">
-<label class="smallcaps text-olive text-[10px]">Contraseña</label><input id="passInput" type="password" required class="inp">
-<div id="loginError" class="hidden text-xs text-red-600">Usuario o contraseña incorrectos.</div>
-<button class="w-full py-3 bg-ink text-paper smallcaps">Ingresar al panel</button>
-</form></div></div>
-<div id="dashboardScreen" class="hidden min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-<header class="flex flex-col md:flex-row justify-between gap-4 pb-4 border-b border-hairline">
-<div><div class="text-xs text-clay uppercase tracking-wider">Panel · 18 de diciembre 2026</div><h1 class="font-display text-4xl">Boda Julián & Carla</h1></div>
-<div class="flex flex-wrap gap-2">
-<a href="index.html" target="_blank" class="px-3 py-2 bg-white border border-hairline text-xs">Ver invitación</a>
-<button onclick="exportBackup()" class="px-3 py-2 bg-white border border-hairline text-xs">Backup JSON</button>
-<button onclick="document.getElementById('importFile').click()" class="px-3 py-2 bg-white border border-hairline text-xs">Importar JSON</button>
-<input type="file" id="importFile" accept="application/json" class="hidden" onchange="importBackup(event)">
-<button onclick="exportToCSV()" class="px-3 py-2 bg-sage/20 text-olive border border-sage/40 text-xs">CSV invitados</button>
-<button onclick="openConfigModal()" class="px-3 py-2 bg-white border border-hairline text-xs">Ajustes</button>
-<button onclick="handleLogout()" class="px-3 py-2 bg-red-50 text-red-700 border border-red-200 text-xs">Salir</button>
+<div class="plate max-w-sm w-full p-8 text-center space-y-4">
+<h1 class="font-display text-3xl">Panel de Administración</h1>
+<p class="smallcaps text-olive">Julián & Carla</p>
+<form onsubmit="handleLogin(event)" class="space-y-3 pt-2">
+<input type="text" id="userInput" class="inp" placeholder="Usuario" autocomplete="username">
+<input type="password" id="passInput" class="inp" placeholder="Contraseña" autocomplete="current-password">
+<p id="loginError" class="text-xs text-clay hidden">Credenciales inválidas.</p>
+<button class="w-full py-2.5 bg-ink text-paper text-xs uppercase tracking-wider font-semibold">Ingresar</button>
+</form>
+</div></div>
+
+<div id="dashboardScreen" class="hidden min-h-screen flex flex-col">
+<header class="border-b border-hairline bg-white/70 px-4 py-3 flex justify-between items-center sticky top-0 z-30">
+<div><h1 class="font-display text-2xl">Julián & Carla</h1><p class="smallcaps text-olive">18 de Diciembre de 2026</p></div>
+<div class="flex items-center gap-2">
+<button onclick="openConfigModal()" class="px-3 py-1.5 border border-hairline text-xs uppercase tracking-wider">Ajustes</button>
+<button onclick="exportBackup()" class="px-3 py-1.5 border border-hairline text-xs uppercase tracking-wider">Backup</button>
+<label class="px-3 py-1.5 border border-hairline text-xs uppercase tracking-wider cursor-pointer">Importar<input type="file" accept=".json" onchange="importBackup(event)" class="hidden"></label>
+<button onclick="handleLogout()" class="px-3 py-1.5 bg-clay text-white text-xs uppercase tracking-wider">Salir</button>
 </div></header>
-<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Confirmados</p><p id="kpiConfirmed" class="text-3xl font-display text-emerald-800">0</p></div>
-<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Cubiertos</p><p id="kpiPlaces" class="text-3xl font-display">0</p></div>
-<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">No asisten</p><p id="kpiDeclined" class="text-3xl font-display text-stone-500">0</p></div>
-<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Menús especiales</p><p id="kpiSpecialDiet" class="text-3xl font-display text-clay">0</p></div>
-<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Mesas estimadas</p><p id="kpiTables" class="text-3xl font-display text-olive">0</p></div>
-</div>
-<nav class="flex flex-wrap gap-2">
+
+<div class="border-b border-hairline bg-parchment/40 px-4 py-3">
+<div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 text-center">
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-stone-500 text-[9px]">Total Lista</p><p id="kpiTotal" class="font-display text-2xl font-bold">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-emerald-700 text-[9px]">Confirmados</p><p id="kpiConfirmed" class="font-display text-2xl font-bold text-emerald-800">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-amber-700 text-[9px]">Pendientes</p><p id="kpiPending" class="font-display text-2xl font-bold text-amber-800">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-blue-700 text-[9px]">Posibles</p><p id="kpiPossible" class="font-display text-2xl font-bold text-blue-800">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-clay text-[9px]">No Asisten</p><p id="kpiDeclined" class="font-display text-2xl font-bold text-clay">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-olive text-[9px]">Cubiertos</p><p id="kpiPlaces" class="font-display text-2xl font-bold">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-stone-500 text-[9px]">Mesas (8 c/u)</p><p id="kpiTables" class="font-display text-2xl font-bold">0</p></div>
+<div class="p-2 border border-hairline bg-white/70"><p class="smallcaps text-olive text-[9px]">Recaud. Tarjeta</p><p id="kpiRevenue" class="font-display text-xl font-bold text-emerald-900">$0</p></div>
+</div></div>
+
+<nav class="border-b border-hairline bg-white/50 px-4 flex gap-1 overflow-x-auto">
 <button class="tab-btn active" data-tab="invitados" onclick="showTab('invitados')">Invitados</button>
-<button class="tab-btn" data-tab="compras" onclick="showTab('compras')">Súper y cantidades</button>
+<button class="tab-btn" data-tab="shopping" onclick="showTab('shopping')">Súper & Bebidas</button>
 <button class="tab-btn" data-tab="mesas" onclick="showTab('mesas')">Mesas</button>
-<button class="tab-btn" data-tab="equipo" onclick="showTab('equipo')">Contrataciones</button>
+<button class="tab-btn" data-tab="vendors" onclick="showTab('vendors')">Equipo</button>
 <button class="tab-btn" data-tab="pista" onclick="showTab('pista')">Pista</button>
+<button class="tab-btn" data-tab="sitio" onclick="showTab('sitio')">Sitio & Tarjeta</button>
 </nav>
-<section id="tab-invitados" class="tab-panel plate overflow-hidden">
-<div class="p-4 border-b border-hairline flex flex-col md:flex-row gap-3 bg-white/40">
-<input id="searchInput" oninput="renderTable()" placeholder="Buscar nombre o canción" class="inp max-w-md">
-<select id="filterStatus" onchange="renderTable()" class="inp max-w-xs"><option value="all">Todos</option><option value="confirmed">Confirmados</option><option value="declined">No asisten</option><option value="diet">Menú especial</option></select>
-<button onclick="openAddGuestModal()" class="px-4 py-2 bg-ink text-white text-xs">Agregar invitado</button>
+
+<main class="flex-1 p-4 max-w-7xl mx-auto w-full">
+
+<!-- TAB INVITADOS -->
+<section id="tab-invitados" class="tab-panel space-y-4">
+<div class="flex flex-wrap gap-2 justify-between items-center">
+<div class="flex gap-2 items-center flex-1 min-w-[280px]">
+<input id="searchInput" oninput="renderTable()" class="inp max-w-xs" placeholder="Buscar nombre, canción, nota...">
+<select id="filterStatus" onchange="renderTable()" class="inp max-w-[180px]">
+<option value="all">Todos los estados</option>
+<option value="confirmado">Confirmados</option>
+<option value="pendiente">Pendientes</option>
+<option value="posible">Posibles</option>
+<option value="no_asiste">No asisten</option>
+<option value="diet">Con Menú Especial</option>
+</select>
 </div>
-<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-parchment/60 text-[10px] uppercase"><tr><th class="p-3">Invitado</th><th class="p-3">Estado</th><th class="p-3">Lugares</th><th class="p-3">Menú</th><th class="p-3">Canción</th><th class="p-3">Notas</th><th class="p-3">Fecha</th><th class="p-3 text-right">Acciones</th></tr></thead><tbody id="guestTableBody" class="divide-y divide-hairline bg-white/50"></tbody></table></div>
-<div id="emptyState" class="hidden p-10 text-center font-serif italic text-stone-500">Aún no hay confirmaciones.</div>
+<div class="flex gap-2">
+<button onclick="openAddGuestModal()" class="px-4 py-2 bg-ink text-white text-xs uppercase tracking-wider">+ Agregar Invitado</button>
+<button onclick="exportToCSV()" class="px-3 py-2 border border-hairline text-xs uppercase tracking-wider">CSV</button>
+</div></div>
+
+<div class="plate overflow-x-auto">
+<table class="w-full text-xs">
+<thead class="bg-stone-100/80 border-b border-hairline text-[10px] uppercase text-stone-500">
+<tr>
+<th class="p-3 text-left">Nombre</th>
+<th class="p-3 text-left">Contacto</th>
+<th class="p-3 text-center">Estado Lista</th>
+<th class="p-3 text-center">Asistencia</th>
+<th class="p-3 text-center">Lugares</th>
+<th class="p-3 text-left">Menú Especial</th>
+<th class="p-3 text-left">Canción</th>
+<th class="p-3 text-left">Notas</th>
+<th class="p-3 text-right">Acciones</th>
+</tr></thead>
+<tbody id="guestTableBody" class="divide-y divide-hairline"></tbody>
+</table>
+<div id="emptyState" class="hidden p-8 text-center text-stone-400 italic">No hay invitados que coincidan con la búsqueda.</div>
+</div>
 </section>
-<section id="tab-compras" class="tab-panel hidden space-y-6">
-<div class="plate p-5 space-y-3"><p class="font-serif italic text-olive text-sm">Cuando encuentren una oferta (Fernet, hielo, vasos), anótenla. Las cantidades se calculan solas según cubiertos.</p>
-<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Ofertas del súper</h2><button onclick="addOffer()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Oferta</button></div>
-<div id="offersBox" class="space-y-2"></div></div>
-<div class="plate p-5 space-y-3"><div class="flex justify-between items-center"><h2 class="font-display text-2xl">Stock actual</h2><button onclick="addStockItem()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Producto</button></div>
-<p class="font-serif italic text-olive text-sm">Lo que ya tenés en casa o en el salón: elegí la bebida y el tamaño de la lista (nada para escribir), solo la cantidad. Se resta automáticamente de lo que falta comprar en la tabla de Provisiones de abajo.</p>
-<div id="stockBox" class="space-y-2"></div></div>
-<div class="plate p-5 space-y-3"><h2 class="font-display text-2xl">Provisiones automáticas</h2><p class="text-xs text-stone-500">Ratios de fiesta. «Comprado» suma ofertas + stock actual; «Falta» es lo que todavía hay que comprar.</p>
-<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-[10px] uppercase text-stone-500"><tr><th class="p-2 text-left">Ítem</th><th class="p-2">Por persona</th><th class="p-2">Pack</th><th class="p-2">Necesario</th><th class="p-2">Comprado</th><th class="p-2">Falta</th></tr></thead><tbody id="provBody"></tbody></table></div></div>
-<div class="plate p-5 space-y-3"><div class="flex justify-between items-center"><h2 class="font-display text-2xl">Checklist de rubros</h2><button onclick="addChecklistItem()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Rubro</button></div>
-<p class="text-xs text-stone-500">Mozos, barra, sonido, deco… marcá lo resuelto. Agregá o borrá rubros según necesiten.</p>
-<div id="checklistBox" class="space-y-2"></div><p class="text-xs text-stone-500 font-semibold" id="checklistSummary"></p></div>
-<div class="plate p-5 space-y-3"><div class="flex justify-between"><h2 class="font-display text-2xl">Presupuesto por invitado</h2><button onclick="addShoppingRow()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Ítem</button></div>
+
+<!-- TAB SUPER & BEBIDAS -->
+<section id="tab-shopping" class="tab-panel hidden space-y-6">
+<div class="plate p-5 space-y-3">
+<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Stock actual en casa/salón</h2><button onclick="addStockItem()" class="px-3 py-1.5 bg-olive/10 text-olive border border-olive/30 text-xs">+ Producto</button></div>
+<p class="italic text-olive text-xs">Elegí la bebida y el tamaño exacto del envase; se resta automáticamente de las provisiones necesarias.</p>
+<div id="stockBox" class="space-y-2"></div>
+</div>
+
+<div class="plate p-5 space-y-3">
+<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Ofertas del súper compradas</h2><button onclick="addOffer()" class="px-3 py-1.5 bg-olive/10 text-olive border border-olive/30 text-xs">+ Oferta</button></div>
+<div id="offersBox" class="space-y-2"></div>
+</div>
+
+<div class="plate p-5 space-y-3">
+<h2 class="font-display text-2xl">Provisiones automáticas según cubiertos</h2>
+<p class="text-xs text-stone-500">«Comprado» suma ofertas + stock actual; «Falta» calcula las unidades restantes a comprar.</p>
+<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-[10px] uppercase text-stone-500"><tr><th class="p-2 text-left">Ítem</th><th class="p-2">Por persona</th><th class="p-2">Pack</th><th class="p-2">Necesario</th><th class="p-2">Comprado/Stock</th><th class="p-2">Falta comprar</th></tr></thead><tbody id="provBody"></tbody></table></div>
+</div>
+
+<div class="plate p-5 space-y-3">
+<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Checklist de rubros y servicios</h2><button onclick="addChecklistItem()" class="px-3 py-1.5 bg-olive/10 text-olive border border-olive/30 text-xs">+ Rubro</button></div>
+<div id="checklistBox" class="space-y-2"></div>
+<p class="text-xs text-stone-500 font-semibold" id="checklistSummary"></p>
+</div>
+
+<div class="plate p-5 space-y-3">
+<div class="flex justify-between"><h2 class="font-display text-2xl">Presupuesto por cubierto</h2><button onclick="addShoppingRow()" class="px-3 py-1.5 bg-olive/10 text-olive border border-olive/30 text-xs">+ Ítem</button></div>
 <div id="shoppingListContainer" class="space-y-2"></div>
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-hairline text-center">
-<div><span class="text-[10px] uppercase text-stone-500">Total</span><span id="shopSubtotal" class="block font-display text-2xl">$ 0</span></div>
-<div><span class="text-[10px] uppercase text-stone-500">Por cubierto</span><span id="shopPerGuest" class="block font-display text-2xl text-olive">$ 0</span></div>
-<div><span class="text-[10px] uppercase text-stone-500">Catering</span><span id="shopCatering" class="block font-display text-2xl">$ 0</span></div>
-<div><span class="text-[10px] uppercase text-stone-500">Extras</span><span id="shopExtras" class="block font-display text-2xl text-clay">$ 0</span></div>
-</div></div></section>
-<section id="tab-mesas" class="tab-panel hidden plate p-5 space-y-4"><h2 class="font-display text-2xl">Mesas</h2><p class="text-xs text-stone-500">Se calcula con cubiertos confirmados.</p>
-<div class="flex items-end gap-4"><div><label class="smallcaps text-[10px] text-olive">Personas por mesa</label><input type="number" id="seatsPerTable" min="4" max="14" value="8" class="inp w-24" onchange="saveTablesCfg()"></div><p class="text-sm font-serif italic text-olive" id="tablesSummary">—</p></div>
-<div id="tablesGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-3"></div></section>
-<section id="tab-equipo" class="tab-panel hidden plate p-5 space-y-4"><div class="flex justify-between"><div><h2 class="font-display text-2xl">Contrataciones</h2><p class="text-xs text-stone-500">DJ, foto, catering, deco. No se muestra en la invitación.</p></div><button onclick="addVendor()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Persona / servicio</button></div><div id="vendorsBox" class="space-y-2"></div><p class="text-sm" id="vendorsTotal"></p></section>
-<section id="tab-pista" class="tab-panel hidden plate p-5 space-y-4"><h2 class="font-display text-2xl">Pista pública</h2><p class="text-xs text-stone-500">En la tarjeta se publica solo el título, nunca quién lo pidió. Reproductor: YouTube (gratis, sin Premium).</p>
-<label class="smallcaps text-[10px] text-olive">ID de playlist de YouTube</label><input id="ytPlaylist" class="inp font-mono" placeholder="PLxxxxxxxx" onchange="saveYt()">
-<p class="text-[10px] text-stone-400">Playlist pública en YouTube → copiar el valor de list=</p>
-<div class="flex gap-2 flex-wrap"><button onclick="importSongsFromGuests()" class="px-3 py-2 bg-ink text-white text-xs">Sumar canciones de invitados (anónimas)</button><button onclick="exportPistaJson()" class="px-3 py-2 bg-white border border-hairline text-xs">Descargar pista.json</button></div>
-<p class="text-[11px] text-stone-500">Para que se vea en todos los celulares, subí pista.json a la raíz del repo y hacé push.</p>
-<div class="flex gap-2"><input id="newSongTitle" class="inp" placeholder="Agregar tema (Título — Artista)"><button onclick="addPistaSong()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">Agregar</button></div>
-<ul id="pistaList" class="space-y-1 text-sm font-serif"></ul></section>
+<div><p class="smallcaps text-[9px] text-stone-500">Catering/Cena</p><p id="costCatering" class="font-display text-xl">$0</p></div>
+<div><p class="smallcaps text-[9px] text-stone-500">Bebidas</p><p id="costBarra" class="font-display text-xl">$0</p></div>
+<div><p class="smallcaps text-[9px] text-stone-500">Total x persona</p><p id="costPerGuestTotal" class="font-display text-xl font-bold">$0</p></div>
+<div><p class="smallcaps text-[9px] text-stone-500">Total fiesta</p><p id="costAllGuests" class="font-display text-xl text-clay font-bold">$0</p></div>
+</div></div>
+</section>
+
+<!-- TAB MESAS -->
+<section id="tab-mesas" class="tab-panel hidden space-y-4">
+<div class="plate p-5 space-y-4">
+<div class="flex flex-wrap items-center justify-between gap-3">
+<div><h2 class="font-display text-2xl">Distribución de Mesas</h2><p id="tablesSummary" class="text-xs text-stone-500 mt-1"></p></div>
+<div class="flex items-center gap-2"><label class="smallcaps text-[10px] text-stone-500">Sillas x mesa:</label><input type="number" id="seatsPerTable" min="4" max="14" class="inp w-20 text-center" onchange="saveTablesCfg()"></div>
 </div>
-<div id="configModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div class="plate p-6 max-w-lg w-full bg-white space-y-4"><div class="flex justify-between"><h3 class="font-display text-2xl">Ajustes</h3><button onclick="closeConfigModal()">✕</button></div>
-<form onsubmit="saveConfig(event)" class="space-y-3"><input id="cfgPhone" required class="inp font-mono" placeholder="WhatsApp 549388..."><input id="cfgWebhook" class="inp font-mono" placeholder="Webhook opcional"><div class="grid grid-cols-2 gap-3"><input id="cfgAlias" class="inp font-mono" placeholder="Alias"><input id="cfgCbu" class="inp font-mono" placeholder="CBU"></div><input id="cfgMpUrl" class="inp font-mono" placeholder="Link Mercado Pago"><div class="flex justify-end gap-2"><button type="button" onclick="closeConfigModal()" class="px-3 py-2 border text-xs">Cancelar</button><button class="px-4 py-2 bg-ink text-white text-xs">Guardar</button></div></form></div></div>
-<div id="guestModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div class="plate p-6 max-w-lg w-full bg-white space-y-3"><div class="flex justify-between"><h3 id="modalTitle" class="font-display text-2xl">Invitado</h3><button onclick="closeGuestModal()">✕</button></div>
-<form onsubmit="saveGuest(event)" class="space-y-3"><input type="hidden" id="editGuestId"><input id="modalName" required class="inp" placeholder="Nombre"><div class="grid grid-cols-2 gap-3"><select id="modalAttendance" class="inp"><option value="Sí, confirmo asistencia">Confirma</option><option value="No podré asistir">No asiste</option></select><select id="modalPlaces" class="inp"><option value="1 persona">1</option><option value="2 personas (con acompañante)">2</option><option value="Grupo familiar">Grupo (3+)</option></select></div><input id="modalDiet" class="inp" placeholder="Menú especial"><input id="modalSong" class="inp" placeholder="Canción"><textarea id="modalNotes" rows="2" class="inp" placeholder="Notas"></textarea><div class="flex justify-end gap-2"><button type="button" onclick="closeGuestModal()" class="px-3 py-2 border text-xs">Cancelar</button><button class="px-4 py-2 bg-ink text-white text-xs">Guardar</button></div></form></div></div>
+<div id="tablesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+</div>
+</section>
+
+<!-- TAB EQUIPO -->
+<section id="tab-vendors" class="tab-panel hidden space-y-4">
+<div class="plate p-5 space-y-4">
+<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Equipo y Contrataciones</h2><button onclick="addVendor()" class="px-3 py-1.5 bg-ink text-white text-xs uppercase tracking-wider">+ Proveedor</button></div>
+<div id="vendorsList" class="space-y-2"></div>
+</div>
+</section>
+
+<!-- TAB PISTA -->
+<section id="tab-pista" class="tab-panel hidden space-y-4">
+<div class="plate p-5 space-y-4">
+<div class="flex flex-wrap justify-between items-center gap-3">
+<div><h2 class="font-display text-2xl">Canciones de los Invitados</h2><p class="text-xs text-stone-500">Sugerencias enviadas desde el formulario RSVP.</p></div>
+<div class="flex items-center gap-2"><input id="ytPlaylist" class="inp w-64" placeholder="YouTube Playlist ID" onchange="saveYtPlaylist(this.value)"><button onclick="saveYtPlaylist(document.getElementById('ytPlaylist').value)" class="px-3 py-1.5 bg-ink text-white text-xs">Guardar</button></div>
+</div>
+<div id="pistaContainer" class="space-y-2"></div>
+</div>
+</section>
+
+<!-- TAB SITIO & TARJETA -->
+<section id="tab-sitio" class="tab-panel hidden space-y-6">
+<div class="flex justify-between items-center">
+<div><h2 class="font-display text-3xl">Personalización del Sitio</h2><p class="text-xs text-stone-500">Edición en vivo de horarios, lugares, GPS, dress code y precio de tarjeta.</p></div>
+<div class="flex gap-2">
+<button onclick="saveSiteContent()" class="px-4 py-2 bg-ink text-white text-xs uppercase tracking-wider">Guardar Cambios</button>
+<button onclick="exportSiteContentJson()" class="px-3 py-2 border border-hairline text-xs uppercase tracking-wider bg-white">Descargar site-content.json</button>
+</div></div>
+
+<div class="grid md:grid-cols-2 gap-6">
+<!-- Tarjeta -->
+<div class="plate p-5 space-y-3">
+<h3 class="font-display text-xl text-clay">Tarjeta de Casamiento</h3>
+<div class="flex items-center gap-2"><input type="checkbox" id="siteTicketEnabled"><label for="siteTicketEnabled" class="text-xs font-semibold">Habilitar cobro / valor de tarjeta en la web</label></div>
+<div class="grid grid-cols-2 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Precio ($ ARS)</label><input type="number" id="siteTicketPrice" class="inp" placeholder="35000"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Título</label><input type="text" id="siteTicketTitle" class="inp" placeholder="Tarjeta de Casamiento"></div>
+</div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Texto descriptivo / instrucciones</label><textarea id="siteTicketDesc" rows="2" class="inp"></textarea></div>
+</div>
+
+<!-- Dress Code -->
+<div class="plate p-5 space-y-3">
+<h3 class="font-display text-xl">Dress Code</h3>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Título</label><input type="text" id="siteDressTitle" class="inp" placeholder="Estética Edén"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Concepto General</label><input type="text" id="siteDressConcept" class="inp"></div>
+<div class="grid grid-cols-2 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Ellas</label><textarea id="siteDressWomen" rows="2" class="inp"></textarea></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Ellos</label><textarea id="siteDressMen" rows="2" class="inp"></textarea></div>
+</div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Nota de adaptación</label><input type="text" id="siteDressNote" class="inp"></div>
+</div>
+
+<!-- Ceremonia -->
+<div class="plate p-5 space-y-3">
+<h3 class="font-display text-xl">Ceremonia Religiosa</h3>
+<div class="grid grid-cols-3 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Hora</label><input type="text" id="siteCeremonyTime" class="inp" placeholder="17:00"></div>
+<div class="col-span-2"><label class="smallcaps text-[9px] text-stone-500 block mb-1">Título</label><input type="text" id="siteCeremonyTitle" class="inp"></div>
+</div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Lugar / Templo</label><input type="text" id="siteCeremonyPlace" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Dirección</label><input type="text" id="siteCeremonyAddress" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Enlace GPS Google Maps</label><input type="url" id="siteCeremonyGps" class="inp"></div>
+</div>
+
+<!-- Celebración -->
+<div class="plate p-5 space-y-3">
+<h3 class="font-display text-xl">Celebración / Fiesta</h3>
+<div class="grid grid-cols-3 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Hora</label><input type="text" id="siteCelebrationTime" class="inp" placeholder="18:30"></div>
+<div class="col-span-2"><label class="smallcaps text-[9px] text-stone-500 block mb-1">Título</label><input type="text" id="siteCelebrationTitle" class="inp"></div>
+</div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Lugar / Salón</label><input type="text" id="siteCelebrationPlace" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Dirección</label><input type="text" id="siteCelebrationAddress" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Enlace GPS Google Maps</label><input type="url" id="siteCelebrationGps" class="inp"></div>
+</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<!-- MODAL INVITADO -->
+<div id="guestModal" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center p-4 z-50">
+<div class="plate max-w-lg w-full p-6 bg-white space-y-4">
+<h3 id="modalGuestTitle" class="font-display text-2xl">Invitado</h3>
+<form onsubmit="saveGuest(event)" class="space-y-3">
+<input type="hidden" id="editGuestId">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Nombre completo *</label><input id="modalName" required class="inp" placeholder="Nombre y apellido"></div>
+<div class="grid grid-cols-2 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">WhatsApp / Teléfono</label><input id="modalPhone" class="inp" placeholder="388 1234567"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Email</label><input id="modalEmail" type="email" class="inp" placeholder="email@ejemplo.com"></div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Estado de lista</label>
+<select id="modalListStatus" class="inp">
+<option value="posible">Posible</option>
+<option value="invitado">Invitado</option>
+<option value="confirmado">Confirmado</option>
+<option value="pendiente">Pendiente</option>
+<option value="no_asiste">No asiste</option>
+</select></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Asistencia RSVP</label>
+<select id="modalAttendance" class="inp">
+<option value="Sí, confirmo asistencia">Confirma</option>
+<option value="No podré asistir">No asiste</option>
+</select></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Lugares / Cupo</label>
+<select id="modalPlaces" class="inp">
+<option value="1 persona">1</option>
+<option value="2 personas (con acompañante)">2</option>
+<option value="Grupo familiar">Grupo (3+)</option>
+</select></div>
+</div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Menú especial / Restricción médica</label><input id="modalDiet" class="inp" placeholder="Ej: Celíaco, Vegano"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Canción pedida</label><input id="modalSong" class="inp" placeholder="Tema y artista"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Notas especiales</label><textarea id="modalNotes" rows="2" class="inp" placeholder="Comentarios, mesa sugerida, etc."></textarea></div>
+<div class="flex justify-end gap-2 pt-2">
+<button type="button" onclick="closeGuestModal()" class="px-4 py-2 border text-xs">Cancelar</button>
+<button class="px-5 py-2 bg-ink text-white text-xs font-semibold">Guardar</button>
+</div></form>
+</div></div>
+
+<!-- MODAL CONFIGURACION -->
+<div id="configModal" class="fixed inset-0 bg-black/40 hidden flex items-center justify-center p-4 z-50">
+<div class="plate max-w-md w-full p-6 bg-white space-y-4">
+<h3 class="font-display text-2xl">Ajustes Generales</h3>
+<form onsubmit="saveConfig(event)" class="space-y-3">
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">WhatsApp Notificaciones</label><input id="cfgPhone" class="inp" placeholder="54911..."></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Webhook URL (Google Sheets/Make)</label><input id="cfgWebhook" class="inp" placeholder="https://..."></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Alias Bancario</label><input id="cfgAlias" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">CBU</label><input id="cfgCbu" class="inp"></div>
+<div><label class="smallcaps text-[9px] text-stone-500 block mb-1">Link Mercado Pago</label><input id="cfgMpUrl" class="inp"></div>
+<div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeConfigModal()" class="px-3 py-1.5 border text-xs">Cerrar</button><button class="px-4 py-1.5 bg-ink text-white text-xs">Guardar</button></div>
+</form></div></div>
+
 <script>
 const AUTH_USER="julianycarla",AUTH_PASS="5pamplona";
-const K={guests:"boda_julian_carla_guests",config:"boda_julian_carla_config",shop:"boda_julian_carla_shopping",offers:"boda_julian_carla_offers",vendors:"boda_julian_carla_vendors",tables:"boda_julian_carla_tables",pista:"boda_julian_carla_pista",rates:"boda_julian_carla_rates",stock:"boda_julian_carla_stock",checklist:"boda_julian_carla_checklist"};
-let guests=[],shoppingItems=[],offers=[],vendors=[],pista=[],tableCfg={seats:8},stock=[],checklist=[];
-let rates=[{key:"fernet",name:"Fernet 750 ml",perPerson:0.15,pack:0.75,packLabel:"botellas"},{key:"coca",name:"Coca (para fernet) 2.25 L",perPerson:0.45,pack:2.25,packLabel:"botellas"},{key:"vino",name:"Vino 750 ml",perPerson:0.4,pack:0.75,packLabel:"botellas"},{key:"cerveza",name:"Cerveza",perPerson:0.8,pack:1,packLabel:"litros"},{key:"gaseosa",name:"Gaseosa 2.25 L",perPerson:0.4,pack:2.25,packLabel:"botellas"},{key:"agua",name:"Agua 2 L",perPerson:0.5,pack:2,packLabel:"botellas"},{key:"hielo",name:"Hielo 5 kg",perPerson:0.5,pack:5,packLabel:"bolsas"},{key:"vasos",name:"Vasos extra",perPerson:2,pack:50,packLabel:"paquetes x50"},{key:"champagne",name:"Champagne 750 ml",perPerson:0.1,pack:0.75,packLabel:"botellas"},{key:"vodka",name:"Vodka 750 ml",perPerson:0.06,pack:0.75,packLabel:"botellas"},{key:"gin",name:"Gin 750 ml",perPerson:0.06,pack:0.75,packLabel:"botellas"}];
-const sizeOptions={fernet:[{l:"750 ml",v:0.75},{l:"1 L",v:1}],coca:[{l:"1.5 L",v:1.5},{l:"2.25 L",v:2.25},{l:"3 L",v:3}],vino:[{l:"750 ml",v:0.75},{l:"Bag in box 3 L",v:3}],cerveza:[{l:"Lata 354 ml",v:0.354},{l:"Botella/lata 1 L",v:1},{l:"Barril 30 L",v:30}],gaseosa:[{l:"500 ml",v:0.5},{l:"1.5 L",v:1.5},{l:"2.25 L",v:2.25},{l:"3 L",v:3}],agua:[{l:"500 ml",v:0.5},{l:"1.5 L",v:1.5},{l:"2 L",v:2},{l:"Bidón 6 L",v:6}],champagne:[{l:"750 ml",v:0.75},{l:"Magnum 1.5 L",v:1.5}],vodka:[{l:"750 ml",v:0.75},{l:"1 L",v:1}],gin:[{l:"700 ml",v:0.7},{l:"750 ml",v:0.75},{l:"1 L",v:1}],hielo:[{l:"Bolsa 5 kg",v:5},{l:"Bolsa 10 kg",v:10}],vasos:[{l:"Paquete x25",v:25},{l:"Paquete x50",v:50},{l:"Paquete x100",v:100}]};
+const K={guests:"boda_julian_carla_guests",config:"boda_julian_carla_config",shop:"boda_julian_carla_shopping",offers:"boda_julian_carla_offers",vendors:"boda_julian_carla_vendors",tables:"boda_julian_carla_tables",pista:"boda_julian_carla_pista",rates:"boda_julian_carla_rates",stock:"boda_julian_carla_stock",checklist:"boda_julian_carla_checklist",site:"boda_julian_carla_site"};
+let guests=[],shoppingItems=[],offers=[],vendors=[],pista=[],tableCfg={seats:8},stock=[],checklist=[],siteData={};
+let rates=[{key:"fernet",name:"Fernet 750 ml",perPerson:0.15,pack:0.75,packLabel:"botellas"},{key:"coca",name:"Coca 2.25 L",perPerson:0.45,pack:2.25,packLabel:"botellas"},{key:"vino",name:"Vino 750 ml",perPerson:0.4,pack:0.75,packLabel:"botellas"},{key:"cerveza",name:"Cerveza",perPerson:0.8,pack:1,packLabel:"litros"},{key:"gaseosa",name:"Gaseosa 2.25 L",perPerson:0.4,pack:2.25,packLabel:"botellas"},{key:"agua",name:"Agua 2 L",perPerson:0.5,pack:2,packLabel:"botellas"},{key:"hielo",name:"Hielo 5 kg",perPerson:0.5,pack:5,packLabel:"bolsas"},{key:"vasos",name:"Vasos extra",perPerson:2,pack:50,packLabel:"paquetes x50"},{key:"champagne",name:"Champagne 750 ml",perPerson:0.1,pack:0.75,packLabel:"botellas"},{key:"vodka",name:"Vodka 750 ml",perPerson:0.06,pack:0.75,packLabel:"botellas"},{key:"gin",name:"Gin 750 ml",perPerson:0.06,pack:0.75,packLabel:"botellas"}];
+const sizeOptions={fernet:[{l:"750 ml",v:0.75},{l:"1 L",v:1}],coca:[{l:"1.5 L",v:1.5},{l:"2.25 L",v:2.25},{l:"3 L",v:3}],vino:[{l:"750 ml",v:0.75},{l:"Bag in box 3 L",v:3}],cerveza:[{l:"Lata 354 ml",v:0.354},{l:"Botella 1 L",v:1},{l:"Barril 30 L",v:30}],gaseosa:[{l:"500 ml",v:0.5},{l:"1.5 L",v:1.5},{l:"2.25 L",v:2.25},{l:"3 L",v:3}],agua:[{l:"500 ml",v:0.5},{l:"1.5 L",v:1.5},{l:"2 L",v:2},{l:"Bidón 6 L",v:6}],champagne:[{l:"750 ml",v:0.75},{l:"Magnum 1.5 L",v:1.5}],vodka:[{l:"750 ml",v:0.75},{l:"1 L",v:1}],gin:[{l:"700 ml",v:0.7},{l:"750 ml",v:0.75},{l:"1 L",v:1}],hielo:[{l:"Bolsa 5 kg",v:5},{l:"Bolsa 10 kg",v:10}],vasos:[{l:"Paquete x25",v:25},{l:"Paquete x50",v:50},{l:"Paquete x100",v:100}]};
 function defaultChecklist(){return [{id:"c1",name:"Mozos",note:"",done:false},{id:"c2",name:"Barra / bartender",note:"",done:false},{id:"c3",name:"Sonido y DJ",note:"",done:false},{id:"c4",name:"Fotografía y video",note:"",done:false},{id:"c5",name:"Decoración",note:"",done:false},{id:"c6",name:"Torta",note:"",done:false},{id:"c7",name:"Vajilla y mantelería",note:"",done:false},{id:"c8",name:"Transporte invitados",note:"",done:false}]}
-function loadJSON(k,f){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch(e){return f}}function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function defaultSiteContent(){return {couple:"Julián & Carla",date:"2026-12-18",dateDisplay:"18 de Diciembre de 2026",ceremony:{time:"17:00",title:"Santa Misa de Casamiento",place:"Iglesia San Pedro y San Pablo",address:"Calle Carlos Figueroa · San Pablo de Reyes · Jujuy",gpsUrl:"https://maps.google.com/?q=Iglesia+San+Pedro+y+San+Pablo,+San+Pablo+de+Reyes,+Jujuy"},celebration:{time:"18:30",title:"Recepción, cena & fiesta",place:"El Quincho del Predio de Reyes",address:"A 4 cuadras de la ceremonia · San Pablo de Reyes",gpsUrl:"https://maps.google.com/?q=Complejo+San+Pablo+de+Reyes,+Jujuy"},dressCode:{title:"Estética Edén",concept:"Inspirado en la naturaleza al atardecer: una gala fresca, sofisticada y luminosa.",women:"Vestido formal en paleta natural o floral noble. Acentos de perlas en joyas, peinado o complementos.",men:"Traje formal con corbata o moño. Pañuelo de seda o prendedor sutil.",note:"No hace falta comprar de nuevo: se puede elevar un conjunto formal con perlas, pañuelo o accesorios a tono.",colorReservation:"Reserva de color: exclusivo novios"},ticket:{enabled:true,price:35000,currency:"ARS",title:"Tarjeta de Casamiento",description:"Para acompañarnos en la celebración, podés abonar la tarjeta correspondiente a tu lugar antes del 1º de diciembre."},bank:{holder:"Julián Morales & Carla Quiroga",alias:"JULIAN.Y.CARLA.BODA",cbu:"0070012345678901234567",mpUrl:"https://mpago.la/LINK_LIBRE"}}}
+function loadJSON(k,f){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch(e){return f}}
+function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function loadConfig(){return loadJSON(K.config,{phone:"5491112345678",webhookUrl:"",alias:"JULIAN.Y.CARLA.BODA",cbu:"0070012345678901234567",mpUrl:"https://mpago.la/LINK_LIBRE",youtubePlaylistId:""})}
-function placesOf(g){if(!(g.attendance||"").includes("Sí")&&!(g.attendance||"").includes("confirmo"))return 0;if((g.places||"").includes("2"))return 2;if((g.places||"").toLowerCase().includes("familiar"))return 4;return 1}
+function placesOf(g){if(!(g.attendance||"").includes("Sí")&&!(g.attendance||"").includes("confirmo")&&g.listStatus!=="confirmado")return 0;if((g.places||"").includes("2"))return 2;if((g.places||"").toLowerCase().includes("familiar"))return 4;return 1}
 function totalPlaces(){return guests.reduce((s,g)=>s+placesOf(g),0)}
-document.addEventListener("DOMContentLoaded",()=>{if(sessionStorage.getItem("boda_admin_logged")==="true")showDashboard();else showLogin();if(window.lucide)lucide.createIcons()});
 function handleLogin(e){e.preventDefault();const u=document.getElementById("userInput").value.trim().toLowerCase(),p=document.getElementById("passInput").value.trim();if(u===AUTH_USER&&p===AUTH_PASS){sessionStorage.setItem("boda_admin_logged","true");document.getElementById("loginError").classList.add("hidden");showDashboard()}else document.getElementById("loginError").classList.remove("hidden")}
 function handleLogout(){sessionStorage.removeItem("boda_admin_logged");showLogin()}
 function showLogin(){document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("dashboardScreen").classList.add("hidden")}
-function showDashboard(){document.getElementById("loginScreen").classList.add("hidden");document.getElementById("dashboardScreen").classList.remove("hidden");guests=loadJSON(K.guests,[]);shoppingItems=loadJSON(K.shop,[{id:"s1",name:"Catering / cena",costPerGuest:0,category:"catering"},{id:"s2",name:"Barra y bebidas",costPerGuest:0,category:"catering"}]);offers=loadJSON(K.offers,[]);vendors=loadJSON(K.vendors,[]);tableCfg=loadJSON(K.tables,{seats:8});pista=loadJSON(K.pista,[]);stock=loadJSON(K.stock,[]);checklist=loadJSON(K.checklist,defaultChecklist());const sr=loadJSON(K.rates,null);if(sr)rates=sr;document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";renderAll();showTab("invitados")}
-function showTab(id){document.querySelectorAll(".tab-panel").forEach(p=>p.classList.add("hidden"));document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));document.getElementById("tab-"+id).classList.remove("hidden")}
+async function showDashboard(){document.getElementById("loginScreen").classList.add("hidden");document.getElementById("dashboardScreen").classList.remove("hidden");guests=loadJSON(K.guests,[]);shoppingItems=loadJSON(K.shop,[{id:"s1",name:"Catering / cena",costPerGuest:0,category:"catering"},{id:"s2",name:"Barra y bebidas",costPerGuest:0,category:"catering"}]);offers=loadJSON(K.offers,[]);vendors=loadJSON(K.vendors,[]);tableCfg=loadJSON(K.tables,{seats:8});pista=loadJSON(K.pista,[]);stock=loadJSON(K.stock,[]);checklist=loadJSON(K.checklist,defaultChecklist());const sr=loadJSON(K.rates,null);if(sr)rates=sr;siteData=loadJSON(K.site,null);if(!siteData){try{const res=await fetch("./site-content.json");if(res.ok)siteData=await res.json()}catch(e){}}if(!siteData)siteData=defaultSiteContent();saveJSON(K.site,siteData);document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";loadSiteFields();renderAll();showTab("invitados")}
+function showTab(id){document.querySelectorAll(".tab-panel").forEach(p=>p.classList.add("hidden"));document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));const el=document.getElementById("tab-"+id);if(el)el.classList.remove("hidden")}
 function renderAll(){updateKPIs();renderTable();renderShopping();renderOffers();renderStock();renderProv();renderChecklist();renderTables();renderVendors();renderPista()}
-function updateKPIs(){let c=0,p=0,d=0,s=0;guests.forEach(g=>{if((g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo")){c++;p+=placesOf(g);if(g.diet&&g.diet.trim())s++}else d++});const seats=Number(tableCfg.seats)||8;document.getElementById("kpiConfirmed").innerText=c;document.getElementById("kpiPlaces").innerText=p;document.getElementById("kpiDeclined").innerText=d;document.getElementById("kpiSpecialDiet").innerText=s;document.getElementById("kpiTables").innerText=p?Math.ceil(p/seats):0}
-function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
-function renderTable(){const tbody=document.getElementById("guestTableBody"),empty=document.getElementById("emptyState"),search=(document.getElementById("searchInput").value||"").toLowerCase(),filter=document.getElementById("filterStatus").value;tbody.innerHTML="";const filtered=guests.filter(g=>{const ok=(g.name||"").toLowerCase().includes(search)||(g.song||"").toLowerCase().includes(search);if(!ok)return false;if(filter==="confirmed")return (g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo");if(filter==="declined")return (g.attendance||"").includes("No");if(filter==="diet")return g.diet&&g.diet.trim();return true});if(!filtered.length)empty.classList.remove("hidden");else{empty.classList.add("hidden");filtered.forEach(g=>{const isAtt=(g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo");const tr=document.createElement("tr");tr.innerHTML=`<td class="p-3 font-semibold">${esc(g.name)}</td><td class="p-3">${isAtt?"Confirmado":"No asiste"}</td><td class="p-3">${isAtt?esc(g.places||"1"):"-"}</td><td class="p-3">${g.diet?esc(g.diet):"-"}</td><td class="p-3 italic">${esc(g.song||"-")}</td><td class="p-3 truncate max-w-[180px]">${esc(g.notes||"-")}</td><td class="p-3 text-stone-400">${esc(g.date||"")}</td><td class="p-3 text-right"><button onclick="editGuest('${g.id}')" class="underline mr-2">Editar</button><button onclick="deleteGuest('${g.id}')" class="text-red-700">Borrar</button></td>`;tbody.appendChild(tr)})}}
-function saveGuests(){saveJSON(K.guests,guests);renderAll()}
-function openAddGuestModal(){document.getElementById("editGuestId").value="";document.getElementById("modalTitle").innerText="Agregar invitado";document.querySelector("#guestModal form").reset();document.getElementById("guestModal").classList.remove("hidden")}
+function updateKPIs(){let total=guests.length,conf=0,pend=0,pos=0,decl=0,cubiertos=0,diet=0;guests.forEach(g=>{const st=g.listStatus||((g.attendance||"").includes("No")?"no_asiste":"confirmado");if(st==="confirmado")conf++;else if(st==="pendiente")pend++;else if(st==="posible")pos++;else if(st==="no_asiste")decl++;if((g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo")||st==="confirmado"){cubiertos+=placesOf(g);if(g.diet&&g.diet.trim())diet++}});const seats=Number(tableCfg.seats)||8;const tPrice=siteData?.ticket?.enabled?Number(siteData.ticket.price||0):0;const revenue=cubiertos*tPrice;document.getElementById("kpiTotal").innerText=total;document.getElementById("kpiConfirmed").innerText=conf;document.getElementById("kpiPending").innerText=pend;document.getElementById("kpiPossible").innerText=pos;document.getElementById("kpiDeclined").innerText=decl;document.getElementById("kpiPlaces").innerText=cubiertos;document.getElementById("kpiTables").innerText=cubiertos?Math.ceil(cubiertos/seats):0;document.getElementById("kpiRevenue").innerText="$"+revenue.toLocaleString("es-AR")}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function renderTable(){const tbody=document.getElementById("guestTableBody"),empty=document.getElementById("emptyState"),search=(document.getElementById("searchInput").value||"").toLowerCase(),filter=document.getElementById("filterStatus").value;tbody.innerHTML="";const filtered=guests.filter(g=>{const text=[g.name,g.phone,g.email,g.song,g.notes].filter(Boolean).join(" ").toLowerCase();if(search&&!text.includes(search))return false;const st=g.listStatus||((g.attendance||"").includes("No")?"no_asiste":"confirmado");if(filter==="diet")return g.diet&&g.diet.trim();if(filter!=="all"&&st!==filter)return false;return true});if(!filtered.length)empty.classList.remove("hidden");else{empty.classList.add("hidden");filtered.forEach(g=>{const st=g.listStatus||((g.attendance||"").includes("No")?"no_asiste":"confirmado");const stLabels={confirmado:"<span class='px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold'>Confirmado</span>",pendiente:"<span class='px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold'>Pendiente</span>",posible:"<span class='px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold'>Posible</span>",no_asiste:"<span class='px-2 py-0.5 rounded bg-stone-100 text-stone-600 font-semibold'>No asiste</span>",invitado:"<span class='px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold'>Invitado</span>"};const isAtt=(g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo")||st==="confirmado";const tr=document.createElement("tr");tr.innerHTML=`<td class="p-3 font-semibold text-sm">${esc(g.name)}</td><td class="p-3 text-stone-600">${g.phone?`<div>📱 ${esc(g.phone)}</div>`:""}${g.email?`<div>✉️ ${esc(g.email)}</div>`:""}${!g.phone&&!g.email?"-":""}</td><td class="p-3 text-center">${stLabels[st]||st}</td><td class="p-3 text-center">${isAtt?"Sí":"No"}</td><td class="p-3 text-center font-semibold">${isAtt?esc(g.places||"1"):"-"}</td><td class="p-3">${g.diet?esc(g.diet):"-"}</td><td class="p-3 italic">${esc(g.song||"-")}</td><td class="p-3 max-w-[180px] truncate" title="${esc(g.notes||"")}">${esc(g.notes||"-")}</td><td class="p-3 text-right whitespace-nowrap"><button onclick="editGuest('${g.id}')" class="underline mr-2 text-olive font-semibold">Editar</button><button onclick="deleteGuest('${g.id}')" class="text-clay font-semibold">Borrar</button></td>`;tbody.appendChild(tr)})}}
+function openAddGuestModal(){document.getElementById("modalGuestTitle").innerText="Nuevo Invitado";document.getElementById("editGuestId").value="";document.getElementById("modalName").value="";document.getElementById("modalPhone").value="";document.getElementById("modalEmail").value="";document.getElementById("modalListStatus").value="confirmado";document.getElementById("modalAttendance").value="Sí, confirmo asistencia";document.getElementById("modalPlaces").value="1 persona";document.getElementById("modalDiet").value="";document.getElementById("modalSong").value="";document.getElementById("modalNotes").value="";document.getElementById("guestModal").classList.remove("hidden")}
+function editGuest(id){const g=guests.find(x=>x.id===id);if(!g)return;document.getElementById("modalGuestTitle").innerText="Editar Invitado";document.getElementById("editGuestId").value=g.id;document.getElementById("modalName").value=g.name||"";document.getElementById("modalPhone").value=g.phone||"";document.getElementById("modalEmail").value=g.email||"";document.getElementById("modalListStatus").value=g.listStatus||((g.attendance||"").includes("No")?"no_asiste":"confirmado");document.getElementById("modalAttendance").value=g.attendance||"Sí, confirmo asistencia";document.getElementById("modalPlaces").value=g.places||"1 persona";document.getElementById("modalDiet").value=g.diet||"";document.getElementById("modalSong").value=g.song||"";document.getElementById("modalNotes").value=g.notes||"";document.getElementById("guestModal").classList.remove("hidden")}
 function closeGuestModal(){document.getElementById("guestModal").classList.add("hidden")}
-function editGuest(id){const g=guests.find(x=>x.id===id);if(!g)return;document.getElementById("editGuestId").value=g.id;document.getElementById("modalTitle").innerText="Editar invitado";document.getElementById("modalName").value=g.name||"";document.getElementById("modalAttendance").value=g.attendance;document.getElementById("modalPlaces").value=g.places||"1 persona";document.getElementById("modalDiet").value=g.diet||"";document.getElementById("modalSong").value=g.song||"";document.getElementById("modalNotes").value=g.notes||"";document.getElementById("guestModal").classList.remove("hidden")}
-function saveGuest(e){e.preventDefault();const id=document.getElementById("editGuestId").value;const g={id:id||Date.now().toString(),name:document.getElementById("modalName").value.trim(),attendance:document.getElementById("modalAttendance").value,places:document.getElementById("modalPlaces").value,diet:document.getElementById("modalDiet").value.trim(),song:document.getElementById("modalSong").value.trim(),notes:document.getElementById("modalNotes").value.trim(),date:new Date().toISOString().split("T")[0]};if(id){const i=guests.findIndex(x=>x.id===id);if(i>=0)guests[i]=g}else guests.unshift(g);saveGuests();closeGuestModal()}
-function deleteGuest(id){if(confirm("¿Eliminar invitado?")){guests=guests.filter(x=>x.id!==id);saveGuests()}}
-function addShoppingRow(){shoppingItems.push({id:Date.now().toString(),name:"Nuevo ítem",costPerGuest:0,category:"extras"});saveJSON(K.shop,shoppingItems);renderShopping()}
-function deleteShoppingRow(id){shoppingItems=shoppingItems.filter(i=>i.id!==id);saveJSON(K.shop,shoppingItems);renderShopping()}
-function updateShoppingItem(id,field,value){const i=shoppingItems.findIndex(x=>x.id===id);if(i<0)return;shoppingItems[i][field]=field==="costPerGuest"?(parseFloat(value)||0):value;saveJSON(K.shop,shoppingItems);renderShopping()}
-function renderShopping(){const box=document.getElementById("shoppingListContainer");if(!box)return;const n=Math.max(totalPlaces(),1);box.innerHTML="";let total=0,cat=0,extra=0;shoppingItems.forEach(item=>{const row=document.createElement("div");row.className="flex flex-wrap gap-2 items-center p-2 border border-hairline bg-white/70";row.innerHTML=`<input class="inp flex-1" value="${esc(item.name)}" onchange="updateShoppingItem('${item.id}','name',this.value)"><span class="text-xs">$</span><input type="number" class="inp w-24" value="${item.costPerGuest}" onchange="updateShoppingItem('${item.id}','costPerGuest',this.value)"><span class="text-[10px] text-stone-400">/ cubierto</span><select class="inp w-28" onchange="updateShoppingItem('${item.id}','category',this.value)"><option value="catering" ${item.category==="catering"?"selected":""}>Catering</option><option value="extras" ${item.category==="extras"?"selected":""}>Extras</option></select><span class="text-xs w-24 text-right">$ ${(item.costPerGuest*n).toLocaleString("es-AR")}</span><button onclick="deleteShoppingRow('${item.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(row);total+=item.costPerGuest;if(item.category==="catering")cat+=item.costPerGuest;else extra+=item.costPerGuest});document.getElementById("shopSubtotal").innerText="$ "+(total*n).toLocaleString("es-AR");document.getElementById("shopPerGuest").innerText="$ "+total.toLocaleString("es-AR");document.getElementById("shopCatering").innerText="$ "+(cat*n).toLocaleString("es-AR");document.getElementById("shopExtras").innerText="$ "+(extra*n).toLocaleString("es-AR")}
-function addOffer(){offers.unshift({id:Date.now().toString(),product:"Fernet",store:"",price:0,qty:0,unit:"botella",key:"fernet",notes:""});saveJSON(K.offers,offers);renderOffers();renderProv()}
-function updateOffer(id,field,value){const i=offers.findIndex(x=>x.id===id);if(i<0)return;offers[i][field]=(field==="price"||field==="qty")?(parseFloat(value)||0):value;saveJSON(K.offers,offers);renderOffers();renderProv()}
+function saveGuest(e){e.preventDefault();const id=document.getElementById("editGuestId").value;const item={name:document.getElementById("modalName").value.trim(),phone:document.getElementById("modalPhone").value.trim(),email:document.getElementById("modalEmail").value.trim(),listStatus:document.getElementById("modalListStatus").value,attendance:document.getElementById("modalAttendance").value,places:document.getElementById("modalPlaces").value,diet:document.getElementById("modalDiet").value.trim(),song:document.getElementById("modalSong").value.trim(),notes:document.getElementById("modalNotes").value.trim()};if(id){const i=guests.findIndex(x=>x.id===id);if(i>=0)guests[i]={...guests[i],...item}}else{guests.unshift({id:Date.now().toString(),date:new Date().toISOString().split("T")[0],...item})}saveJSON(K.guests,guests);closeGuestModal();renderAll()}
+function deleteGuest(id){if(confirm("¿Eliminar este invitado?")){guests=guests.filter(x=>x.id!==id);saveJSON(K.guests,guests);renderAll()}}
+function renderShopping(){const c=document.getElementById("shoppingListContainer");if(!c)return;c.innerHTML="";let sc=0,sb=0;shoppingItems.forEach(s=>{if(s.category==="catering")sc+=Number(s.costPerGuest)||0;else sb+=Number(s.costPerGuest)||0;const d=document.createElement("div");d.className="grid grid-cols-12 gap-2 items-center p-2 border border-hairline bg-white/70";d.innerHTML=`<input class="col-span-5 inp" value="${esc(s.name)}" onchange="updateShopping('${s.id}','name',this.value)"><select class="col-span-3 inp" onchange="updateShopping('${s.id}','category',this.value)"><option value="catering" ${s.category==="catering"?"selected":""}>Catering</option><option value="barra" ${s.category==="barra"?"selected":""}>Barra</option><option value="otro" ${s.category==="otro"?"selected":""}>Otro</option></select><input type="number" class="col-span-3 inp" value="${s.costPerGuest||""}" placeholder="$ x cubierto" onchange="updateShopping('${s.id}','costPerGuest',this.value)"><button onclick="deleteShopping('${s.id}')" class="col-span-1 text-clay text-xs font-bold">✕</button>`;c.appendChild(d)});const p=totalPlaces(),tot=sc+sb;document.getElementById("costCatering").innerText="$"+sc.toLocaleString("es-AR");document.getElementById("costBarra").innerText="$"+sb.toLocaleString("es-AR");document.getElementById("costPerGuestTotal").innerText="$"+tot.toLocaleString("es-AR");document.getElementById("costAllGuests").innerText="$"+(tot*p).toLocaleString("es-AR")}
+function addShoppingRow(){shoppingItems.push({id:Date.now().toString(),name:"Nuevo ítem",costPerGuest:0,category:"catering"});saveJSON(K.shop,shoppingItems);renderShopping()}
+function updateShopping(id,f,v){const i=shoppingItems.findIndex(x=>x.id===id);if(i<0)return;if(f==="costPerGuest")shoppingItems[i][f]=parseFloat(v)||0;else shoppingItems[i][f]=v;saveJSON(K.shop,shoppingItems);renderShopping()}
+function deleteShopping(id){shoppingItems=shoppingItems.filter(x=>x.id!==id);saveJSON(K.shop,shoppingItems);renderShopping()}
+function addOffer(){offers.push({id:Date.now().toString(),product:"Fernet",store:"Super",price:0,qty:1,key:"fernet"});saveJSON(K.offers,offers);renderOffers();renderProv()}
+function updateOffer(id,f,v){const i=offers.findIndex(x=>x.id===id);if(i<0)return;if(f==="price"||f==="qty")offers[i][f]=parseFloat(v)||0;else offers[i][f]=v;saveJSON(K.offers,offers);renderOffers();renderProv()}
 function deleteOffer(id){offers=offers.filter(x=>x.id!==id);saveJSON(K.offers,offers);renderOffers();renderProv()}
-function renderOffers(){const box=document.getElementById("offersBox");if(!box)return;if(!offers.length){box.innerHTML='<p class="text-xs text-stone-400">Todavía no hay ofertas. Ejemplo: Fernet en Changomas a $X.</p>';return}box.innerHTML="";offers.forEach(o=>{const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(o.product)}" placeholder="Producto" onchange="updateOffer('${o.id}','product',this.value)"><input class="inp" value="${esc(o.store)}" placeholder="Súper" onchange="updateOffer('${o.id}','store',this.value)"><input type="number" class="inp" value="${o.price||""}" placeholder="Precio" onchange="updateOffer('${o.id}','price',this.value)"><input type="number" class="inp" value="${o.qty||""}" placeholder="Cant. comprada" onchange="updateOffer('${o.id}','qty',this.value)"><select class="inp" onchange="updateOffer('${o.id}','key',this.value)">${rates.map(r=>`<option value="${r.key}" ${o.key===r.key?"selected":""}>${esc(r.name)}</option>`).join("")}<option value="" ${!o.key?"selected":""}>Otro</option></select><button onclick="deleteOffer('${o.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)})}
+function renderOffers(){const box=document.getElementById("offersBox");if(!box)return;if(!offers.length){box.innerHTML='<p class="text-xs text-stone-400">Todavía no hay ofertas registradas.</p>';return}box.innerHTML="";offers.forEach(o=>{const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(o.product)}" placeholder="Producto" onchange="updateOffer('${o.id}','product',this.value)"><input class="inp" value="${esc(o.store)}" placeholder="Súper" onchange="updateOffer('${o.id}','store',this.value)"><input type="number" class="inp" value="${o.price||""}" placeholder="Precio $" onchange="updateOffer('${o.id}','price',this.value)"><input type="number" class="inp" value="${o.qty||""}" placeholder="Cant." onchange="updateOffer('${o.id}','qty',this.value)"><select class="inp" onchange="updateOffer('${o.id}','key',this.value)">${rates.map(r=>`<option value="${r.key}" ${o.key===r.key?"selected":""}>${esc(r.name)}</option>`).join("")}<option value="" ${!o.key?"selected":""}>Otro</option></select><button onclick="deleteOffer('${o.id}')" class="text-clay text-xs font-semibold">Borrar</button>`;box.appendChild(d)})}
 function boughtFor(key){return offers.filter(o=>o.key===key).reduce((s,o)=>s+(Number(o.qty)||0),0)}
 function neededPacks(r,people){return Math.ceil((people*r.perPerson)/r.pack)}
 function stockOptionsHtml(selectedKey){return rates.map(r=>`<option value="${r.key}" ${selectedKey===r.key?"selected":""}>${esc(r.name)}</option>`).join("")}
 function sizeOptionsHtml(key,selectedV){const opts=sizeOptions[key]||[];return opts.map(o=>`<option value="${o.v}" ${Number(selectedV)===o.v?"selected":""}>${o.l}</option>`).join("")}
 function addStockItem(){const firstKey=rates[0].key;stock.unshift({id:Date.now().toString(),key:firstKey,size:sizeOptions[firstKey][0].v,qty:0});saveJSON(K.stock,stock);renderStock();renderProv()}
-function updateStockItem(id,field,value){const i=stock.findIndex(x=>x.id===id);if(i<0)return;if(field==="key"){stock[i].key=value;const opts=sizeOptions[value];stock[i].size=opts&&opts[0]?opts[0].v:1}else if(field==="size")stock[i].size=parseFloat(value)||0;else if(field==="qty")stock[i].qty=parseFloat(value)||0;saveJSON(K.stock,stock);renderStock();renderProv()}
+function updateStockItem(id,field,value){const i=stock.findIndex(x=>x.id===id);if(i<0)return;if(field==="key"){stock[i].key=value;const opts=sizeOptions[value];stock[i].size=opts&&opts[0]?opts[0].v:1}else if(field==="size"||field==="qty")stock[i][field]=parseFloat(value)||0;saveJSON(K.stock,stock);renderStock();renderProv()}
 function deleteStockItem(id){stock=stock.filter(x=>x.id!==id);saveJSON(K.stock,stock);renderStock();renderProv()}
-function renderStock(){const box=document.getElementById("stockBox");if(!box)return;if(!stock.length){box.innerHTML='<p class="text-xs text-stone-400">Todavía no cargaste stock. Sumá lo que ya tenés en casa o en el salón.</p>';return}box.innerHTML="";stock.forEach(s=>{const d=document.createElement("div");d.className="grid md:grid-cols-[2fr_1.5fr_1fr_auto] gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<select class="inp" onchange="updateStockItem('${s.id}','key',this.value)">${stockOptionsHtml(s.key)}</select><select class="inp" onchange="updateStockItem('${s.id}','size',this.value)">${sizeOptionsHtml(s.key,s.size)}</select><input type="number" min="0" step="1" class="inp" value="${s.qty||""}" placeholder="Cantidad" onchange="updateStockItem('${s.id}','qty',this.value)"><button onclick="deleteStockItem('${s.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)})}
+function renderStock(){const box=document.getElementById("stockBox");if(!box)return;if(!stock.length){box.innerHTML='<p class="text-xs text-stone-400">Sin stock cargado aún.</p>';return}box.innerHTML="";stock.forEach(s=>{const d=document.createElement("div");d.className="grid md:grid-cols-[2fr_1.5fr_1fr_auto] gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<select class="inp" onchange="updateStockItem('${s.id}','key',this.value)">${stockOptionsHtml(s.key)}</select><select class="inp" onchange="updateStockItem('${s.id}','size',this.value)">${sizeOptionsHtml(s.key,s.size)}</select><input type="number" min="0" step="1" class="inp" value="${s.qty||""}" placeholder="Cantidad" onchange="updateStockItem('${s.id}','qty',this.value)"><button onclick="deleteStockItem('${s.id}')" class="text-clay text-xs font-semibold">Borrar</button>`;box.appendChild(d)})}
 function stockPacksFor(key){const r=rates.find(x=>x.key===key);if(!r)return 0;return stock.filter(s=>s.key===key).reduce((sum,s)=>sum+((Number(s.qty)||0)*(Number(s.size)||0))/r.pack,0)}
-function renderProv(){const people=totalPlaces(),body=document.getElementById("provBody");if(!body)return;body.innerHTML="";rates.forEach(r=>{const need=people?neededPacks(r,people):0,gotRaw=boughtFor(r.key)+stockPacksFor(r.key),got=Math.round(gotRaw*10)/10,miss=Math.max(Math.ceil(need-gotRaw),0);const tr=document.createElement("tr");tr.innerHTML=`<td class="p-2">${esc(r.name)}</td><td class="p-2 text-center"><input type="number" step="0.05" class="inp w-20" value="${r.perPerson}" onchange="updateRate('${r.key}',this.value)"></td><td class="p-2 text-center text-stone-500">${r.pack} · ${esc(r.packLabel)}</td><td class="p-2 text-center font-semibold">${need}</td><td class="p-2 text-center">${got}</td><td class="p-2 text-center ${miss?"text-clay font-semibold":"text-emerald-700"}">${miss}</td>`;body.appendChild(tr)})}
+function renderProv(){const people=totalPlaces(),body=document.getElementById("provBody");if(!body)return;body.innerHTML="";rates.forEach(r=>{const need=people?neededPacks(r,people):0,gotRaw=boughtFor(r.key)+stockPacksFor(r.key),got=Math.round(gotRaw*10)/10,miss=Math.max(Math.ceil(need-gotRaw),0);const tr=document.createElement("tr");tr.innerHTML=`<td class="p-2 font-medium">${esc(r.name)}</td><td class="p-2 text-center"><input type="number" step="0.05" class="inp w-20 text-center" value="${r.perPerson}" onchange="updateRate('${r.key}',this.value)"></td><td class="p-2 text-center text-stone-500">${r.pack} · ${esc(r.packLabel)}</td><td class="p-2 text-center font-bold">${need}</td><td class="p-2 text-center">${got}</td><td class="p-2 text-center ${miss?"text-clay font-bold":"text-emerald-700 font-bold"}">${miss}</td>`;body.appendChild(tr)})}
+function updateRate(key,val){const r=rates.find(x=>x.key===key);if(!r)return;r.perPerson=parseFloat(val)||0;saveJSON(K.rates,rates);renderProv()}
 function addChecklistItem(){checklist.push({id:Date.now().toString(),name:"Nuevo rubro",note:"",done:false});saveJSON(K.checklist,checklist);renderChecklist()}
 function updateChecklistItem(id,field,value){const i=checklist.findIndex(x=>x.id===id);if(i<0)return;if(field==="done")checklist[i].done=!!value;else checklist[i][field]=value;saveJSON(K.checklist,checklist);renderChecklist()}
 function deleteChecklistItem(id){checklist=checklist.filter(x=>x.id!==id);saveJSON(K.checklist,checklist);renderChecklist()}
-function renderChecklist(){const box=document.getElementById("checklistBox"),sum=document.getElementById("checklistSummary");if(!box)return;if(!checklist.length){box.innerHTML='<p class="text-xs text-stone-400">Sin rubros todavía.</p>';if(sum)sum.innerText="";return}box.innerHTML="";let done=0;checklist.forEach(c=>{if(c.done)done++;const d=document.createElement("div");d.className="grid md:grid-cols-[auto_2fr_2fr_auto] gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input type="checkbox" ${c.done?"checked":""} onchange="updateChecklistItem('${c.id}','done',this.checked)"><input class="inp${c.done?" line-through text-stone-400":""}" value="${esc(c.name)}" onchange="updateChecklistItem('${c.id}','name',this.value)"><input class="inp" value="${esc(c.note)}" placeholder="Nota (cantidad, proveedor…)" onchange="updateChecklistItem('${c.id}','note',this.value)"><button onclick="deleteChecklistItem('${c.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)});if(sum)sum.innerText=`${done} / ${checklist.length} resueltos`}
-function updateRate(key,val){const r=rates.find(x=>x.key===key);if(!r)return;r.perPerson=parseFloat(val)||0;saveJSON(K.rates,rates);renderProv()}
+function renderChecklist(){const box=document.getElementById("checklistBox"),sum=document.getElementById("checklistSummary");if(!box)return;if(!checklist.length){box.innerHTML='<p class="text-xs text-stone-400">Sin rubros todavía.</p>';if(sum)sum.innerText="";return}box.innerHTML="";let done=0;checklist.forEach(c=>{if(c.done)done++;const d=document.createElement("div");d.className="grid md:grid-cols-[auto_2fr_2fr_auto] gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input type="checkbox" ${c.done?"checked":""} onchange="updateChecklistItem('${c.id}','done',this.checked)"><input class="inp${c.done?" line-through text-stone-400":""}" value="${esc(c.name)}" onchange="updateChecklistItem('${c.id}','name',this.value)"><input class="inp" value="${esc(c.note)}" placeholder="Nota / Proveedor" onchange="updateChecklistItem('${c.id}','note',this.value)"><button onclick="deleteChecklistItem('${c.id}')" class="text-clay text-xs font-semibold">Borrar</button>`;box.appendChild(d)});if(sum)sum.innerText=`${done} / ${checklist.length} resueltos`}
 function saveTablesCfg(){tableCfg.seats=Number(document.getElementById("seatsPerTable").value)||8;saveJSON(K.tables,tableCfg);renderTables();updateKPIs()}
-function renderTables(){const seats=Number(tableCfg.seats)||8,people=totalPlaces(),n=people?Math.ceil(people/seats):0,leftover=n?(n*seats-people):0;document.getElementById("tablesSummary").innerText=people?`${people} cubiertos → ${n} mesas de ${seats} (libres ${leftover})`:"Todavía no hay cubiertos.";const grid=document.getElementById("tablesGrid");grid.innerHTML="";for(let i=1;i<=n;i++){const fill=i<n?seats:(people-seats*(n-1));const d=document.createElement("div");d.className="p-3 border border-hairline bg-white/70";d.innerHTML=`<p class="smallcaps text-[10px] text-olive">Mesa ${i}</p><p class="font-display text-2xl">${fill}<span class="text-sm text-stone-400"> / ${seats}</span></p>`;grid.appendChild(d)}}
-function addVendor(){vendors.unshift({id:Date.now().toString(),role:"DJ",name:"",phone:"",amount:0,paid:false,notes:""});saveJSON(K.vendors,vendors);renderVendors()}
-function updateVendor(id,field,value){const i=vendors.findIndex(x=>x.id===id);if(i<0)return;if(field==="amount")vendors[i][field]=parseFloat(value)||0;else if(field==="paid")vendors[i][field]=!!value;else vendors[i][field]=value;saveJSON(K.vendors,vendors);renderVendors()}
+function renderTables(){const seats=Number(tableCfg.seats)||8,people=totalPlaces(),n=people?Math.ceil(people/seats):0,leftover=n?(n*seats-people):0;document.getElementById("tablesSummary").innerText=people?`${people} cubiertos → ${n} mesas de ${seats} (libres ${leftover})`:"Todavía no hay cubiertos.";const grid=document.getElementById("tablesGrid");grid.innerHTML="";for(let i=1;i<=n;i++){const fill=i<n?seats:(people-seats*(n-1));const d=document.createElement("div");d.className="p-3 border border-hairline bg-white/70 text-center";d.innerHTML=`<p class="smallcaps text-[10px] text-olive">Mesa ${i}</p><p class="font-display text-2xl">${fill}<span class="text-sm text-stone-400"> / ${seats}</span></p>`;grid.appendChild(d)}}
+function addVendor(){vendors.push({id:Date.now().toString(),rubro:"Servicio",name:"",contact:"",cost:0,paid:0});saveJSON(K.vendors,vendors);renderVendors()}
+function updateVendor(id,f,v){const i=vendors.findIndex(x=>x.id===id);if(i<0)return;if(f==="cost"||f==="paid")vendors[i][f]=parseFloat(v)||0;else vendors[i][f]=v;saveJSON(K.vendors,vendors);renderVendors()}
 function deleteVendor(id){vendors=vendors.filter(x=>x.id!==id);saveJSON(K.vendors,vendors);renderVendors()}
-function renderVendors(){const box=document.getElementById("vendorsBox");if(!vendors.length){box.innerHTML='<p class="text-xs text-stone-400">Cargá DJ, foto, catering, deco, etc.</p>';document.getElementById("vendorsTotal").innerText="";return}box.innerHTML="";let total=0,paid=0;vendors.forEach(v=>{total+=Number(v.amount)||0;if(v.paid)paid+=Number(v.amount)||0;const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(v.role)}" placeholder="Rol" onchange="updateVendor('${v.id}','role',this.value)"><input class="inp" value="${esc(v.name)}" placeholder="Nombre" onchange="updateVendor('${v.id}','name',this.value)"><input class="inp" value="${esc(v.phone)}" placeholder="Tel" onchange="updateVendor('${v.id}','phone',this.value)"><input type="number" class="inp" value="${v.amount||""}" placeholder="$" onchange="updateVendor('${v.id}','amount',this.value)"><label class="text-xs"><input type="checkbox" ${v.paid?"checked":""} onchange="updateVendor('${v.id}','paid',this.checked)"> Señado</label><button onclick="deleteVendor('${v.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)});document.getElementById("vendorsTotal").innerText=`Total $ ${total.toLocaleString("es-AR")} · pagado $ ${paid.toLocaleString("es-AR")} · saldo $ ${(total-paid).toLocaleString("es-AR")}`}
-function saveYt(){const cfg=loadConfig();cfg.youtubePlaylistId=document.getElementById("ytPlaylist").value.trim();saveJSON(K.config,cfg)}
-function addPistaSong(){const t=document.getElementById("newSongTitle").value.trim();if(!t)return;if(!pista.some(s=>s.title.toLowerCase()===t.toLowerCase()))pista.push({title:t,at:new Date().toISOString()});document.getElementById("newSongTitle").value="";saveJSON(K.pista,pista);renderPista()}
-function importSongsFromGuests(){guests.forEach(g=>{const t=(g.song||"").trim();if(!t)return;if(!pista.some(s=>s.title.toLowerCase()===t.toLowerCase()))pista.push({title:t,at:g.date||new Date().toISOString()})});saveJSON(K.pista,pista);renderPista()}
-function deletePista(i){pista.splice(i,1);saveJSON(K.pista,pista);renderPista()}
-function renderPista(){const ul=document.getElementById("pistaList");ul.innerHTML=pista.length?pista.map((s,i)=>`<li class="flex justify-between border-b border-hairline py-1"><span>${esc(s.title)}</span><button class="text-red-700 text-xs" onclick="deletePista(${i})">Quitar</button></li>`).join(""):'<li class="text-stone-400 text-xs">Todavía no hay temas publicados.</li>'}
-function exportPistaJson(){const cfg=loadConfig();const blob=new Blob([JSON.stringify({youtubePlaylistId:cfg.youtubePlaylistId||"",songs:pista.map(s=>({title:s.title}))},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pista.json";a.click()}
-function openConfigModal(){const c=loadConfig();document.getElementById("cfgPhone").value=c.phone||"";document.getElementById("cfgWebhook").value=c.webhookUrl||"";document.getElementById("cfgAlias").value=c.alias||"";document.getElementById("cfgCbu").value=c.cbu||"";document.getElementById("cfgMpUrl").value=c.mpUrl||"";document.getElementById("configModal").classList.remove("hidden")}
+function renderVendors(){const l=document.getElementById("vendorsList");if(!l)return;l.innerHTML="";vendors.forEach(v=>{const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(v.rubro)}" placeholder="Rubro" onchange="updateVendor('${v.id}','rubro',this.value)"><input class="inp" value="${esc(v.name)}" placeholder="Nombre" onchange="updateVendor('${v.id}','name',this.value)"><input class="inp" value="${esc(v.contact)}" placeholder="Contacto" onchange="updateVendor('${v.id}','contact',this.value)"><input type="number" class="inp" value="${v.cost||""}" placeholder="Total $" onchange="updateVendor('${v.id}','cost',this.value)"><input type="number" class="inp" value="${v.paid||""}" placeholder="Seña $" onchange="updateVendor('${v.id}','paid',this.value)"><button onclick="deleteVendor('${v.id}')" class="text-clay text-xs font-semibold">Borrar</button>`;l.appendChild(d)})}
+function renderPista(){const c=document.getElementById("pistaContainer");if(!c)return;c.innerHTML="";if(!pista.length){c.innerHTML='<p class="text-xs text-stone-400">No hay canciones sugeridas todavía.</p>';return}pista.forEach((s,idx)=>{const d=document.createElement("div");d.className="flex justify-between items-center p-2 border border-hairline bg-white/70 text-xs";d.innerHTML=`<span class="font-serif italic text-sm">#${idx+1} ${esc(s.title||s)}</span><button onclick="deleteSong(${idx})" class="text-clay text-xs">Borrar</button>`;c.appendChild(d)})}
+function deleteSong(idx){pista.splice(idx,1);saveJSON(K.pista,pista);renderPista()}
+function saveYtPlaylist(val){const cfg=loadConfig();cfg.youtubePlaylistId=(val||"").trim();saveJSON(K.config,cfg);alert("Playlist actualizada")}
+function loadSiteFields(){if(!siteData)siteData=defaultSiteContent();document.getElementById("siteTicketEnabled").checked=siteData.ticket?.enabled!==false;document.getElementById("siteTicketPrice").value=siteData.ticket?.price||35000;document.getElementById("siteTicketTitle").value=siteData.ticket?.title||"Tarjeta de Casamiento";document.getElementById("siteTicketDesc").value=siteData.ticket?.description||"";document.getElementById("siteDressTitle").value=siteData.dressCode?.title||"";document.getElementById("siteDressConcept").value=siteData.dressCode?.concept||"";document.getElementById("siteDressWomen").value=siteData.dressCode?.women||"";document.getElementById("siteDressMen").value=siteData.dressCode?.men||"";document.getElementById("siteDressNote").value=siteData.dressCode?.note||"";document.getElementById("siteCeremonyTime").value=siteData.ceremony?.time||"";document.getElementById("siteCeremonyTitle").value=siteData.ceremony?.title||"";document.getElementById("siteCeremonyPlace").value=siteData.ceremony?.place||"";document.getElementById("siteCeremonyAddress").value=siteData.ceremony?.address||"";document.getElementById("siteCeremonyGps").value=siteData.ceremony?.gpsUrl||"";document.getElementById("siteCelebrationTime").value=siteData.celebration?.time||"";document.getElementById("siteCelebrationTitle").value=siteData.celebration?.title||"";document.getElementById("siteCelebrationPlace").value=siteData.celebration?.place||"";document.getElementById("siteCelebrationAddress").value=siteData.celebration?.address||"";document.getElementById("siteCelebrationGps").value=siteData.celebration?.gpsUrl||""}
+function saveSiteContent(){siteData={...siteData,ticket:{enabled:document.getElementById("siteTicketEnabled").checked,price:Number(document.getElementById("siteTicketPrice").value)||0,currency:"ARS",title:document.getElementById("siteTicketTitle").value.trim(),description:document.getElementById("siteTicketDesc").value.trim()},dressCode:{title:document.getElementById("siteDressTitle").value.trim(),concept:document.getElementById("siteDressConcept").value.trim(),women:document.getElementById("siteDressWomen").value.trim(),men:document.getElementById("siteDressMen").value.trim(),note:document.getElementById("siteDressNote").value.trim(),colorReservation:"Reserva de color: exclusivo novios"},ceremony:{time:document.getElementById("siteCeremonyTime").value.trim(),title:document.getElementById("siteCeremonyTitle").value.trim(),place:document.getElementById("siteCeremonyPlace").value.trim(),address:document.getElementById("siteCeremonyAddress").value.trim(),gpsUrl:document.getElementById("siteCeremonyGps").value.trim()},celebration:{time:document.getElementById("siteCelebrationTime").value.trim(),title:document.getElementById("siteCelebrationTitle").value.trim(),place:document.getElementById("siteCelebrationPlace").value.trim(),address:document.getElementById("siteCelebrationAddress").value.trim(),gpsUrl:document.getElementById("siteCelebrationGps").value.trim()}};saveJSON(K.site,siteData);updateKPIs();alert("Contenido del sitio guardado exitosamente.")}
+function exportSiteContentJson(){const blob=new Blob([JSON.stringify(siteData,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="site-content.json";a.click()}
+function openConfigModal(){const cfg=loadConfig();document.getElementById("cfgPhone").value=cfg.phone||"";document.getElementById("cfgWebhook").value=cfg.webhookUrl||"";document.getElementById("cfgAlias").value=cfg.alias||"";document.getElementById("cfgCbu").value=cfg.cbu||"";document.getElementById("cfgMpUrl").value=cfg.mpUrl||"";document.getElementById("configModal").classList.remove("hidden")}
 function closeConfigModal(){document.getElementById("configModal").classList.add("hidden")}
 function saveConfig(e){e.preventDefault();const prev=loadConfig();saveJSON(K.config,{phone:document.getElementById("cfgPhone").value.replace(/\D/g,""),webhookUrl:document.getElementById("cfgWebhook").value.trim(),alias:document.getElementById("cfgAlias").value.trim(),cbu:document.getElementById("cfgCbu").value.trim(),mpUrl:document.getElementById("cfgMpUrl").value.trim(),youtubePlaylistId:prev.youtubePlaylistId||""});closeConfigModal()}
-function exportToCSV(){if(!guests.length){alert("No hay invitados.");return}let csv="Nombre,Estado,Lugares,Menu,Cancion,Notas,Fecha\n";guests.forEach(g=>{csv+=`"${g.name}","${g.attendance}","${g.places||""}","${g.diet||""}","${g.song||""}","${(g.notes||"").replace(/"/g,'""')}","${g.date||""}"\n`});const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="invitados.csv";a.click()}
-function exportBackup(){const data={guests,shoppingItems,offers,vendors,tableCfg,pista,rates,stock,checklist,config:loadConfig()};const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="backup-boda-julian-carla.json";a.click()}
-function importBackup(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(reader.result);if(d.guests)guests=d.guests;if(d.shoppingItems)shoppingItems=d.shoppingItems;if(d.offers)offers=d.offers;if(d.vendors)vendors=d.vendors;if(d.tableCfg)tableCfg=d.tableCfg;if(d.pista)pista=d.pista;if(d.rates)rates=d.rates;if(d.stock)stock=d.stock;if(d.checklist)checklist=d.checklist;if(d.config)saveJSON(K.config,d.config);saveJSON(K.guests,guests);saveJSON(K.shop,shoppingItems);saveJSON(K.offers,offers);saveJSON(K.vendors,vendors);saveJSON(K.tables,tableCfg);saveJSON(K.pista,pista);saveJSON(K.rates,rates);saveJSON(K.stock,stock);saveJSON(K.checklist,checklist);document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";renderAll();alert("Backup importado.")}catch(err){alert("JSON inválido")}};reader.readAsText(f)}
+function exportToCSV(){if(!guests.length){alert("No hay invitados.");return}let csv="Nombre,Telefono,Email,EstadoLista,Asistencia,Lugares,Menu,Cancion,Notas,Fecha\n";guests.forEach(g=>{csv+=`"${g.name}","${g.phone||""}","${g.email||""}","${g.listStatus||""}","${g.attendance||""}","${g.places||""}","${g.diet||""}","${g.song||""}","${(g.notes||"").replace(/"/g,'""')}","${g.date||""}"\n`});const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="invitados.csv";a.click()}
+function exportBackup(){const data={guests,shoppingItems,offers,vendors,tableCfg,pista,rates,stock,checklist,siteData,config:loadConfig()};const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="backup-boda-julian-carla.json";a.click()}
+function importBackup(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(reader.result);if(d.guests)guests=d.guests;if(d.shoppingItems)shoppingItems=d.shoppingItems;if(d.offers)offers=d.offers;if(d.vendors)vendors=d.vendors;if(d.tableCfg)tableCfg=d.tableCfg;if(d.pista)pista=d.pista;if(d.rates)rates=d.rates;if(d.stock)stock=d.stock;if(d.checklist)checklist=d.checklist;if(d.siteData){siteData=d.siteData;saveJSON(K.site,siteData);loadSiteFields()}if(d.config)saveJSON(K.config,d.config);saveJSON(K.guests,guests);saveJSON(K.shop,shoppingItems);saveJSON(K.offers,offers);saveJSON(K.vendors,vendors);saveJSON(K.tables,tableCfg);saveJSON(K.pista,pista);saveJSON(K.rates,rates);saveJSON(K.stock,stock);saveJSON(K.checklist,checklist);document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";renderAll();alert("Backup importado con éxito.")}catch(err){alert("JSON inválido")}};reader.readAsText(f)}
+document.addEventListener("DOMContentLoaded",()=>{if(sessionStorage.getItem("boda_admin_logged")==="true")showDashboard();else showLogin()});
 </script></body></html>
