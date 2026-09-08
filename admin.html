@@ -1,720 +1,145 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <title>Panel de Control — Boda Julián & Carla</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        display: ['"Italiana"', 'serif'],
-                        serif: ['"Cormorant Garamond"', 'serif'],
-                        caps: ['"Montserrat"', 'sans-serif'],
-                    },
-                    colors: {
-                        ink: '#2A3226',
-                        olive: '#4A5844',
-                        sage: '#7C8B6F',
-                        paper: '#F6F2E9',
-                        parchment: '#EFE9DB',
-                        clay: '#B0603F',
-                        hairline: '#C9C2B0'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #F6F2E9;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.20 0 0 0 0 0.15 0 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-        .smallcaps { font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: .25em; font-size: 11px; }
-        .plate { border: 1px solid #C9C2B0; background: rgba(255, 255, 255, 0.75); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Panel — Boda Julián & Carla</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{display:['"Italiana"','serif'],serif:['"Cormorant Garamond"','serif'],caps:['"Montserrat"','sans-serif']},colors:{ink:'#2A3226',olive:'#4A5844',sage:'#7C8B6F',paper:'#F6F2E9',parchment:'#EFE9DB',clay:'#B0603F',hairline:'#C9C2B0'}}}}</script>
+<style>body{background:#F6F2E9}.smallcaps{font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.25em;font-size:11px}.plate{border:1px solid #C9C2B0;background:rgba(255,255,255,.75)}.tab-btn{padding:.55rem .9rem;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid #C9C2B0;background:#fff;color:#4A5844}.tab-btn.active{background:#2A3226;color:#F6F2E9;border-color:#2A3226}.inp{width:100%;padding:.45rem .6rem;border:1px solid #C9C2B0;background:#fff;font-size:12px;outline:none}</style>
 </head>
-<body class="text-ink font-sans antialiased min-h-screen">
-
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="plate p-8 md:p-12 rounded-2xl max-w-md w-full shadow-lg border border-hairline text-center space-y-6">
-            <div class="space-y-2">
-                <span class="smallcaps text-clay font-semibold">Acceso Privado</span>
-                <h1 class="font-display text-4xl text-ink">Julián & Carla</h1>
-                <p class="text-xs text-stone-500 font-serif italic text-base">Administración de Invitados y Boda</p>
-            </div>
-
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Usuario</label>
-                    <input type="text" id="userInput" required placeholder="julianycarla" class="w-full px-4 py-2.5 rounded-lg border border-hairline bg-white/80 text-sm focus:outline-none focus:border-olive">
-                </div>
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Contraseña</label>
-                    <input type="password" id="passInput" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-hairline bg-white/80 text-sm focus:outline-none focus:border-olive">
-                </div>
-                <div id="loginError" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded border border-red-200 text-center font-medium">
-                    Usuario o contraseña incorrectos.
-                </div>
-                <button type="submit" class="w-full py-3 bg-ink text-paper rounded-lg smallcaps font-semibold hover:bg-olive transition flex items-center justify-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4"></i>
-                    <span>Ingresar al Panel</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MAIN DASHBOARD -->
-    <div id="dashboardScreen" class="hidden min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-        
-        <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-hairline">
-            <div>
-                <div class="flex items-center gap-2 text-xs text-clay font-medium uppercase tracking-wider">
-                    <span>Panel de Control</span>
-                    <span>•</span>
-                    <span>18 de Diciembre, 2026</span>
-                </div>
-                <h1 class="font-display text-4xl text-ink">Boda Julián & Carla</h1>
-            </div>
-            
-            <div class="flex flex-wrap items-center gap-3">
-                <a href="index.html" target="_blank" class="px-4 py-2 bg-white text-ink border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50 flex items-center gap-1.5 transition">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                    <span>Ver Invitación</span>
-                </a>
-                <button onclick="exportToCSV()" class="px-4 py-2 bg-sage/20 text-olive border border-sage/40 rounded-lg text-xs font-medium hover:bg-sage/30 flex items-center gap-1.5 transition">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>Exportar CSV</span>
-                </button>
-                <button onclick="openConfigModal()" class="px-4 py-2 bg-white text-olive border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50 flex items-center gap-1.5 transition">
-                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-                    <span>WhatsApp & Ajustes</span>
-                </button>
-                <button onclick="handleLogout()" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-medium hover:bg-red-100 flex items-center gap-1.5 transition">
-                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                    <span>Salir</span>
-                </button>
-            </div>
-        </header>
-
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
-                <div class="flex items-center justify-between text-stone-500 text-xs">
-                    <span>Total Confirmados</span>
-                    <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i>
-                </div>
-                <p id="kpiConfirmed" class="text-3xl font-display text-emerald-800 font-bold">0</p>
-                <p class="text-[10px] text-stone-400">Respuestas positivas</p>
-            </div>
-            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
-                <div class="flex items-center justify-between text-stone-500 text-xs">
-                    <span>Lugares / Personas</span>
-                    <i data-lucide="users" class="w-4 h-4 text-olive"></i>
-                </div>
-                <p id="kpiPlaces" class="text-3xl font-display text-ink font-bold">0</p>
-                <p class="text-[10px] text-stone-400">Cubiertos a reservar</p>
-            </div>
-            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
-                <div class="flex items-center justify-between text-stone-500 text-xs">
-                    <span>No Asisten</span>
-                    <i data-lucide="user-x" class="w-4 h-4 text-stone-400"></i>
-                </div>
-                <p id="kpiDeclined" class="text-3xl font-display text-stone-500 font-bold">0</p>
-                <p class="text-[10px] text-stone-400">Acompañan a la distancia</p>
-            </div>
-            <div class="plate p-5 rounded-xl border border-hairline space-y-1">
-                <div class="flex items-center justify-between text-stone-500 text-xs">
-                    <span>Menús Especiales</span>
-                    <i data-lucide="utensils" class="w-4 h-4 text-clay"></i>
-                </div>
-                <p id="kpiSpecialDiet" class="text-3xl font-display text-clay font-bold">0</p>
-                <p class="text-[10px] text-stone-400">Celíaco / Vegano / etc.</p>
-            </div>
-        </div>
-
-        <!-- Lista de Compras / Calculadora -->
-        <div class="plate rounded-2xl border border-hairline overflow-hidden shadow-sm">
-            <div class="p-4 md:p-6 border-b border-hairline bg-white/40">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="font-display text-2xl text-ink flex items-center gap-2">
-                            <i data-lucide="shopping-cart" class="w-5 h-5 text-olive"></i>
-                            <span>Calculadora de Lista & Compras</span>
-                        </h2>
-                        <p class="text-[11px] text-stone-400">Estimá costos de catering, bebidas o detalles por invitado.</p>
-                    </div>
-                    <button onclick="addShoppingRow()" class="px-4 py-2 bg-olive/10 text-olive border border-olive/30 rounded-lg text-xs font-medium hover:bg-olive/20 transition flex items-center gap-1.5 self-start sm:self-auto">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>Agregar Ítem</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="p-4 md:p-6 bg-white/30 space-y-3" id="shoppingListContainer">
-                <!-- Shopping rows injected here -->
-            </div>
-
-            <div class="p-4 md:p-6 bg-parchment/50 border-t border-hairline grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Subtotal Estimado</span>
-                    <span id="shopSubtotal" class="font-display text-2xl text-ink font-bold block mt-1">$ 0</span>
-                </div>
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Por Invitado</span>
-                    <span id="shopPerGuest" class="font-display text-2xl text-olive font-bold block mt-1">$ 0</span>
-                </div>
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Catering / Menús</span>
-                    <span id="shopCatering" class="font-display text-2xl text-emerald-700 font-bold block mt-1">$ 0</span>
-                </div>
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider text-stone-500 block">Extras</span>
-                    <span id="shopExtras" class="font-display text-2xl text-clay font-bold block mt-1">$ 0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Banner de configuración rápida -->
-        <div class="plate p-4 rounded-xl border border-hairline flex flex-col sm:flex-row items-center justify-between gap-3 text-xs bg-white/60">
-            <div class="flex items-center gap-2">
-                <i data-lucide="phone-call" class="w-4 h-4 text-emerald-600"></i>
-                <span><strong>WhatsApp receptor actual:</strong> <span id="currentPhoneDisplay" class="font-mono text-emerald-800 font-semibold">Cargando...</span></span>
-            </div>
-            <button onclick="openConfigModal()" class="text-clay hover:text-ink font-medium underline flex items-center gap-1">
-                <span>Cambiar número o webhook</span>
-                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-            </button>
-        </div>
-
-        <!-- Table & Actions Section -->
-        <div class="plate rounded-2xl border border-hairline overflow-hidden shadow-sm">
-            <div class="p-4 md:p-6 border-b border-hairline flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/40">
-                <div class="flex flex-1 items-center gap-3">
-                    <div class="relative flex-1 max-w-md">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-stone-400"></i>
-                        <input type="text" id="searchInput" oninput="renderTable()" placeholder="Buscar por nombre o canción..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-hairline bg-white text-xs focus:outline-none focus:border-olive">
-                    </div>
-                    <select id="filterStatus" onchange="renderTable()" class="px-3 py-2 rounded-lg border border-hairline bg-white text-xs text-stone-600 focus:outline-none focus:border-olive">
-                        <option value="all">Todos los estados</option>
-                        <option value="confirmed">Confirmados</option>
-                        <option value="declined">No asisten</option>
-                        <option value="diet">Con Menú Especial</option>
-                    </select>
-                </div>
-                <button onclick="openAddGuestModal()" class="px-4 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    <span>Agregar Invitado Manual</span>
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-parchment/60 border-b border-hairline text-stone-600 uppercase tracking-wider text-[10px] font-semibold">
-                        <tr>
-                            <th class="p-4">Invitado</th>
-                            <th class="p-4">Estado</th>
-                            <th class="p-4">Lugares</th>
-                            <th class="p-4">Menú Especial</th>
-                            <th class="p-4">Canción</th>
-                            <th class="p-4">Mensaje / Dedicatoria</th>
-                            <th class="p-4">Fecha</th>
-                            <th class="p-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guestTableBody" class="divide-y divide-hairline bg-white/50"></tbody>
-                </table>
-            </div>
-
-            <div id="emptyState" class="hidden p-12 text-center space-y-3">
-                <i data-lucide="inbox" class="w-10 h-10 text-stone-300 mx-auto"></i>
-                <p class="font-serif italic text-lg text-stone-500">Aún no hay confirmaciones registradas</p>
-                <p class="text-xs text-stone-400">Los invitados que confirmen en la web o los que agregues manualmente aparecerán acá.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: CONFIGURACIÓN GENERAL -->
-    <div id="configModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="plate p-6 md:p-8 rounded-2xl max-w-lg w-full bg-white shadow-xl border border-hairline space-y-5">
-            <div class="flex items-center justify-between border-b border-hairline pb-3">
-                <div>
-                    <h3 class="font-display text-2xl text-ink">Ajustes de la Boda</h3>
-                    <p class="text-[11px] text-stone-400">Configurá el número receptor y la conexión de la app</p>
-                </div>
-                <button onclick="closeConfigModal()" class="text-stone-400 hover:text-stone-700">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <form id="configForm" onsubmit="saveConfig(event)" class="space-y-4">
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Número de WhatsApp receptor</label>
-                    <input type="text" id="cfgPhone" required placeholder="Ej: 5493881234567" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm font-mono focus:outline-none focus:border-olive">
-                    <span class="text-[10px] text-stone-400">Formato internacional sin signos.</span>
-                </div>
-
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">URL de la App / Webhook</label>
-                    <input type="url" id="cfgWebhook" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
-                    <span class="text-[10px] text-stone-400">Opcional. Cada confirmación enviará datos aquí además de WhatsApp.</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-1">
-                    <div>
-                        <label class="smallcaps text-olive block mb-1 text-[10px]">Alias Bancario</label>
-                        <input type="text" id="cfgAlias" placeholder="JULIAN.Y.CARLA.BODA" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
-                    </div>
-                    <div>
-                        <label class="smallcaps text-olive block mb-1 text-[10px]">CBU Bancario</label>
-                        <input type="text" id="cfgCbu" placeholder="0070012345678901234567" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Link de Mercado Pago</label>
-                    <input type="url" id="cfgMpUrl" placeholder="https://mpago.la/LINK_LIBRE" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs font-mono focus:outline-none focus:border-olive">
-                </div>
-
-                <div class="flex items-center justify-end gap-2 pt-3 border-t border-hairline">
-                    <button type="button" onclick="closeConfigModal()" class="px-4 py-2 border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: AGREGAR / EDITAR INVITADO -->
-    <div id="guestModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="plate p-6 md:p-8 rounded-2xl max-w-lg w-full bg-white shadow-xl border border-hairline space-y-4">
-            <div class="flex items-center justify-between border-b border-hairline pb-3">
-                <h3 id="modalTitle" class="font-display text-2xl text-ink">Agregar Invitado</h3>
-                <button onclick="closeGuestModal()" class="text-stone-400 hover:text-stone-700">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <form id="guestModalForm" onsubmit="saveGuest(event)" class="space-y-4">
-                <input type="hidden" id="editGuestId">
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Nombre Completo</label>
-                    <input type="text" id="modalName" required class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="smallcaps text-olive block mb-1 text-[10px]">Asistencia</label>
-                        <select id="modalAttendance" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs focus:outline-none focus:border-olive">
-                            <option value="Sí, confirmo asistencia">Sí, confirmo asistencia</option>
-                            <option value="No podré asistir">No podré asistir</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="smallcaps text-olive block mb-1 text-[10px]">Lugares</label>
-                        <select id="modalPlaces" class="w-full px-3 py-2 rounded-lg border border-hairline text-xs focus:outline-none focus:border-olive">
-                            <option value="1 persona">1 persona</option>
-                            <option value="2 personas (con acompañante)">2 personas</option>
-                            <option value="Grupo familiar">Grupo familiar (3+)</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Menú Especial (opcional)</label>
-                    <input type="text" id="modalDiet" placeholder="Ej: Celíaco, Vegetariano..." class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
-                </div>
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Canción sugerida</label>
-                    <input type="text" id="modalSong" placeholder="Canción y artista" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive">
-                </div>
-                <div>
-                    <label class="smallcaps text-olive block mb-1 text-[10px]">Dedicatoria / Notas</label>
-                    <textarea id="modalNotes" rows="2" class="w-full px-3 py-2 rounded-lg border border-hairline text-sm focus:outline-none focus:border-olive"></textarea>
-                </div>
-
-                <div class="flex items-center justify-end gap-2 pt-2 border-t border-hairline">
-                    <button type="button" onclick="closeGuestModal()" class="px-4 py-2 border border-hairline rounded-lg text-xs font-medium hover:bg-stone-50">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-ink text-white rounded-lg text-xs font-medium hover:bg-olive transition">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const AUTH_USER = "julianycarla";
-        const AUTH_PASS = "5pamplona";
-        const STORAGE_KEY = "boda_julian_carla_guests";
-        const CONFIG_KEY = "boda_julian_carla_config";
-        const SHOPPING_KEY = "boda_julian_carla_shopping";
-
-        let guests = [];
-        let shoppingItems = [];
-
-        function loadConfig() {
-            const raw = localStorage.getItem(CONFIG_KEY);
-            return raw ? JSON.parse(raw) : {
-                phone: "5491112345678",
-                webhookUrl: "",
-                alias: "JULIAN.Y.CARLA.BODA",
-                cbu: "0070012345678901234567",
-                mpUrl: "https://mpago.la/LINK_LIBRE"
-            };
-        }
-
-        function loadShopping() {
-            const raw = localStorage.getItem(SHOPPING_KEY);
-            if (raw) {
-                try { shoppingItems = JSON.parse(raw); } catch (e) { shoppingItems = []; }
-            } else {
-                shoppingItems = [
-                    { id: "s1", name: "Catering / Cena Principal", costPerGuest: 25000, category: "catering" },
-                    { id: "s2", name: "Barra Libre & Bebidas", costPerGuest: 8000, category: "catering" },
-                    { id: "s3", name: "Detalles & Recuerdos", costPerGuest: 3000, category: "extras" }
-                ];
-                saveShopping();
-            }
-        }
-
-        function saveShopping() {
-            localStorage.setItem(SHOPPING_KEY, JSON.stringify(shoppingItems));
-            renderShopping();
-        }
-
-        function addShoppingRow() {
-            shoppingItems.push({
-                id: Date.now().toString(),
-                name: "Nuevo ítem",
-                costPerGuest: 0,
-                category: "extras"
-            });
-            saveShopping();
-        }
-
-        function deleteShoppingRow(id) {
-            shoppingItems = shoppingItems.filter(i => i.id !== id);
-            saveShopping();
-        }
-
-        function updateShoppingItem(id, field, value) {
-            const idx = shoppingItems.findIndex(i => i.id === id);
-            if (idx !== -1) {
-                if (field === "costPerGuest") {
-                    shoppingItems[idx][field] = parseFloat(value) || 0;
-                } else {
-                    shoppingItems[idx][field] = value;
-                }
-            }
-            saveShopping();
-        }
-
-        function renderShopping() {
-            const container = document.getElementById("shoppingListContainer");
-            container.innerHTML = "";
-            
-            let totalConfirmed = parseInt(document.getElementById("kpiPlaces").innerText) || 0;
-            if (totalConfirmed === 0) totalConfirmed = 1;
-
-            let total = 0;
-            let cateringTotal = 0;
-            let extrasTotal = 0;
-
-            shoppingItems.forEach(item => {
-                const row = document.createElement("div");
-                row.className = "flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-lg border border-hairline bg-white/60";
-                row.innerHTML = `
-                    <div class="flex-1">
-                        <input type="text" value="${item.name}" onchange="updateShoppingItem('${item.id}', 'name', this.value)" class="w-full bg-transparent border-0 border-b border-transparent focus:border-olive outline-none text-sm font-medium text-ink placeholder:text-stone-400">
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-stone-400">$</span>
-                        <input type="number" value="${item.costPerGuest}" min="0" step="100" onchange="updateShoppingItem('${item.id}', 'costPerGuest', this.value)" class="w-24 px-2 py-1 rounded border border-hairline bg-white text-xs font-mono focus:outline-none focus:border-olive text-right">
-                        <span class="text-[10px] text-stone-400">/ persona</span>
-                    </div>
-                    <div>
-                        <select onchange="updateShoppingItem('${item.id}', 'category', this.value)" class="px-2 py-1 rounded border border-hairline bg-white text-xs text-stone-600 focus:outline-none focus:border-olive">
-                            <option value="catering" ${item.category === 'catering' ? 'selected' : ''}>Catering</option>
-                            <option value="extras" ${item.category === 'extras' ? 'selected' : ''}>Extras</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-stone-500 font-mono w-20 text-right">$ ${(item.costPerGuest * totalConfirmed).toLocaleString('es-AR')}</span>
-                        <button onclick="deleteShoppingRow('${item.id}')" class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(row);
-
-                total += item.costPerGuest;
-                if (item.category === "catering") cateringTotal += item.costPerGuest;
-                else extrasTotal += item.costPerGuest;
-            });
-
-            document.getElementById("shopSubtotal").innerText = "$ " + (total * totalConfirmed).toLocaleString('es-AR');
-            document.getElementById("shopPerGuest").innerText = "$ " + total.toLocaleString('es-AR');
-            document.getElementById("shopCatering").innerText = "$ " + (cateringTotal * totalConfirmed).toLocaleString('es-AR');
-            document.getElementById("shopExtras").innerText = "$ " + (extrasTotal * totalConfirmed).toLocaleString('es-AR');
-
-            if (window.lucide) lucide.createIcons();
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if (sessionStorage.getItem("boda_admin_logged") === "true") {
-                showDashboard();
-            } else {
-                showLogin();
-            }
-            if (window.lucide) lucide.createIcons();
-        });
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById("userInput").value.trim().toLowerCase();
-            const p = document.getElementById("passInput").value.trim();
-
-            if (u === AUTH_USER && p === AUTH_PASS) {
-                sessionStorage.setItem("boda_admin_logged", "true");
-                document.getElementById("loginError").classList.add("hidden");
-                showDashboard();
-            } else {
-                document.getElementById("loginError").classList.remove("hidden");
-            }
-        }
-
-        function handleLogout() {
-            sessionStorage.removeItem("boda_admin_logged");
-            showLogin();
-        }
-
-        function showLogin() {
-            document.getElementById("loginScreen").classList.remove("hidden");
-            document.getElementById("dashboardScreen").classList.add("hidden");
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function showDashboard() {
-            document.getElementById("loginScreen").classList.add("hidden");
-            document.getElementById("dashboardScreen").classList.remove("hidden");
-            const cfg = loadConfig();
-            document.getElementById("currentPhoneDisplay").innerText = "+" + cfg.phone;
-            loadGuests();
-            renderTable();
-            updateKPIs();
-            loadShopping();
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function loadGuests() {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                try { guests = JSON.parse(raw); } catch (e) { guests = []; }
-            } else {
-                guests = [];
-                saveToStorage();
-            }
-        }
-
-        function saveToStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
-            updateKPIs();
-            renderShopping();
-        }
-
-        function updateKPIs() {
-            let confirmed = 0;
-            let places = 0;
-            let declined = 0;
-            let specialDiet = 0;
-
-            guests.forEach(g => {
-                if (g.attendance.includes("Sí") || g.attendance.includes("confirmo")) {
-                    confirmed++;
-                    if (g.places.includes("2")) places += 2;
-                    else if (g.places.includes("familiar")) places += 4;
-                    else places += 1;
-
-                    if (g.diet && g.diet.trim() !== "") specialDiet++;
-                } else {
-                    declined++;
-                }
-            });
-
-            document.getElementById("kpiConfirmed").innerText = confirmed;
-            document.getElementById("kpiPlaces").innerText = places;
-            document.getElementById("kpiDeclined").innerText = declined;
-            document.getElementById("kpiSpecialDiet").innerText = specialDiet;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById("guestTableBody");
-            const empty = document.getElementById("emptyState");
-            const search = document.getElementById("searchInput").value.toLowerCase();
-            const filter = document.getElementById("filterStatus").value;
-
-            tbody.innerHTML = "";
-
-            const filtered = guests.filter(g => {
-                const matchesSearch = g.name.toLowerCase().includes(search) || (g.song && g.song.toLowerCase().includes(search));
-                if (!matchesSearch) return false;
-
-                if (filter === "confirmed") return g.attendance.includes("Sí") || g.attendance.includes("confirmo");
-                if (filter === "declined") return g.attendance.includes("No");
-                if (filter === "diet") return g.diet && g.diet.trim() !== "";
-                return true;
-            });
-
-            if (filtered.length === 0) {
-                empty.classList.remove("hidden");
-            } else {
-                empty.classList.add("hidden");
-                filtered.forEach(g => {
-                    const isAtt = g.attendance.includes("Sí") || g.attendance.includes("confirmo");
-                    const tr = document.createElement("tr");
-                    tr.className = "hover:bg-white/80 transition";
-                    tr.innerHTML = `
-                        <td class="p-4 font-semibold text-ink">${g.name}</td>
-                        <td class="p-4">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${isAtt ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-600 border border-stone-200'}">
-                                ${isAtt ? 'Confirmado' : 'No Asiste'}
-                            </span>
-                        </td>
-                        <td class="p-4 text-stone-600">${isAtt ? (g.places || '1 persona') : '-'}</td>
-                        <td class="p-4">
-                            ${g.diet ? `<span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-200 text-[10px]">${g.diet}</span>` : '<span class="text-stone-300">-</span>'}
-                        </td>
-                        <td class="p-4 text-stone-500 italic">${g.song || '-'}</td>
-                        <td class="p-4 text-stone-600 max-w-xs truncate" title="${g.notes || ''}">${g.notes || '-'}</td>
-                        <td class="p-4 text-stone-400 text-[10px]">${g.date || '-'}</td>
-                        <td class="p-4 text-right space-x-1">
-                            <button onclick="editGuest('${g.id}')" class="p-1.5 text-stone-500 hover:text-ink hover:bg-stone-100 rounded transition" title="Editar">
-                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="deleteGuest('${g.id}')" class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition" title="Eliminar">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function openConfigModal() {
-            const cfg = loadConfig();
-            document.getElementById("cfgPhone").value = cfg.phone || "";
-            document.getElementById("cfgWebhook").value = cfg.webhookUrl || "";
-            document.getElementById("cfgAlias").value = cfg.alias || "";
-            document.getElementById("cfgCbu").value = cfg.cbu || "";
-            document.getElementById("cfgMpUrl").value = cfg.mpUrl || "";
-            document.getElementById("configModal").classList.remove("hidden");
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function closeConfigModal() {
-            document.getElementById("configModal").classList.add("hidden");
-        }
-
-        function saveConfig(e) {
-            e.preventDefault();
-            const cleanPhone = document.getElementById("cfgPhone").value.replace(/\D/g, "");
-            const newCfg = {
-                phone: cleanPhone,
-                webhookUrl: document.getElementById("cfgWebhook").value.trim(),
-                alias: document.getElementById("cfgAlias").value.trim(),
-                cbu: document.getElementById("cfgCbu").value.trim(),
-                mpUrl: document.getElementById("cfgMpUrl").value.trim()
-            };
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(newCfg));
-            document.getElementById("currentPhoneDisplay").innerText = "+" + newCfg.phone;
-            alert("Ajustes guardados correctamente.");
-            closeConfigModal();
-        }
-
-        function openAddGuestModal() {
-            document.getElementById("editGuestId").value = "";
-            document.getElementById("modalTitle").innerText = "Agregar Invitado";
-            document.getElementById("guestModalForm").reset();
-            document.getElementById("guestModal").classList.remove("hidden");
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function closeGuestModal() {
-            document.getElementById("guestModal").classList.add("hidden");
-        }
-
-        function editGuest(id) {
-            const g = guests.find(item => item.id === id);
-            if (!g) return;
-            document.getElementById("editGuestId").value = g.id;
-            document.getElementById("modalTitle").innerText = "Editar Invitado";
-            document.getElementById("modalName").value = g.name;
-            document.getElementById("modalAttendance").value = g.attendance;
-            document.getElementById("modalPlaces").value = g.places || "1 persona";
-            document.getElementById("modalDiet").value = g.diet || "";
-            document.getElementById("modalSong").value = g.song || "";
-            document.getElementById("modalNotes").value = g.notes || "";
-            document.getElementById("guestModal").classList.remove("hidden");
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function saveGuest(e) {
-            e.preventDefault();
-            const id = document.getElementById("editGuestId").value;
-            const newGuest = {
-                id: id || Date.now().toString(),
-                name: document.getElementById("modalName").value.trim(),
-                attendance: document.getElementById("modalAttendance").value,
-                places: document.getElementById("modalPlaces").value,
-                diet: document.getElementById("modalDiet").value.trim(),
-                song: document.getElementById("modalSong").value.trim(),
-                notes: document.getElementById("modalNotes").value.trim(),
-                date: new Date().toISOString().split("T")[0]
-            };
-
-            if (id) {
-                const idx = guests.findIndex(item => item.id === id);
-                if (idx !== -1) guests[idx] = newGuest;
-            } else {
-                guests.unshift(newGuest);
-            }
-
-            saveToStorage();
-            closeGuestModal();
-            renderTable();
-        }
-
-        function deleteGuest(id) {
-            if (confirm("¿Seguro que deseas eliminar este invitado de la lista?")) {
-                guests = guests.filter(item => item.id !== id);
-                saveToStorage();
-                renderTable();
-            }
-        }
-
-        function exportToCSV() {
-            if (guests.length === 0) {
-                alert("No hay invitados para exportar.");
-                return;
-            }
-            let csv = "Nombre,Estado,Lugares,Menu Especial,Cancion,Dedicatoria,Fecha\n";
-            guests.forEach(g => {
-                csv += `"${g.name}","${g.attendance}","${g.places || ''}","${g.diet || ''}","${g.song || ''}","${(g.notes || '').replace(/"/g, '""')}","${g.date || ''}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `invitados_boda_julian_y_carla_${new Date().toISOString().split("T")[0]}.csv`;
-            link.click();
-        }
-    </script>
-</body>
-</html>
+<body class="text-ink font-caps antialiased min-h-screen">
+<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+<div class="plate p-8 max-w-md w-full text-center space-y-6">
+<span class="smallcaps text-clay font-semibold">Acceso privado</span>
+<h1 class="font-display text-4xl">Julián & Carla</h1>
+<form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+<label class="smallcaps text-olive text-[10px]">Usuario</label><input id="userInput" required class="inp">
+<label class="smallcaps text-olive text-[10px]">Contraseña</label><input id="passInput" type="password" required class="inp">
+<div id="loginError" class="hidden text-xs text-red-600">Usuario o contraseña incorrectos.</div>
+<button class="w-full py-3 bg-ink text-paper smallcaps">Ingresar al panel</button>
+</form></div></div>
+<div id="dashboardScreen" class="hidden min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+<header class="flex flex-col md:flex-row justify-between gap-4 pb-4 border-b border-hairline">
+<div><div class="text-xs text-clay uppercase tracking-wider">Panel · 18 de diciembre 2026</div><h1 class="font-display text-4xl">Boda Julián & Carla</h1></div>
+<div class="flex flex-wrap gap-2">
+<a href="index.html" target="_blank" class="px-3 py-2 bg-white border border-hairline text-xs">Ver invitación</a>
+<button onclick="exportBackup()" class="px-3 py-2 bg-white border border-hairline text-xs">Backup JSON</button>
+<button onclick="document.getElementById('importFile').click()" class="px-3 py-2 bg-white border border-hairline text-xs">Importar JSON</button>
+<input type="file" id="importFile" accept="application/json" class="hidden" onchange="importBackup(event)">
+<button onclick="exportToCSV()" class="px-3 py-2 bg-sage/20 text-olive border border-sage/40 text-xs">CSV invitados</button>
+<button onclick="openConfigModal()" class="px-3 py-2 bg-white border border-hairline text-xs">Ajustes</button>
+<button onclick="handleLogout()" class="px-3 py-2 bg-red-50 text-red-700 border border-red-200 text-xs">Salir</button>
+</div></header>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Confirmados</p><p id="kpiConfirmed" class="text-3xl font-display text-emerald-800">0</p></div>
+<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Cubiertos</p><p id="kpiPlaces" class="text-3xl font-display">0</p></div>
+<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">No asisten</p><p id="kpiDeclined" class="text-3xl font-display text-stone-500">0</p></div>
+<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Menús especiales</p><p id="kpiSpecialDiet" class="text-3xl font-display text-clay">0</p></div>
+<div class="plate p-4"><p class="text-[10px] uppercase text-stone-500">Mesas estimadas</p><p id="kpiTables" class="text-3xl font-display text-olive">0</p></div>
+</div>
+<nav class="flex flex-wrap gap-2">
+<button class="tab-btn active" data-tab="invitados" onclick="showTab('invitados')">Invitados</button>
+<button class="tab-btn" data-tab="compras" onclick="showTab('compras')">Súper y cantidades</button>
+<button class="tab-btn" data-tab="mesas" onclick="showTab('mesas')">Mesas</button>
+<button class="tab-btn" data-tab="equipo" onclick="showTab('equipo')">Contrataciones</button>
+<button class="tab-btn" data-tab="pista" onclick="showTab('pista')">Pista</button>
+</nav>
+<section id="tab-invitados" class="tab-panel plate overflow-hidden">
+<div class="p-4 border-b border-hairline flex flex-col md:flex-row gap-3 bg-white/40">
+<input id="searchInput" oninput="renderTable()" placeholder="Buscar nombre o canción" class="inp max-w-md">
+<select id="filterStatus" onchange="renderTable()" class="inp max-w-xs"><option value="all">Todos</option><option value="confirmed">Confirmados</option><option value="declined">No asisten</option><option value="diet">Menú especial</option></select>
+<button onclick="openAddGuestModal()" class="px-4 py-2 bg-ink text-white text-xs">Agregar invitado</button>
+</div>
+<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-parchment/60 text-[10px] uppercase"><tr><th class="p-3">Invitado</th><th class="p-3">Estado</th><th class="p-3">Lugares</th><th class="p-3">Menú</th><th class="p-3">Canción</th><th class="p-3">Notas</th><th class="p-3">Fecha</th><th class="p-3 text-right">Acciones</th></tr></thead><tbody id="guestTableBody" class="divide-y divide-hairline bg-white/50"></tbody></table></div>
+<div id="emptyState" class="hidden p-10 text-center font-serif italic text-stone-500">Aún no hay confirmaciones.</div>
+</section>
+<section id="tab-compras" class="tab-panel hidden space-y-6">
+<div class="plate p-5 space-y-3"><p class="font-serif italic text-olive text-sm">Cuando encuentren una oferta (Fernet, hielo, vasos), anótenla. Las cantidades se calculan solas según cubiertos.</p>
+<div class="flex justify-between items-center"><h2 class="font-display text-2xl">Ofertas del súper</h2><button onclick="addOffer()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Oferta</button></div>
+<div id="offersBox" class="space-y-2"></div></div>
+<div class="plate p-5 space-y-3"><h2 class="font-display text-2xl">Provisiones automáticas</h2><p class="text-xs text-stone-500">Ratios de fiesta. El faltante compara contra lo comprado en ofertas.</p>
+<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-[10px] uppercase text-stone-500"><tr><th class="p-2 text-left">Ítem</th><th class="p-2">Por persona</th><th class="p-2">Pack</th><th class="p-2">Necesario</th><th class="p-2">Comprado</th><th class="p-2">Falta</th></tr></thead><tbody id="provBody"></tbody></table></div></div>
+<div class="plate p-5 space-y-3"><div class="flex justify-between"><h2 class="font-display text-2xl">Presupuesto por invitado</h2><button onclick="addShoppingRow()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Ítem</button></div>
+<div id="shoppingListContainer" class="space-y-2"></div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-hairline text-center">
+<div><span class="text-[10px] uppercase text-stone-500">Total</span><span id="shopSubtotal" class="block font-display text-2xl">$ 0</span></div>
+<div><span class="text-[10px] uppercase text-stone-500">Por cubierto</span><span id="shopPerGuest" class="block font-display text-2xl text-olive">$ 0</span></div>
+<div><span class="text-[10px] uppercase text-stone-500">Catering</span><span id="shopCatering" class="block font-display text-2xl">$ 0</span></div>
+<div><span class="text-[10px] uppercase text-stone-500">Extras</span><span id="shopExtras" class="block font-display text-2xl text-clay">$ 0</span></div>
+</div></div></section>
+<section id="tab-mesas" class="tab-panel hidden plate p-5 space-y-4"><h2 class="font-display text-2xl">Mesas</h2><p class="text-xs text-stone-500">Se calcula con cubiertos confirmados.</p>
+<div class="flex items-end gap-4"><div><label class="smallcaps text-[10px] text-olive">Personas por mesa</label><input type="number" id="seatsPerTable" min="4" max="14" value="8" class="inp w-24" onchange="saveTablesCfg()"></div><p class="text-sm font-serif italic text-olive" id="tablesSummary">—</p></div>
+<div id="tablesGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-3"></div></section>
+<section id="tab-equipo" class="tab-panel hidden plate p-5 space-y-4"><div class="flex justify-between"><div><h2 class="font-display text-2xl">Contrataciones</h2><p class="text-xs text-stone-500">DJ, foto, catering, deco. No se muestra en la invitación.</p></div><button onclick="addVendor()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">+ Persona / servicio</button></div><div id="vendorsBox" class="space-y-2"></div><p class="text-sm" id="vendorsTotal"></p></section>
+<section id="tab-pista" class="tab-panel hidden plate p-5 space-y-4"><h2 class="font-display text-2xl">Pista pública</h2><p class="text-xs text-stone-500">En la tarjeta se publica solo el título, nunca quién lo pidió. Reproductor: YouTube (gratis, sin Premium).</p>
+<label class="smallcaps text-[10px] text-olive">ID de playlist de YouTube</label><input id="ytPlaylist" class="inp font-mono" placeholder="PLxxxxxxxx" onchange="saveYt()">
+<p class="text-[10px] text-stone-400">Playlist pública en YouTube → copiar el valor de list=</p>
+<div class="flex gap-2 flex-wrap"><button onclick="importSongsFromGuests()" class="px-3 py-2 bg-ink text-white text-xs">Sumar canciones de invitados (anónimas)</button><button onclick="exportPistaJson()" class="px-3 py-2 bg-white border border-hairline text-xs">Descargar pista.json</button></div>
+<p class="text-[11px] text-stone-500">Para que se vea en todos los celulares, subí pista.json a la raíz del repo y hacé push.</p>
+<div class="flex gap-2"><input id="newSongTitle" class="inp" placeholder="Agregar tema (Título — Artista)"><button onclick="addPistaSong()" class="px-3 py-2 bg-olive/10 text-olive border border-olive/30 text-xs">Agregar</button></div>
+<ul id="pistaList" class="space-y-1 text-sm font-serif"></ul></section>
+</div>
+<div id="configModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div class="plate p-6 max-w-lg w-full bg-white space-y-4"><div class="flex justify-between"><h3 class="font-display text-2xl">Ajustes</h3><button onclick="closeConfigModal()">✕</button></div>
+<form onsubmit="saveConfig(event)" class="space-y-3"><input id="cfgPhone" required class="inp font-mono" placeholder="WhatsApp 549388..."><input id="cfgWebhook" class="inp font-mono" placeholder="Webhook opcional"><div class="grid grid-cols-2 gap-3"><input id="cfgAlias" class="inp font-mono" placeholder="Alias"><input id="cfgCbu" class="inp font-mono" placeholder="CBU"></div><input id="cfgMpUrl" class="inp font-mono" placeholder="Link Mercado Pago"><div class="flex justify-end gap-2"><button type="button" onclick="closeConfigModal()" class="px-3 py-2 border text-xs">Cancelar</button><button class="px-4 py-2 bg-ink text-white text-xs">Guardar</button></div></form></div></div>
+<div id="guestModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div class="plate p-6 max-w-lg w-full bg-white space-y-3"><div class="flex justify-between"><h3 id="modalTitle" class="font-display text-2xl">Invitado</h3><button onclick="closeGuestModal()">✕</button></div>
+<form onsubmit="saveGuest(event)" class="space-y-3"><input type="hidden" id="editGuestId"><input id="modalName" required class="inp" placeholder="Nombre"><div class="grid grid-cols-2 gap-3"><select id="modalAttendance" class="inp"><option value="Sí, confirmo asistencia">Confirma</option><option value="No podré asistir">No asiste</option></select><select id="modalPlaces" class="inp"><option value="1 persona">1</option><option value="2 personas (con acompañante)">2</option><option value="Grupo familiar">Grupo (3+)</option></select></div><input id="modalDiet" class="inp" placeholder="Menú especial"><input id="modalSong" class="inp" placeholder="Canción"><textarea id="modalNotes" rows="2" class="inp" placeholder="Notas"></textarea><div class="flex justify-end gap-2"><button type="button" onclick="closeGuestModal()" class="px-3 py-2 border text-xs">Cancelar</button><button class="px-4 py-2 bg-ink text-white text-xs">Guardar</button></div></form></div></div>
+<script>
+const AUTH_USER="julianycarla",AUTH_PASS="5pamplona";
+const K={guests:"boda_julian_carla_guests",config:"boda_julian_carla_config",shop:"boda_julian_carla_shopping",offers:"boda_julian_carla_offers",vendors:"boda_julian_carla_vendors",tables:"boda_julian_carla_tables",pista:"boda_julian_carla_pista",rates:"boda_julian_carla_rates"};
+let guests=[],shoppingItems=[],offers=[],vendors=[],pista=[],tableCfg={seats:8};
+let rates=[{key:"fernet",name:"Fernet 750 ml",perPerson:0.15,pack:0.75,packLabel:"botellas"},{key:"coca",name:"Coca (para fernet) 2.25 L",perPerson:0.45,pack:2.25,packLabel:"botellas"},{key:"vino",name:"Vino 750 ml",perPerson:0.4,pack:0.75,packLabel:"botellas"},{key:"cerveza",name:"Cerveza",perPerson:0.8,pack:1,packLabel:"litros"},{key:"gaseosa",name:"Gaseosa 2.25 L",perPerson:0.4,pack:2.25,packLabel:"botellas"},{key:"agua",name:"Agua 2 L",perPerson:0.5,pack:2,packLabel:"botellas"},{key:"hielo",name:"Hielo 5 kg",perPerson:0.5,pack:5,packLabel:"bolsas"},{key:"vasos",name:"Vasos extra",perPerson:2,pack:50,packLabel:"paquetes x50"}];
+function loadJSON(k,f){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch(e){return f}}function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function loadConfig(){return loadJSON(K.config,{phone:"5491112345678",webhookUrl:"",alias:"JULIAN.Y.CARLA.BODA",cbu:"0070012345678901234567",mpUrl:"https://mpago.la/LINK_LIBRE",youtubePlaylistId:""})}
+function placesOf(g){if(!(g.attendance||"").includes("Sí")&&!(g.attendance||"").includes("confirmo"))return 0;if((g.places||"").includes("2"))return 2;if((g.places||"").toLowerCase().includes("familiar"))return 4;return 1}
+function totalPlaces(){return guests.reduce((s,g)=>s+placesOf(g),0)}
+document.addEventListener("DOMContentLoaded",()=>{if(sessionStorage.getItem("boda_admin_logged")==="true")showDashboard();else showLogin();if(window.lucide)lucide.createIcons()});
+function handleLogin(e){e.preventDefault();const u=document.getElementById("userInput").value.trim().toLowerCase(),p=document.getElementById("passInput").value.trim();if(u===AUTH_USER&&p===AUTH_PASS){sessionStorage.setItem("boda_admin_logged","true");document.getElementById("loginError").classList.add("hidden");showDashboard()}else document.getElementById("loginError").classList.remove("hidden")}
+function handleLogout(){sessionStorage.removeItem("boda_admin_logged");showLogin()}
+function showLogin(){document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("dashboardScreen").classList.add("hidden")}
+function showDashboard(){document.getElementById("loginScreen").classList.add("hidden");document.getElementById("dashboardScreen").classList.remove("hidden");guests=loadJSON(K.guests,[]);shoppingItems=loadJSON(K.shop,[{id:"s1",name:"Catering / cena",costPerGuest:0,category:"catering"},{id:"s2",name:"Barra y bebidas",costPerGuest:0,category:"catering"}]);offers=loadJSON(K.offers,[]);vendors=loadJSON(K.vendors,[]);tableCfg=loadJSON(K.tables,{seats:8});pista=loadJSON(K.pista,[]);const sr=loadJSON(K.rates,null);if(sr)rates=sr;document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";renderAll();showTab("invitados")}
+function showTab(id){document.querySelectorAll(".tab-panel").forEach(p=>p.classList.add("hidden"));document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));document.getElementById("tab-"+id).classList.remove("hidden")}
+function renderAll(){updateKPIs();renderTable();renderShopping();renderOffers();renderProv();renderTables();renderVendors();renderPista()}
+function updateKPIs(){let c=0,p=0,d=0,s=0;guests.forEach(g=>{if((g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo")){c++;p+=placesOf(g);if(g.diet&&g.diet.trim())s++}else d++});const seats=Number(tableCfg.seats)||8;document.getElementById("kpiConfirmed").innerText=c;document.getElementById("kpiPlaces").innerText=p;document.getElementById("kpiDeclined").innerText=d;document.getElementById("kpiSpecialDiet").innerText=s;document.getElementById("kpiTables").innerText=p?Math.ceil(p/seats):0}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function renderTable(){const tbody=document.getElementById("guestTableBody"),empty=document.getElementById("emptyState"),search=(document.getElementById("searchInput").value||"").toLowerCase(),filter=document.getElementById("filterStatus").value;tbody.innerHTML="";const filtered=guests.filter(g=>{const ok=(g.name||"").toLowerCase().includes(search)||(g.song||"").toLowerCase().includes(search);if(!ok)return false;if(filter==="confirmed")return (g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo");if(filter==="declined")return (g.attendance||"").includes("No");if(filter==="diet")return g.diet&&g.diet.trim();return true});if(!filtered.length)empty.classList.remove("hidden");else{empty.classList.add("hidden");filtered.forEach(g=>{const isAtt=(g.attendance||"").includes("Sí")||(g.attendance||"").includes("confirmo");const tr=document.createElement("tr");tr.innerHTML=`<td class="p-3 font-semibold">${esc(g.name)}</td><td class="p-3">${isAtt?"Confirmado":"No asiste"}</td><td class="p-3">${isAtt?esc(g.places||"1"):"-"}</td><td class="p-3">${g.diet?esc(g.diet):"-"}</td><td class="p-3 italic">${esc(g.song||"-")}</td><td class="p-3 truncate max-w-[180px]">${esc(g.notes||"-")}</td><td class="p-3 text-stone-400">${esc(g.date||"")}</td><td class="p-3 text-right"><button onclick="editGuest('${g.id}')" class="underline mr-2">Editar</button><button onclick="deleteGuest('${g.id}')" class="text-red-700">Borrar</button></td>`;tbody.appendChild(tr)})}}
+function saveGuests(){saveJSON(K.guests,guests);renderAll()}
+function openAddGuestModal(){document.getElementById("editGuestId").value="";document.getElementById("modalTitle").innerText="Agregar invitado";document.querySelector("#guestModal form").reset();document.getElementById("guestModal").classList.remove("hidden")}
+function closeGuestModal(){document.getElementById("guestModal").classList.add("hidden")}
+function editGuest(id){const g=guests.find(x=>x.id===id);if(!g)return;document.getElementById("editGuestId").value=g.id;document.getElementById("modalTitle").innerText="Editar invitado";document.getElementById("modalName").value=g.name||"";document.getElementById("modalAttendance").value=g.attendance;document.getElementById("modalPlaces").value=g.places||"1 persona";document.getElementById("modalDiet").value=g.diet||"";document.getElementById("modalSong").value=g.song||"";document.getElementById("modalNotes").value=g.notes||"";document.getElementById("guestModal").classList.remove("hidden")}
+function saveGuest(e){e.preventDefault();const id=document.getElementById("editGuestId").value;const g={id:id||Date.now().toString(),name:document.getElementById("modalName").value.trim(),attendance:document.getElementById("modalAttendance").value,places:document.getElementById("modalPlaces").value,diet:document.getElementById("modalDiet").value.trim(),song:document.getElementById("modalSong").value.trim(),notes:document.getElementById("modalNotes").value.trim(),date:new Date().toISOString().split("T")[0]};if(id){const i=guests.findIndex(x=>x.id===id);if(i>=0)guests[i]=g}else guests.unshift(g);saveGuests();closeGuestModal()}
+function deleteGuest(id){if(confirm("¿Eliminar invitado?")){guests=guests.filter(x=>x.id!==id);saveGuests()}}
+function addShoppingRow(){shoppingItems.push({id:Date.now().toString(),name:"Nuevo ítem",costPerGuest:0,category:"extras"});saveJSON(K.shop,shoppingItems);renderShopping()}
+function deleteShoppingRow(id){shoppingItems=shoppingItems.filter(i=>i.id!==id);saveJSON(K.shop,shoppingItems);renderShopping()}
+function updateShoppingItem(id,field,value){const i=shoppingItems.findIndex(x=>x.id===id);if(i<0)return;shoppingItems[i][field]=field==="costPerGuest"?(parseFloat(value)||0):value;saveJSON(K.shop,shoppingItems);renderShopping()}
+function renderShopping(){const box=document.getElementById("shoppingListContainer");if(!box)return;const n=Math.max(totalPlaces(),1);box.innerHTML="";let total=0,cat=0,extra=0;shoppingItems.forEach(item=>{const row=document.createElement("div");row.className="flex flex-wrap gap-2 items-center p-2 border border-hairline bg-white/70";row.innerHTML=`<input class="inp flex-1" value="${esc(item.name)}" onchange="updateShoppingItem('${item.id}','name',this.value)"><span class="text-xs">$</span><input type="number" class="inp w-24" value="${item.costPerGuest}" onchange="updateShoppingItem('${item.id}','costPerGuest',this.value)"><span class="text-[10px] text-stone-400">/ cubierto</span><select class="inp w-28" onchange="updateShoppingItem('${item.id}','category',this.value)"><option value="catering" ${item.category==="catering"?"selected":""}>Catering</option><option value="extras" ${item.category==="extras"?"selected":""}>Extras</option></select><span class="text-xs w-24 text-right">$ ${(item.costPerGuest*n).toLocaleString("es-AR")}</span><button onclick="deleteShoppingRow('${item.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(row);total+=item.costPerGuest;if(item.category==="catering")cat+=item.costPerGuest;else extra+=item.costPerGuest});document.getElementById("shopSubtotal").innerText="$ "+(total*n).toLocaleString("es-AR");document.getElementById("shopPerGuest").innerText="$ "+total.toLocaleString("es-AR");document.getElementById("shopCatering").innerText="$ "+(cat*n).toLocaleString("es-AR");document.getElementById("shopExtras").innerText="$ "+(extra*n).toLocaleString("es-AR")}
+function addOffer(){offers.unshift({id:Date.now().toString(),product:"Fernet",store:"",price:0,qty:0,unit:"botella",key:"fernet",notes:""});saveJSON(K.offers,offers);renderOffers();renderProv()}
+function updateOffer(id,field,value){const i=offers.findIndex(x=>x.id===id);if(i<0)return;offers[i][field]=(field==="price"||field==="qty")?(parseFloat(value)||0):value;saveJSON(K.offers,offers);renderOffers();renderProv()}
+function deleteOffer(id){offers=offers.filter(x=>x.id!==id);saveJSON(K.offers,offers);renderOffers();renderProv()}
+function renderOffers(){const box=document.getElementById("offersBox");if(!box)return;if(!offers.length){box.innerHTML='<p class="text-xs text-stone-400">Todavía no hay ofertas. Ejemplo: Fernet en Changomas a $X.</p>';return}box.innerHTML="";offers.forEach(o=>{const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(o.product)}" placeholder="Producto" onchange="updateOffer('${o.id}','product',this.value)"><input class="inp" value="${esc(o.store)}" placeholder="Súper" onchange="updateOffer('${o.id}','store',this.value)"><input type="number" class="inp" value="${o.price||""}" placeholder="Precio" onchange="updateOffer('${o.id}','price',this.value)"><input type="number" class="inp" value="${o.qty||""}" placeholder="Cant. comprada" onchange="updateOffer('${o.id}','qty',this.value)"><select class="inp" onchange="updateOffer('${o.id}','key',this.value)">${rates.map(r=>`<option value="${r.key}" ${o.key===r.key?"selected":""}>${esc(r.name)}</option>`).join("")}<option value="" ${!o.key?"selected":""}>Otro</option></select><button onclick="deleteOffer('${o.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)})}
+function boughtFor(key){return offers.filter(o=>o.key===key).reduce((s,o)=>s+(Number(o.qty)||0),0)}
+function neededPacks(r,people){return Math.ceil((people*r.perPerson)/r.pack)}
+function renderProv(){const people=totalPlaces(),body=document.getElementById("provBody");if(!body)return;body.innerHTML="";rates.forEach(r=>{const need=people?neededPacks(r,people):0,got=boughtFor(r.key),miss=Math.max(need-got,0);const tr=document.createElement("tr");tr.innerHTML=`<td class="p-2">${esc(r.name)}</td><td class="p-2 text-center"><input type="number" step="0.05" class="inp w-20" value="${r.perPerson}" onchange="updateRate('${r.key}',this.value)"></td><td class="p-2 text-center text-stone-500">${r.pack} · ${esc(r.packLabel)}</td><td class="p-2 text-center font-semibold">${need}</td><td class="p-2 text-center">${got}</td><td class="p-2 text-center ${miss?"text-clay font-semibold":"text-emerald-700"}">${miss}</td>`;body.appendChild(tr)})}
+function updateRate(key,val){const r=rates.find(x=>x.key===key);if(!r)return;r.perPerson=parseFloat(val)||0;saveJSON(K.rates,rates);renderProv()}
+function saveTablesCfg(){tableCfg.seats=Number(document.getElementById("seatsPerTable").value)||8;saveJSON(K.tables,tableCfg);renderTables();updateKPIs()}
+function renderTables(){const seats=Number(tableCfg.seats)||8,people=totalPlaces(),n=people?Math.ceil(people/seats):0,leftover=n?(n*seats-people):0;document.getElementById("tablesSummary").innerText=people?`${people} cubiertos → ${n} mesas de ${seats} (libres ${leftover})`:"Todavía no hay cubiertos.";const grid=document.getElementById("tablesGrid");grid.innerHTML="";for(let i=1;i<=n;i++){const fill=i<n?seats:(people-seats*(n-1));const d=document.createElement("div");d.className="p-3 border border-hairline bg-white/70";d.innerHTML=`<p class="smallcaps text-[10px] text-olive">Mesa ${i}</p><p class="font-display text-2xl">${fill}<span class="text-sm text-stone-400"> / ${seats}</span></p>`;grid.appendChild(d)}}
+function addVendor(){vendors.unshift({id:Date.now().toString(),role:"DJ",name:"",phone:"",amount:0,paid:false,notes:""});saveJSON(K.vendors,vendors);renderVendors()}
+function updateVendor(id,field,value){const i=vendors.findIndex(x=>x.id===id);if(i<0)return;if(field==="amount")vendors[i][field]=parseFloat(value)||0;else if(field==="paid")vendors[i][field]=!!value;else vendors[i][field]=value;saveJSON(K.vendors,vendors);renderVendors()}
+function deleteVendor(id){vendors=vendors.filter(x=>x.id!==id);saveJSON(K.vendors,vendors);renderVendors()}
+function renderVendors(){const box=document.getElementById("vendorsBox");if(!vendors.length){box.innerHTML='<p class="text-xs text-stone-400">Cargá DJ, foto, catering, deco, etc.</p>';document.getElementById("vendorsTotal").innerText="";return}box.innerHTML="";let total=0,paid=0;vendors.forEach(v=>{total+=Number(v.amount)||0;if(v.paid)paid+=Number(v.amount)||0;const d=document.createElement("div");d.className="grid md:grid-cols-6 gap-2 p-2 border border-hairline bg-white/70 items-center";d.innerHTML=`<input class="inp" value="${esc(v.role)}" placeholder="Rol" onchange="updateVendor('${v.id}','role',this.value)"><input class="inp" value="${esc(v.name)}" placeholder="Nombre" onchange="updateVendor('${v.id}','name',this.value)"><input class="inp" value="${esc(v.phone)}" placeholder="Tel" onchange="updateVendor('${v.id}','phone',this.value)"><input type="number" class="inp" value="${v.amount||""}" placeholder="$" onchange="updateVendor('${v.id}','amount',this.value)"><label class="text-xs"><input type="checkbox" ${v.paid?"checked":""} onchange="updateVendor('${v.id}','paid',this.checked)"> Señado</label><button onclick="deleteVendor('${v.id}')" class="text-red-700 text-xs">Borrar</button>`;box.appendChild(d)});document.getElementById("vendorsTotal").innerText=`Total $ ${total.toLocaleString("es-AR")} · pagado $ ${paid.toLocaleString("es-AR")} · saldo $ ${(total-paid).toLocaleString("es-AR")}`}
+function saveYt(){const cfg=loadConfig();cfg.youtubePlaylistId=document.getElementById("ytPlaylist").value.trim();saveJSON(K.config,cfg)}
+function addPistaSong(){const t=document.getElementById("newSongTitle").value.trim();if(!t)return;if(!pista.some(s=>s.title.toLowerCase()===t.toLowerCase()))pista.push({title:t,at:new Date().toISOString()});document.getElementById("newSongTitle").value="";saveJSON(K.pista,pista);renderPista()}
+function importSongsFromGuests(){guests.forEach(g=>{const t=(g.song||"").trim();if(!t)return;if(!pista.some(s=>s.title.toLowerCase()===t.toLowerCase()))pista.push({title:t,at:g.date||new Date().toISOString()})});saveJSON(K.pista,pista);renderPista()}
+function deletePista(i){pista.splice(i,1);saveJSON(K.pista,pista);renderPista()}
+function renderPista(){const ul=document.getElementById("pistaList");ul.innerHTML=pista.length?pista.map((s,i)=>`<li class="flex justify-between border-b border-hairline py-1"><span>${esc(s.title)}</span><button class="text-red-700 text-xs" onclick="deletePista(${i})">Quitar</button></li>`).join(""):'<li class="text-stone-400 text-xs">Todavía no hay temas publicados.</li>'}
+function exportPistaJson(){const cfg=loadConfig();const blob=new Blob([JSON.stringify({youtubePlaylistId:cfg.youtubePlaylistId||"",songs:pista.map(s=>({title:s.title}))},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pista.json";a.click()}
+function openConfigModal(){const c=loadConfig();document.getElementById("cfgPhone").value=c.phone||"";document.getElementById("cfgWebhook").value=c.webhookUrl||"";document.getElementById("cfgAlias").value=c.alias||"";document.getElementById("cfgCbu").value=c.cbu||"";document.getElementById("cfgMpUrl").value=c.mpUrl||"";document.getElementById("configModal").classList.remove("hidden")}
+function closeConfigModal(){document.getElementById("configModal").classList.add("hidden")}
+function saveConfig(e){e.preventDefault();const prev=loadConfig();saveJSON(K.config,{phone:document.getElementById("cfgPhone").value.replace(/\D/g,""),webhookUrl:document.getElementById("cfgWebhook").value.trim(),alias:document.getElementById("cfgAlias").value.trim(),cbu:document.getElementById("cfgCbu").value.trim(),mpUrl:document.getElementById("cfgMpUrl").value.trim(),youtubePlaylistId:prev.youtubePlaylistId||""});closeConfigModal()}
+function exportToCSV(){if(!guests.length){alert("No hay invitados.");return}let csv="Nombre,Estado,Lugares,Menu,Cancion,Notas,Fecha\n";guests.forEach(g=>{csv+=`"${g.name}","${g.attendance}","${g.places||""}","${g.diet||""}","${g.song||""}","${(g.notes||"").replace(/"/g,'""')}","${g.date||""}"\n`});const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="invitados.csv";a.click()}
+function exportBackup(){const data={guests,shoppingItems,offers,vendors,tableCfg,pista,rates,config:loadConfig()};const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="backup-boda-julian-carla.json";a.click()}
+function importBackup(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(reader.result);if(d.guests)guests=d.guests;if(d.shoppingItems)shoppingItems=d.shoppingItems;if(d.offers)offers=d.offers;if(d.vendors)vendors=d.vendors;if(d.tableCfg)tableCfg=d.tableCfg;if(d.pista)pista=d.pista;if(d.rates)rates=d.rates;if(d.config)saveJSON(K.config,d.config);saveJSON(K.guests,guests);saveJSON(K.shop,shoppingItems);saveJSON(K.offers,offers);saveJSON(K.vendors,vendors);saveJSON(K.tables,tableCfg);saveJSON(K.pista,pista);saveJSON(K.rates,rates);document.getElementById("seatsPerTable").value=tableCfg.seats||8;document.getElementById("ytPlaylist").value=loadConfig().youtubePlaylistId||"";renderAll();alert("Backup importado.")}catch(err){alert("JSON inválido")}};reader.readAsText(f)}
+</script></body></html>
