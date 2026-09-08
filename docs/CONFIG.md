@@ -2,56 +2,70 @@
 
 Nada se compila. Cambiar, commit, push a `main`.
 
-## Invitación (`index.html`)
+## Contenido del sitio (`site-content.json`)
 
-| Dato | Dónde |
-|---|---|
-| Fecha / countdown | `targetDate = new Date("2026-12-18T17:00:00-03:00")` y textos 18 · XII · 2026 |
-| Horarios | 17:00 ceremonia / 18:30 fiesta |
-| Iglesia | San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes |
-| Fiesta | El Quincho del Predio de Reyes (no escribir Colegio de Abogados) |
-| Gate invitados | `checkPassword()` compara con `18dic` |
-| Hero | Solo Julián & Carla (sin apellidos) |
-| Titulares transferencia | Julián Morales & Carla Quiroga |
-| Alias / CBU / MP | Defaults en `getConfig()`; el admin los pisa vía `localStorage` `boda_julian_carla_config` |
-
-## Admin (`admin.html`)
-
-| Dato | Dónde |
-|---|---|
-| Usuario / clave panel | `AUTH_USER` / `AUTH_PASS` (arriba del `<script>`) |
-| WhatsApp receptor | Ajustes → número internacional sin + |
-| Webhook RSVP | Ajustes → URL (opcional, POST JSON) |
-| Alias / CBU / MP | Ajustes |
-| Playlist YouTube | Tab Pista → ID `list=` |
-
-Keys `localStorage` (mismo origen):
-
-- `boda_julian_carla_guests`
-- `boda_julian_carla_config`
-- `boda_julian_carla_shopping`
-- `boda_julian_carla_offers`
-- `boda_julian_carla_vendors`
-- `boda_julian_carla_tables`
-- `boda_julian_carla_pista`
-- `boda_julian_carla_rates`
-
-## Pista pública (`pista.json` + `js/public-pista.js`)
+Fuente de verdad unificada para la landing pública:
 
 ```json
 {
-  "youtubePlaylistId": "PLxxxxxxxx",
-  "songs": [{ "title": "Tema — Artista" }]
+  "couple": "Julián & Carla",
+  "date": "2026-12-18",
+  "dateDisplay": "18 de Diciembre de 2026",
+  "dateDisplayShort": "18 · XII · 2026",
+  "locationDisplay": "San Pablo de Reyes · Jujuy",
+  "ceremony": {
+    "time": "17:00",
+    "title": "Santa Misa de Casamiento",
+    "place": "Iglesia San Pedro y San Pablo",
+    "address": "Calle Carlos Figueroa · San Pablo de Reyes · Jujuy",
+    "gpsUrl": "https://maps.google.com/?q=..."
+  },
+  "celebration": {
+    "time": "18:30",
+    "title": "Recepción, cena & fiesta",
+    "place": "El Quincho del Predio de Reyes",
+    "address": "A 4 cuadras de la ceremonia · San Pablo de Reyes",
+    "gpsUrl": "https://maps.google.com/?q=..."
+  },
+  "dressCode": {
+    "title": "Estética Edén",
+    "concept": "Inspirado en la naturaleza al atardecer...",
+    "women": "Vestido formal en paleta natural...",
+    "men": "Traje formal con corbata o moño...",
+    "note": "No hace falta comprar de nuevo..."
+  },
+  "ticket": {
+    "enabled": true,
+    "price": 35000,
+    "currency": "ARS",
+    "title": "Tarjeta de Casamiento",
+    "description": "..."
+  },
+  "bank": {
+    "holder": "Julián Morales & Carla Quiroga",
+    "alias": "JULIAN.Y.CARLA.BODA",
+    "cbu": "0070012345678901234567",
+    "mpUrl": "https://mpago.la/LINK_LIBRE"
+  }
 }
 ```
 
-Flujo: RSVP guarda el tema anónimo → Admin Pista “Sumar canciones de invitados” → Descargar `pista.json` → reemplazar en la raíz → push. Sin ese push, el resto de invitados no ve la lista.
+Para editarlo: entrar al Admin → Pestaña **Sitio & Tarjeta** → Modificar campos → "Descargar site-content.json" → reemplazar en la raíz y commitear.
 
-YouTube se escucha sin Premium. No usar Spotify.
+## Invitación (`index.html`)
 
-## Placeholders que siguen vacíos (los novios / el dev tienen que completar)
+- Carga automáticamente `site-content.json` con fallback a `localStorage` y defaults en el cliente.
+- Gate de acceso para invitados: contraseña `18dic`.
+- Formulario RSVP registra nombre, WhatsApp, email, cupo, restricciones alimentarias, tema musical y dedicatoria.
+- Genera mensaje preformateado y redirige al WhatsApp de los novios.
 
-- Número WhatsApp real
-- Alias y CBU reales
-- Link Mercado Pago de monto libre
-- ID de playlist YouTube
+## Admin (`admin.html`)
+
+- Credenciales por defecto: usuario `julianycarla` / contraseña `5pamplona`.
+- Pestañas disponibles:
+  - **Invitados**: Filtros por estado (`confirmado`, `pendiente`, `posible`, `no_asiste`, `diet`), edición, teléfono, mail y exportación CSV.
+  - **Súper & Bebidas**: Stock actual con envases específicos, ofertas de compra y provisiones automáticas según cubiertos confirmados.
+  - **Mesas**: Distribución automática configurable (por defecto 8 sillas por mesa).
+  - **Equipo**: Registro de proveedores, costos y señas.
+  - **Pista**: Gestión de temas solicitados por invitados, ID de playlist de YouTube y descarga de `pista.json`.
+  - **Sitio & Tarjeta**: Control editorial de textos, GPS y precio unitario de tarjeta con cálculo en tiempo real de recaudación proyectada.
