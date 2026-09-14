@@ -117,3 +117,23 @@ footer .display{font-size:2.8rem}
 
 .address-link{display:inline-block;margin-top:.15rem;text-decoration:underline;text-decoration-color:rgba(74,88,68,.32);text-underline-offset:.22em}
 .address-link:hover{color:var(--ink);text-decoration-color:currentColor}
+
+/* Editorial botanical pass — scenery scrolls with the invitation */
+body{background:radial-gradient(circle at 18% 8%,rgba(124,139,111,.07),transparent 24rem),radial-gradient(circle at 88% 28%,rgba(174,96,63,.055),transparent 28rem),var(--paper)}
+#site{overflow:hidden;background:linear-gradient(180deg,rgba(255,253,248,.18),transparent 16%,rgba(239,233,219,.18) 66%,transparent)}
+#site:before,#site:after{position:absolute;top:90px;bottom:80px;width:160px;height:auto;z-index:0;opacity:.62;background-repeat:repeat-y;background-size:150px 590px}
+#site:before{left:-34px;transform:rotate(-3deg)}#site:after{right:-38px;transform:scaleX(-1) rotate(-3deg)}
+.hero{position:relative;min-height:78vh;display:flex;flex-direction:column;justify-content:center}
+.hero:before{content:"J · C";position:absolute;inset:auto 0 50%;transform:translateY(50%);z-index:-1;font:400 clamp(8rem,28vw,22rem)/1 Italiana,Georgia,serif;letter-spacing:.02em;color:rgba(74,88,68,.035);white-space:nowrap;overflow:hidden}
+.hero:after{content:"";width:72px;height:1px;background:var(--clay);opacity:.58;margin:30px auto 0}
+main>section{position:relative}
+main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(255,253,248,.6) 16%,rgba(255,253,248,.6) 84%,transparent);border-block:1px solid rgba(203,195,178,.42)}
+.section-title:after{content:"✦";display:block;margin:.9rem auto 0;color:var(--clay);font-size:.72rem;opacity:.62}
+.card{border-radius:22px;box-shadow:0 18px 55px rgba(39,48,38,.065)}
+.event,.gift-card,.rsvp-card,.note-box{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.event:hover,.gift-card:hover{transform:translateY(-3px);box-shadow:0 24px 66px rgba(39,48,38,.095);border-color:rgba(74,88,68,.32)}
+.event{background:linear-gradient(155deg,rgba(255,253,248,.78),rgba(239,233,219,.38))}
+.event-time{color:var(--clay);text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.btn{border-radius:999px;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(39,48,38,.09)}
+.gate-box{border-radius:26px}.gate-code{border-radius:14px}.choice{border-radius:16px}
+@media(max-width:760px){#site:before,#site:after{width:86px;opacity:.40;background-size:82px 470px;top:110px;bottom:50px}.hero{min-height:72vh}.hero:before{font-size:clamp(7rem,42vw,12rem)}main>section:nth-child(even){background:rgba(255,253,248,.42)}}
