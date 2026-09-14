@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup diario de la boda
+
+[Timer]
+OnCalendar=*-*-* 04:17:00
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

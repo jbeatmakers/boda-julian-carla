@@ -1,168 +1,210 @@
-<!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<!doctype html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-<title>Julián & Carla — 18 de Diciembre de 2026</title>
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://boda-julian-carla.bpm.red/">
-<meta property="og:title" content="Julián & Carla — 18 de Diciembre de 2026">
-<meta property="og:description" content="Invitación de Casamiento · San Pablo de Reyes, Jujuy · Confirmá tu asistencia.">
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{display:['"Italiana"','serif'],serif:['"Cormorant Garamond"','serif'],caps:['"Montserrat"','sans-serif']},colors:{ink:'#2A3226',olive:'#4A5844',sage:'#7C8B6F',paper:'#F6F2E9',parchment:'#EFE9DB',clay:'#B0603F',hairline:'#C9C2B0'}}}}</script>
-<style>
-body{background-color:#F6F2E9}
-.smallcaps{font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.32em;font-size:11px}
-.leafrule{height:14px;flex:1 1 auto;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='14' fill='none' stroke='%237C8B6F' stroke-width='1'%3E%3Cpath d='M0 7h26'/%3E%3C/svg%3E");background-repeat:repeat-x}
-.leader{flex:1 1 auto;border-bottom:1px dotted #B9B19E;transform:translateY(-5px);min-width:1.5rem}
-.plate{border:1px solid #C9C2B0;background:rgba(255,255,255,.35)}
-.field{width:100%;background:transparent;border:0;border-bottom:1px solid #C9C2B0;padding:.55rem .1rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:#2A3226;outline:none}
-.btn-ink{background:#2A3226;color:#F6F2E9;transition:.2s}
-.btn-ink:hover{background:#4A5844}
-.btn-line{border:1px solid #2A3226;color:#2A3226;transition:.2s}
-.btn-line:hover{background:#2A3226;color:#F6F2E9}
-.copylink{font-family:Montserrat,sans-serif;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:#4A5844;border-bottom:1px solid #7C8B6F;background:none;cursor:pointer}
-#lockScreen{position:fixed;inset:0;background:#F6F2E9;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center}
-#lockScreen input{background:transparent;border:0;border-bottom:1px solid #C9C2B0;padding:.6rem 1rem;font-family:'Cormorant Garamond',serif;font-size:1.5rem;text-align:center;outline:none}
-#lockError{color:#B0603F;font-size:.85rem;margin-top:1rem;opacity:0}
-#lockError.visible{opacity:1}
-@media print{.no-print{display:none}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <meta name="wedding-api" content="https://boda-api.bpm.red">
+  <title>Julián & Carla — 18 de diciembre de 2026</title>
+  <meta property="og:title" content="Julián & Carla — 18 de diciembre de 2026">
+  <meta property="og:description" content="Nos casamos. Acá encontrás horarios, mapas y confirmación.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body class="text-ink font-serif antialiased overflow-x-hidden">
-<div id="lockScreen">
-<h2 class="font-display text-3xl md:text-4xl text-ink mb-2">Invitación exclusiva</h2>
-<p class="smallcaps text-olive/70 mb-6">Ingresá la contraseña para acceder</p>
-<input type="password" id="passInput" placeholder="····" autocomplete="off" onkeydown="if(event.key==='Enter') checkPassword()">
-<p id="lockError">Contraseña incorrecta.</p>
+<body class="locked">
+<div id="gate">
+  <div class="gate-box card">
+    <div class="eyebrow">Julián & Carla · 18 · XII · 2026</div>
+    <h1 class="display">Nos casamos</h1>
+    <p class="muted">Ingresá el código de la invitación para entrar.</p>
+    <form id="gateForm">
+      <input id="gateCode" class="field gate-code" inputmode="text" autocomplete="off" maxlength="12" placeholder="Código" aria-label="Código de acceso">
+      <p id="gateError" class="gate-error" aria-live="polite"></p>
+      <button class="btn primary" type="submit">Entrar</button>
+    </form>
+  </div>
 </div>
-<div id="mainContent" class="hidden">
-<div class="fixed inset-2 md:inset-4 border border-hairline pointer-events-none z-40"></div>
-<header class="relative z-10 max-w-3xl mx-auto px-6 pt-16 md:pt-24 pb-14 text-center">
-<div class="flex items-center gap-4 smallcaps text-olive/80"><span class="leafrule"></span><span id="headerLocation">San Pablo de Reyes · Jujuy</span><span id="headerDate">18 · XII · 2026</span><span class="leafrule"></span></div>
-<p class="smallcaps text-olive mt-10">Nos casamos</p>
-<h1 class="font-display text-[17vw] md:text-[8.5rem] leading-none mt-4" id="headerNames">Julián <span class="font-serif italic text-clay text-[10vw] md:text-[4.5rem] align-middle">&</span> Carla</h1>
-<div class="mt-10"><p class="smallcaps text-olive/70">Faltan</p>
-<div id="countdown" class="mt-3 flex items-end justify-center divide-x divide-hairline">
-<div class="px-4 md:px-7"><span id="days" class="block font-display text-4xl md:text-7xl">00</span><span class="smallcaps text-olive/60 block mt-1">Días</span></div>
-<div class="px-4 md:px-7"><span id="hours" class="block font-display text-4xl md:text-7xl">00</span><span class="smallcaps text-olive/60 block mt-1">Hs</span></div>
-<div class="px-4 md:px-7"><span id="minutes" class="block font-display text-4xl md:text-7xl">00</span><span class="smallcaps text-olive/60 block mt-1">Min</span></div>
-<div class="px-4 md:px-7"><span id="seconds" class="block font-display text-4xl md:text-7xl text-clay">00</span><span class="smallcaps text-olive/60 block mt-1">Seg</span></div>
-</div></div>
-<div class="mt-12 flex flex-col sm:flex-row justify-center gap-3 no-print">
-<a href="#rsvp" class="btn-ink smallcaps px-10 py-4 !text-[11.5px]">Confirmar asistencia</a>
-<a href="#tarjeta" class="btn-line smallcaps px-10 py-4 !text-[11.5px]">Tarjeta & Regalo</a>
-</div></header>
 
-<section class="relative z-10 max-w-4xl mx-auto px-6 py-16">
-<p class="smallcaps text-clay text-center">Nº I — Nº II</p>
-<h2 class="font-display text-5xl md:text-6xl text-center mt-2">Ceremonia & Celebración</h2>
-<div class="mt-10 grid md:grid-cols-2 md:divide-x md:divide-hairline gap-12 md:gap-0">
-<div class="text-center md:px-10 space-y-3">
-<p class="smallcaps text-olive/70">I · La Ceremonia</p>
-<p class="font-display text-7xl" id="ceremonyTime">17<span class="text-clay">:</span>00</p>
-<p class="font-serif italic text-2xl mt-4" id="ceremonyTitle">Santa Misa de Casamiento</p>
-<p class="font-serif text-xl" id="ceremonyPlace">Iglesia San Pedro y San Pablo</p>
-<p class="text-sm text-olive/80" id="ceremonyAddress">Calle Carlos Figueroa · San Pablo de Reyes · Jujuy</p>
-<a id="ceremonyGps" href="https://maps.google.com/?q=Iglesia+San+Pedro+y+San+Pablo,+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa ↗</a>
-</div>
-<div class="text-center md:px-10 space-y-3">
-<p class="smallcaps text-olive/70">II · La Celebración</p>
-<p class="font-display text-7xl" id="celebrationTime">18<span class="text-clay">:</span>30</p>
-<p class="font-serif italic text-2xl mt-4" id="celebrationTitle">Recepción, cena & fiesta</p>
-<p class="font-serif text-xl" id="celebrationPlace">El Quincho del Predio de Reyes</p>
-<p class="text-sm text-olive/80" id="celebrationAddress">A 4 cuadras de la ceremonia · San Pablo de Reyes</p>
-<a id="celebrationGps" href="https://maps.google.com/?q=Complejo+San+Pablo+de+Reyes,+Jujuy" target="_blank" rel="noopener" class="copylink inline-block mt-2 no-print">Ver mapa ↗</a>
-</div>
-</div></section>
+<div id="site" class="hidden">
+  <div class="frame"></div>
+  <header class="hero wrap">
+    <div class="eyebrow"><span id="heroLocation">San Pablo de Reyes · Jujuy</span> · <span>18 · XII · 2026</span></div>
+    <h1 class="display">Julián <span class="amp">&</span> Carla</h1>
+    <p class="muted">Queremos compartir este día con vos.</p>
+    <div class="countdown" id="countdown" aria-label="Cuenta regresiva">
+      <div><strong id="cdDays">00</strong><span class="eyebrow">Días</span></div>
+      <div><strong id="cdHours">00</strong><span class="eyebrow">Hs</span></div>
+      <div><strong id="cdMinutes">00</strong><span class="eyebrow">Min</span></div>
+      <div><strong id="cdSeconds">00</strong><span class="eyebrow">Seg</span></div>
+    </div>
+    <div class="hero-actions">
+      <a class="btn primary" href="#rsvp">Confirmar asistencia</a>
+      <a class="btn" href="#lugares">Horarios y mapas</a>
+    </div>
+  </header>
 
-<section class="relative z-10 max-w-2xl mx-auto px-6 py-16">
-<p class="smallcaps text-clay text-center">Nº III — Dress Code</p>
-<h2 class="font-display text-5xl md:text-6xl text-center mt-2" id="dressCodeTitle">Estética Edén</h2>
-<div class="plate p-7 md:p-10 mt-10 space-y-6">
-<p class="font-serif text-xl md:text-2xl leading-relaxed text-center italic" id="dressCodeConcept">Inspirado en la naturaleza al atardecer: una gala fresca, sofisticada y luminosa.</p>
-<div class="grid sm:grid-cols-2 gap-6 text-center">
-<div><p class="smallcaps text-olive/80">Ellas</p><p class="italic text-olive mt-2" id="dressCodeWomen">Vestido formal en paleta natural o floral noble.<br>Acentos de perlas en joyas, peinado o complementos.</p></div>
-<div><p class="smallcaps text-olive/80">Ellos</p><p class="italic text-olive mt-2" id="dressCodeMen">Traje formal con corbata o moño.<br>Pañuelo de seda o prendedor sutil.</p></div>
-</div>
-<p class="text-sm text-center text-stone-600" id="dressCodeNote">No hace falta comprar de nuevo: se puede elevar un conjunto formal con perlas, pañuelo o accesorios a tono.</p>
-<p class="smallcaps text-olive/60 text-center" id="dressCodeReservation">Reserva de color: exclusivo novios</p>
-</div></section>
+  <main>
+    <section id="lugares">
+      <div class="wrap">
+        <div class="section-title">
+          <div class="eyebrow">Ceremonia & celebración</div>
+          <h2 class="display">El casamiento</h2>
+          <p class="muted">Los dos lugares quedan muy cerca entre sí.</p>
+        </div>
+        <div class="event-grid">
+          <article class="event card">
+            <div class="eyebrow">I · Ceremonia</div>
+            <div class="event-time" id="ceremonyTime">17:00</div>
+            <h3 id="ceremonyTitle">Santa Misa de Casamiento</h3>
+            <p id="ceremonyPlace">Iglesia San Pedro y San Pablo</p>
+            <a class="muted small address-link celebrate-link" id="ceremonyAddress" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14581,-65.39445">Carlos Figueroa · San Pablo de Reyes · Jujuy ↗</a>
+            <div class="map">
+              <iframe id="ceremonyMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la ceremonia" src="https://www.google.com/maps?q=-24.14581,-65.39445&z=16&output=embed"></iframe>
+            </div>
+            <div class="map-actions">
+              <a id="ceremonyDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14581,-65.39445">Cómo llegar ↗</a>
+            </div>
+          </article>
 
-<section id="rsvp" class="relative z-10 max-w-xl mx-auto px-6 py-16">
-<p class="smallcaps text-clay text-center">Nº IV — R.S.V.P.</p>
-<h2 class="font-display text-5xl md:text-6xl text-center mt-2">Confirmación</h2>
-<p class="text-center italic text-olive mt-3">Agradecemos responder antes del 1º de diciembre</p>
-<form id="rsvpForm" class="mt-12 space-y-6" onsubmit="handleRSVP(event)">
-<div class="grid grid-cols-2 gap-4">
-<label class="plate cursor-pointer p-5 text-center has-[:checked]:border-ink has-[:checked]:bg-parchment"><input type="radio" name="attendance" value="Sí, confirmo asistencia" checked class="sr-only" onchange="toggleAttendance(true)"><span class="font-display text-3xl block">Sí</span><span class="smallcaps text-olive/70 block mt-1">Asistiré</span></label>
-<label class="plate cursor-pointer p-5 text-center has-[:checked]:border-ink has-[:checked]:bg-parchment"><input type="radio" name="attendance" value="No podré asistir" class="sr-only" onchange="toggleAttendance(false)"><span class="font-display text-3xl block">No</span><span class="smallcaps text-olive/70 block mt-1">No podré ir</span></label>
-</div>
-<div><label class="smallcaps text-olive mb-1 block">Nombre y apellido *</label><input type="text" id="fullName" required class="field" placeholder="Tu nombre completo"></div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div><label class="smallcaps text-olive mb-1 block">WhatsApp / Teléfono</label><input type="tel" id="guestPhone" class="field" placeholder="Ej: 388 1234567"></div>
-<div><label class="smallcaps text-olive mb-1 block">Email</label><input type="email" id="guestEmail" class="field" placeholder="tunombre@correo.com"></div>
-</div>
-<div id="attendingFields" class="space-y-6">
-<div><label class="smallcaps text-olive mb-1 block">Lugares a reservar</label><select id="guestsCount" class="field"><option value="1 persona">1 persona</option><option value="2 personas (con acompañante)">2 personas (con acompañante)</option><option value="Grupo familiar">Grupo familiar</option></select></div>
-<div><button type="button" onclick="toggleMenuSpecial()" class="text-left text-xs uppercase tracking-wider text-sage">+ ¿Necesitás indicar alguna restricción alimentaria?</button>
-<div id="specialMenuContainer" class="hidden mt-4 p-4 plate space-y-3"><select id="dietarySelect" class="field"><option value="">Seleccionar restricción...</option><option value="Celíaco (sin TACC)">Celíaco (sin TACC)</option><option value="Vegetariano">Vegetariano</option><option value="Vegano">Vegano</option><option value="Sin sal agregada">Sin sal agregada</option><option value="Otra restricción">Otra</option></select><input type="text" id="dietaryDetail" class="field" placeholder="Detalle adicional (opcional)"></div></div>
-<div><label class="smallcaps text-olive mb-1 block">Canción que no puede faltar</label><input type="text" id="songRequest" class="field" placeholder="Tema y artista (opcional)"></div>
-</div>
-<div id="declinedMessagePanel" class="hidden plate p-6 text-center space-y-4"><p class="italic text-xl">¡Brindaremos y festejaremos teniéndote muy presente!</p><p class="text-xs text-stone-500">Si querés acompañarnos con un presente a la distancia, podés usar los datos bancarios de abajo.</p></div>
-<div><label class="smallcaps text-olive mb-1 block">Dedicatoria / Nota</label><textarea id="message" rows="2" class="field resize-none" placeholder="Unas palabras (opcional)"></textarea></div>
-<button type="submit" class="btn-ink smallcaps w-full py-5 !text-[11.5px] no-print">Enviar confirmación</button>
-</form></section>
+          <article class="event card">
+            <div class="eyebrow">II · Celebración</div>
+            <div class="event-time" id="celebrationTime">18:30</div>
+            <h3 id="celebrationTitle">Recepción, cena & fiesta</h3>
+            <p id="celebrationPlace">Quincho · San Pablo de Reyes</p>
+            <a class="muted small address-link celebrate-link" id="celebrationAddress" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14816,-65.39326">A unos 300 metros de la ceremonia · abrir ubicación ↗</a>
+            <div class="map">
+              <iframe id="celebrationMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la celebración" src="https://www.google.com/maps?q=-24.14816,-65.39326&z=17&output=embed"></iframe>
+            </div>
+            <div class="map-actions">
+              <a id="celebrationDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14816,-65.39326">Cómo llegar ↗</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
 
-<section id="pistaPublica" class="relative z-10 max-w-2xl mx-auto px-6 py-16">
-<p class="smallcaps text-clay text-center">La pista</p>
-<h2 class="font-display text-5xl md:text-6xl text-center mt-2">Temas de la fiesta</h2>
-<p class="text-center italic text-olive mt-3 text-lg">Los invitados van sumando canciones. Se publica el tema, no quién lo pidió.</p>
-<div class="plate p-6 md:p-8 mt-8 space-y-6">
-<iframe id="pistaPlayer" class="hidden w-full aspect-video border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Pista"></iframe>
-<p id="pistaEmpty" class="text-center text-stone-500 italic">La pista se va armando con los temas que sugieran.</p>
-<ul id="pistaSongList" class="font-serif text-lg leading-relaxed"></ul>
-</div></section>
+    <section>
+      <div class="narrow">
+        <div class="section-title">
+          <div class="eyebrow">Dress code</div>
+          <h2 class="display" id="dressTitle">Estética Edén</h2>
+        </div>
+        <div class="note-box card">
+          <p id="dressConcept"><em>Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.</em></p>
+          <p class="small muted" id="dressDetails">Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche.</p>
+        </div>
+      </div>
+    </section>
 
-<section id="tarjeta" class="relative z-10 max-w-2xl mx-auto px-6 py-16">
-<p class="smallcaps text-clay text-center">Nº V — Tarjeta & Regalo</p>
-<h2 class="font-display text-5xl md:text-6xl text-center mt-2">Tarjeta & Mesa de Regalos</h2>
-<div id="ticketBlock" class="plate p-7 md:p-9 space-y-3 mt-8">
-<div class="flex items-baseline justify-between"><h3 class="font-display text-3xl" id="ticketTitle">Tarjeta de Casamiento</h3><span class="font-display text-2xl text-clay font-bold" id="ticketAmount">$35.000</span></div>
-<p class="italic text-stone-600 text-sm leading-relaxed" id="ticketDesc">Para acompañarnos en la celebración, podés abonar la tarjeta correspondiente a tu lugar antes del 1º de diciembre mediante transferencia bancaria o Mercado Pago.</p>
-</div>
-<div class="mt-8 space-y-6">
-<div class="plate p-7 md:p-9 space-y-4"><h3 class="font-display text-2xl">Transferencia bancaria</h3>
-<div class="flex items-baseline gap-3"><span class="smallcaps text-olive/70 shrink-0">Titulares</span><span class="leader"></span><span id="bankHolder" class="text-right">Julián Morales & Carla Quiroga</span></div>
-<div class="flex items-baseline gap-3"><span class="smallcaps text-olive/70 shrink-0">Alias</span><span class="leader"></span><span id="aliasVal" class="font-mono text-sm font-bold">JULIAN.Y.CARLA.BODA</span><button type="button" onclick="copyData('aliasVal')" class="copylink no-print">Copiar</button></div>
-<div class="flex items-baseline gap-3"><span class="smallcaps text-olive/70 shrink-0">CBU</span><span class="leader"></span><span id="cbuVal" class="font-mono text-xs truncate">0070012345678901234567</span><button type="button" onclick="copyData('cbuVal')" class="copylink no-print">Copiar</button></div></div>
-<div class="plate p-7 md:p-9 text-center space-y-4"><h3 class="font-display text-2xl">Mercado Pago</h3><p class="italic text-stone-600 text-sm">Podés colaborar o abonar la tarjeta directamente con tarjeta o dinero en cuenta:</p><a id="mpLinkBtn" href="https://mpago.la/LINK_LIBRE" target="_blank" rel="noopener" class="btn-ink smallcaps inline-flex px-8 py-4 !text-[11px] no-print">Pagar con Mercado Pago</a></div>
-</div>
-<p id="toastSuccess" class="hidden text-center smallcaps text-olive mt-6 border border-hairline py-3">✓ Copiado al portapapeles</p>
-</section>
+    <section id="rsvp">
+      <div class="narrow">
+        <div class="section-title">
+          <div class="eyebrow">R.S.V.P.</div>
+          <h2 class="display">¿Nos acompañás?</h2>
+          <p class="muted">Nos ayuda mucho que respondas antes del <span id="rsvpDeadline">1 de diciembre</span>.</p>
+        </div>
+        <form id="rsvpForm" class="rsvp-card card" novalidate>
+          <div class="choice-grid">
+            <label class="choice">
+              <input type="radio" name="attendance" value="yes" checked>
+              <strong>Sí</strong><span class="eyebrow">Voy</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="attendance" value="no">
+              <strong>No</strong><span class="eyebrow">No podré ir</span>
+            </label>
+          </div>
 
-<footer class="relative z-10 max-w-3xl mx-auto px-6 pb-24 text-center">
-<p class="font-display text-4xl mt-6" id="footerNames">Julián & Carla</p>
-<p class="smallcaps text-olive/70 mt-4" id="footerDetails">18 de Diciembre de 2026 · San Pablo de Reyes · Jujuy</p>
-</footer>
+          <div class="form-row">
+            <label class="label" for="fullName">Nombre y apellido *</label>
+            <input class="field" id="fullName" autocomplete="name" required>
+          </div>
+          <div class="form-grid form-row">
+            <div><label class="label" for="phone">WhatsApp / teléfono</label><input class="field" id="phone" autocomplete="tel"></div>
+            <div><label class="label" for="email">Email</label><input class="field" id="email" type="email" autocomplete="email"></div>
+          </div>
+
+          <div id="attendingFields">
+            <div class="form-grid form-row">
+              <div>
+                <label class="label" for="seats">Lugares a reservar</label>
+                <select class="field" id="seats">
+                  <option value="1">1 persona</option>
+                  <option value="2">2 personas</option>
+                  <option value="3">3 personas</option>
+                  <option value="4">4 personas</option>
+                  <option value="5">5 personas</option>
+                  <option value="6">6 personas</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" for="diet">Restricción alimentaria</label>
+                <input class="field" id="diet" placeholder="Solo si hace falta">
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="label" for="song">Una canción que no puede faltar</label>
+              <input class="field" id="song" placeholder="Tema — artista (opcional)">
+            </div>
+          </div>
+
+          <div id="declineMessage" class="note-box card hidden form-row">
+            <p>Gracias por avisarnos. Está todo bien: nos alegra igual que seas parte de nuestra vida.</p>
+            <p class="small muted">No tenés que abonar ninguna tarjeta. Más abajo dejamos una opción de regalo solo para quien tenga ganas; no hace falta.</p>
+          </div>
+
+          <div class="form-row">
+            <label class="label" for="message">Dedicatoria / nota</label>
+            <textarea class="field" id="message" rows="2" placeholder="Unas palabras, si querés"></textarea>
+          </div>
+          <button id="rsvpSubmit" class="btn primary" type="submit" style="width:100%;margin-top:22px">Enviar confirmación</button>
+          <div id="rsvpStatus" class="form-status hidden" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="regalos">
+      <div class="narrow">
+        <div class="section-title">
+          <div class="eyebrow">Tarjeta & regalos</div>
+          <h2 class="display">Lo importante es compartir</h2>
+        </div>
+        <div class="gift-grid">
+          <article id="ticketCard" class="gift-card card">
+            <div class="eyebrow">Si venís</div>
+            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Tarjeta de la celebración</h3>
+            <div class="price" id="ticketPrice">$35.000</div>
+            <p class="muted small" id="ticketText">Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso.</p>
+          </article>
+          <article class="gift-card card">
+            <div class="eyebrow">Un regalo, solo si querés</div>
+            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Cualquier forma está bien</h3>
+            <p>Para nosotros, estar o hacernos llegar unas palabras ya es un regalo.</p>
+            <p class="muted small">Si además querés regalarnos algo, puede ser un detalle de cualquier tipo. Y si te resulta más práctico sumarlo a una transferencia, podés hacerlo con el monto que vos quieras, sin montos sugeridos.</p>
+          </article>
+        </div>
+
+        <article id="paymentCard" class="gift-card card hidden" style="margin-top:18px">
+          <div class="eyebrow">Datos para transferencia</div>
+          <div class="bank-grid">
+            <span>Titular</span><strong id="bankHolder"></strong><span></span>
+            <span>Alias</span><strong id="bankAlias"></strong><button class="copy" type="button" data-copy="bankAlias">Copiar</button>
+            <span>CBU/CVU</span><strong id="bankCbu"></strong><button class="copy" type="button" data-copy="bankCbu">Copiar</button>
+          </div>
+          <a id="mpLink" class="btn primary hidden" target="_blank" rel="noopener" style="margin-top:18px">Mercado Pago ↗</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <div class="display">Julián & Carla</div>
+    <div class="eyebrow">18 de diciembre de 2026 · Jujuy</div>
+  </footer>
 </div>
-<script src="js/public-pista.js" defer></script>
-<script>
-const CONFIG_KEY="boda_julian_carla_config",GUESTS_KEY="boda_julian_carla_guests",ACCESS_KEY="boda_julian_carla_access",PISTA_KEY="boda_julian_carla_pista",SITE_KEY="boda_julian_carla_site";
-let siteData=null;
-function getConfig(){const saved=localStorage.getItem(CONFIG_KEY);return saved?JSON.parse(saved):{phone:"5491112345678",webhookUrl:"",alias:"JULIAN.Y.CARLA.BODA",cbu:"0070012345678901234567",mpUrl:"https://mpago.la/LINK_LIBRE"}}
-document.addEventListener("DOMContentLoaded",()=>{initSiteContent();if(sessionStorage.getItem(ACCESS_KEY)==="granted")unlockPage()});
-async function initSiteContent(){try{const res=await fetch("./site-content.json",{cache:"no-store"});if(res.ok){siteData=await res.json();localStorage.setItem(SITE_KEY,JSON.stringify(siteData))}}catch(e){}if(!siteData){try{siteData=JSON.parse(localStorage.getItem(SITE_KEY))}catch(e){}}if(siteData)applySiteContent(siteData)}
-function applySiteContent(d){if(!d)return;const set=(id,val)=>{const el=document.getElementById(id);if(el&&val!==undefined&&val!=="")el.innerText=val};const setHtml=(id,val)=>{const el=document.getElementById(id);if(el&&val!==undefined&&val!=="")el.innerHTML=val};if(d.couple){set("headerNames",d.couple);set("footerNames",d.couple)}if(d.locationDisplay)set("headerLocation",d.locationDisplay);if(d.dateDisplayShort)set("headerDate",d.dateDisplayShort);if(d.dateDisplay&&d.locationDisplay)set("footerDetails",d.dateDisplay+" · "+d.locationDisplay);if(d.ceremony){set("ceremonyTime",d.ceremony.time);set("ceremonyTitle",d.ceremony.title);set("ceremonyPlace",d.ceremony.place);set("ceremonyAddress",d.ceremony.address);const cg=document.getElementById("ceremonyGps");if(cg&&d.ceremony.gpsUrl)cg.href=d.ceremony.gpsUrl}if(d.celebration){set("celebrationTime",d.celebration.time);set("celebrationTitle",d.celebration.title);set("celebrationPlace",d.celebration.place);set("celebrationAddress",d.celebration.address);const fg=document.getElementById("celebrationGps");if(fg&&d.celebration.gpsUrl)fg.href=d.celebration.gpsUrl}if(d.dressCode){set("dressCodeTitle",d.dressCode.title);set("dressCodeConcept",d.dressCode.concept);setHtml("dressCodeWomen",d.dressCode.women);setHtml("dressCodeMen",d.dressCode.men);set("dressCodeNote",d.dressCode.note)}if(d.ticket){const tb=document.getElementById("ticketBlock");if(tb){if(d.ticket.enabled===false)tb.classList.add("hidden");else{tb.classList.remove("hidden");set("ticketTitle",d.ticket.title||"Tarjeta de Casamiento");if(d.ticket.price)set("ticketAmount","$"+Number(d.ticket.price).toLocaleString("es-AR"));set("ticketDesc",d.ticket.description)}}}if(d.bank){set("bankHolder",d.bank.holder);set("aliasVal",d.bank.alias);set("cbuVal",d.bank.cbu);const mp=document.getElementById("mpLinkBtn");if(mp&&d.bank.mpUrl)mp.href=d.bank.mpUrl}}
-function checkPassword(){const input=document.getElementById("passInput").value.trim().toLowerCase();if(input==="18dic"){sessionStorage.setItem(ACCESS_KEY,"granted");unlockPage()}else document.getElementById("lockError").classList.add("visible")}
-function unlockPage(){document.getElementById("lockScreen").style.display="none";document.getElementById("mainContent").classList.remove("hidden");applyConfig();if(siteData)applySiteContent(siteData);updateTimer()}
-function applyConfig(){const cfg=getConfig();const setTxt=(id,v)=>{const e=document.getElementById(id);if(e&&v)e.innerText=v};setTxt("aliasVal",cfg.alias);setTxt("cbuVal",cfg.cbu);const mp=document.getElementById("mpLinkBtn");if(mp&&cfg.mpUrl)mp.href=cfg.mpUrl}
-const targetDate=new Date("2026-12-18T17:00:00-03:00").getTime();
-function updateTimer(){const diff=targetDate-Date.now();if(diff<=0){const el=document.getElementById("countdown");if(el)el.innerHTML="<p class='font-serif italic text-2xl text-clay px-6'>¡Hoy es el gran día!</p>";return}const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=String(v).padStart(2,'0')};set("days",Math.floor(diff/86400000));set("hours",Math.floor(diff%86400000/3600000));set("minutes",Math.floor(diff%3600000/60000));set("seconds",Math.floor(diff%60000/1000))}
-setInterval(updateTimer,1000);
-function toggleAttendance(attending){document.getElementById("attendingFields").classList.toggle("hidden",!attending);document.getElementById("declinedMessagePanel").classList.toggle("hidden",attending)}
-function toggleMenuSpecial(){document.getElementById("specialMenuContainer").classList.toggle("hidden")}
-function handleRSVP(e){e.preventDefault();const att=(document.querySelector('input[name="attendance"]:checked')||{}).value||\"Sí, confirmo asistencia\";const name=document.getElementById("fullName").value.trim();const phone=(document.getElementById("guestPhone")?.value||\"\").trim();const email=(document.getElementById("guestEmail")?.value||\"\").trim();const cnt=document.getElementById("guestsCount").value;const dietarySel=document.getElementById("dietarySelect").value;const dietaryDet=document.getElementById("dietaryDetail").value.trim();const song=document.getElementById("songRequest").value.trim();const msg=document.getElementById("message").value.trim();const isAtt=att.includes("confirmo")||att.includes("Sí");if(isAtt&&typeof confetti==="function")confetti({particleCount:75,spread:60,origin:{y:.65},colors:['#7C8B6F','#4A5844','#B0603F','#C9C2B0']});const guestRecord={id:Date.now().toString(),name,phone,email,attendance:att,listStatus:isAtt?\"confirmado\":\"no_asiste\",places:isAtt?cnt:\"-\",diet:dietarySel?(dietaryDet?dietarySel+\" (\"+dietaryDet+\")\":dietarySel):\"\",song,notes:msg,date:new Date().toISOString().split(\"T\")[0]};try{const existing=JSON.parse(localStorage.getItem(GUESTS_KEY)||\"[]\");existing.unshift(guestRecord);localStorage.setItem(GUESTS_KEY,JSON.stringify(existing))}catch(err){}if(song){try{const pista=JSON.parse(localStorage.getItem(PISTA_KEY)||\"[]\");if(!pista.some(s=>(s.title||\"\").toLowerCase()===song.toLowerCase())){pista.push({title:song,at:new Date().toISOString()});localStorage.setItem(PISTA_KEY,JSON.stringify(pista))}}catch(err){}}const cfg=getConfig();if(cfg.webhookUrl&&cfg.webhookUrl.startsWith(\"http\")){fetch(cfg.webhookUrl,{method:\"POST\",mode:\"no-cors\",headers:{\"Content-Type\":\"application/json\"},body:JSON.stringify(guestRecord)}).catch(function(){})}let t=\"*Confirmación de Boda — Julián & Carla*\\n\\n👤 *Nombre:* \"+name+\"\\n📍 *Asistencia:* \"+att+\"\\n\";if(phone)t+=\"📱 *Tel:* \"+phone+\"\\n\";if(email)t+=\"✉️ *Email:* \"+email+\"\\n\";if(isAtt){t+=\"👥 *Lugares:* \"+cnt+\"\\n\";if(dietarySel)t+=\"🍽️ *Menú:* \"+dietarySel+(dietaryDet?\" (\"+dietaryDet+\")\":\"\")+\"\\n\";if(song)t+=\"🎵 *Tema:* \"+song+\"\\n\"}if(msg)t+=\"💌 *Mensaje:* \"+msg+\"\\n\";setTimeout(()=>window.open(\"https://wa.me/\"+(cfg.phone||\"5491112345678\")+\"?text=\"+encodeURIComponent(t),\"_blank\"),400)}\nfunction copyData(id){const el=document.getElementById(id);if(!el)return;const txt=el.innerText.trim();const toast=()=>{const t=document.getElementById(\"toastSuccess\");if(t){t.classList.remove(\"hidden\");setTimeout(()=>t.classList.add(\"hidden\"),2500)}};if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(txt).then(toast).catch(()=>fallbackCopy(txt,toast));else fallbackCopy(txt,toast)}\nfunction fallbackCopy(text,cb){const ta=document.createElement(\"textarea\");ta.value=text;ta.style.cssText=\"position:fixed;left:-9999px\";document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");if(cb)cb()}catch(e){}document.body.removeChild(ta)}\n</script>\n</body></html>\n
+
+<script src="assets/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+:root{
+  --paper:#f6f2e9;--parchment:#efe9db;--ink:#273026;--olive:#4a5844;
+  --sage:#7c8b6f;--clay:#ae603f;--line:#cbc3b2;--white:#fffdf8;
+  --ok:#2f6b4e;--warn:#9a6a25;--danger:#9d4639
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;line-height:1.5}
+body.locked{overflow:hidden}
+a{color:inherit}
+img,iframe{max-width:100%}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.wrap{width:min(1120px,calc(100% - 32px));margin:auto}
+.narrow{width:min(760px,calc(100% - 32px));margin:auto}
+.eyebrow{font-family:Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.24em;font-size:.66rem;color:var(--olive)}
+.display{font-family:Italiana,Georgia,serif;font-weight:400}
+.muted{color:#667060}
+.small{font-size:.9rem}
+.card{border:1px solid var(--line);background:rgba(255,255,255,.48);box-shadow:0 12px 38px rgba(39,48,38,.04)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:46px;padding:.75rem 1rem;border:1px solid var(--ink);text-decoration:none;font-family:Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:600;background:transparent;color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.soft{border-color:var(--line);background:rgba(255,255,255,.55)}
+.btn:focus-visible,.field:focus-visible{outline:3px solid rgba(124,139,111,.35);outline-offset:2px}
+.field{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:.72rem .15rem;color:var(--ink);outline:0}
+.field.boxed{border:1px solid var(--line);background:white;padding:.62rem .7rem}
+label.label{display:block;margin-bottom:.25rem;font-family:Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.13em;font-size:.63rem;color:var(--olive)}
+#gate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:radial-gradient(circle at 50% 25%,#fffdf9 0,var(--paper) 54%,#eee5d5 100%);padding:24px}
+.gate-box{width:min(450px,100%);text-align:center;padding:42px 28px}
+.gate-box h1{font-size:clamp(2rem,8vw,3.2rem);margin:.3rem 0}
+.gate-code{margin:1.6rem auto 0;max-width:220px;text-transform:uppercase;text-align:center;letter-spacing:.16em;font-family:Montserrat,Arial,sans-serif}
+.gate-error{min-height:1.4rem;color:var(--clay);font-size:.85rem}
+.frame{position:fixed;inset:12px;border:1px solid var(--line);pointer-events:none;z-index:50}
+.hero{padding:88px 0 68px;text-align:center}
+.hero h1{font-size:clamp(4rem,15vw,9rem);line-height:.82;margin:30px 0 18px}
+.hero .amp{font-family:"Cormorant Garamond",serif;font-style:italic;color:var(--clay);font-size:.5em}
+.hero .meta{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.countdown{display:flex;justify-content:center;margin:34px auto 0}
+.countdown>div{min-width:86px;padding:0 20px;border-right:1px solid var(--line)}
+.countdown>div:last-child{border:0}
+.countdown strong{display:block;font-family:Italiana,serif;font-size:2.5rem;font-weight:400;line-height:1}
+.hero-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:32px}
+section{padding:64px 0}
+.section-title{text-align:center;margin-bottom:34px}
+.section-title h2{font-size:clamp(2.5rem,8vw,4.5rem);line-height:1;margin:.2rem 0}
+.event-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.event{padding:28px}
+.event-time{font-family:Italiana,serif;font-size:4rem;line-height:1;margin:.5rem 0 1.1rem}
+.event h3{font-family:Italiana,serif;font-size:2rem;font-weight:400;margin:.35rem 0}
+.map{margin-top:20px;border:1px solid var(--line);overflow:hidden;background:#e8e3d9}
+.map iframe{display:block;width:100%;height:245px;border:0}
+.map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.note-box{padding:28px;text-align:center}
+.note-box p{font-size:1.25rem;margin:.4rem 0}
+.rsvp-card{padding:28px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{border:1px solid var(--line);padding:18px;text-align:center;background:rgba(255,255,255,.38)}
+.choice:has(input:checked){border-color:var(--ink);background:var(--parchment)}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice strong{display:block;font-family:Italiana,serif;font-size:2rem;font-weight:400}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-row{margin-top:18px}
+.form-status{margin-top:14px;padding:12px 14px;border:1px solid var(--line);font-size:.95rem}
+.form-status.ok{border-color:#8ab89e;background:#edf8f1;color:#28583f}
+.form-status.err{border-color:#d6a096;background:#fff4f1;color:#7c352c}
+.gift-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.gift-card{padding:28px}
+.price{font-family:Italiana,serif;font-size:3rem;color:var(--clay);line-height:1;margin:.5rem 0}
+.bank-grid{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin-top:16px}
+.bank-grid span:nth-child(3n+1){font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.58rem;color:var(--olive)}
+.copy{border:0;background:transparent;border-bottom:1px solid var(--sage);font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.58rem;color:var(--olive);padding:2px}
+footer{text-align:center;padding:48px 0 88px}
+footer .display{font-size:2.8rem}
+.confetti-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1200}
+.confetti-piece{position:absolute;top:-8vh;width:7px;height:14px;border-radius:1px;opacity:.92;animation:fall var(--dur) cubic-bezier(.19,.74,.35,1) forwards;transform:rotate(var(--rot))}
+@keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(calc(var(--rot) + 540deg));opacity:.15}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.confetti-layer{display:none}}
+@media(max-width:760px){
+  .frame{inset:6px}.hero{padding-top:72px}.event-grid,.gift-grid,.form-grid{grid-template-columns:1fr}
+  .countdown>div{min-width:68px;padding:0 10px}.countdown strong{font-size:2rem}
+  .event{padding:22px}.rsvp-card,.gift-card{padding:22px}
+}
+
+.address-link{display:inline-block;margin-top:.15rem;text-decoration:underline;text-decoration-color:rgba(74,88,68,.32);text-underline-offset:.22em}
+.address-link:hover{color:var(--ink);text-decoration-color:currentColor}

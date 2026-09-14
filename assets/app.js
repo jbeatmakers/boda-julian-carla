@@ -1,0 +1,259 @@
+(() => {
+  "use strict";
+  const ACCESS_CODE = "18DIC";
+  const ACCESS_KEY = "boda_access_v2";
+  const OUTBOX_KEY = "boda_rsvp_outbox_v2";
+  const API_BASE = (document.querySelector('meta[name="wedding-api"]')?.content || "").replace(/\/+$/,"");
+  const DEFAULTS = {
+    event_at:"2026-12-18T17:00:00-03:00",
+    location_display:"San Pablo de Reyes · Jujuy",
+    rsvp_deadline_display:"1 de diciembre",
+    ceremony:{time:"17:00",title:"Santa Misa de Casamiento",place:"Iglesia San Pedro y San Pablo",address:"Carlos Figueroa · San Pablo de Reyes · Jujuy",lat:-24.14581,lng:-65.39445},
+    celebration:{time:"18:30",title:"Recepción, cena & fiesta",place:"Quincho · San Pablo de Reyes",address:"A unos 300 metros de la ceremonia.",lat:-24.14816,lng:-65.39326},
+    dress:{title:"Estética Edén",concept:"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.",details:"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
+    ticket:{enabled:true,price:35000,currency:"ARS",text:"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
+    bank:{holder:"",alias:"",cbu:"",mp_url:""},
+    fallback_whatsapp:""
+  };
+  let config = structuredClone(DEFAULTS);
+  const $ = id => document.getElementById(id);
+  const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null && v!=="") el.textContent=v; };
+  const money = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    $("gateForm").addEventListener("submit", onGate);
+    document.querySelectorAll('input[name="attendance"]').forEach(x=>x.addEventListener("change", syncAttendance));
+    $("rsvpForm").addEventListener("submit", onRsvp);
+    document.querySelectorAll(".celebrate-link").forEach(a=>a.addEventListener("click",()=>celebrate(20)));
+    document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>copyField(b.dataset.copy,b)));
+    if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false);
+    window.addEventListener("online", flushOutbox);
+  });
+
+  function onGate(e){
+    e.preventDefault();
+    const code=($("gateCode").value||"").trim().toUpperCase();
+    if(code!==ACCESS_CODE){
+      $("gateError").textContent="Ese código no coincide. Probá de nuevo.";
+      $("gateCode").select();
+      return;
+    }
+    sessionStorage.setItem(ACCESS_KEY,"ok");
+    unlock(true);
+  }
+
+  function unlock(withCelebration){
+    $("gate").classList.add("hidden");
+    $("site").classList.remove("hidden");
+    document.body.classList.remove("locked");
+    if(withCelebration) requestAnimationFrame(()=>celebrate(42));
+    startCountdown();
+    loadPublicConfig();
+    flushOutbox();
+  }
+
+  function celebrate(count=32){
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const layer=document.createElement("div");
+    layer.className="confetti-layer";
+    const palette=["#7c8b6f","#4a5844","#ae603f","#d7be78","#f4e7cf"];
+    for(let i=0;i<count;i++){
+      const p=document.createElement("i");
+      p.className="confetti-piece";
+      p.style.left=(3+Math.random()*94)+"vw";
+      p.style.background=palette[i%palette.length];
+      p.style.setProperty("--dur",(1.25+Math.random()*.9)+"s");
+      p.style.setProperty("--drift",(-90+Math.random()*180)+"px");
+      p.style.setProperty("--rot",(Math.random()*180)+"deg");
+      p.style.animationDelay=(Math.random()*.2)+"s";
+      layer.appendChild(p);
+    }
+    document.body.appendChild(layer);
+    setTimeout(()=>layer.remove(),2400);
+  }
+
+  async function fetchJson(url, options={}, timeout=4500){
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),timeout);
+    try{
+      const res=await fetch(url,{...options,signal:ctrl.signal});
+      const body=await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(body.error||`HTTP ${res.status}`);
+      return body;
+    } finally { clearTimeout(timer); }
+  }
+
+  async function loadPublicConfig(){
+    if(!API_BASE){ applyConfig(config); return; }
+    try{
+      const remote=await fetchJson(`${API_BASE}/api/public/config`,{cache:"no-store"},3500);
+      config=merge(DEFAULTS,remote);
+    }catch(_){ config=structuredClone(DEFAULTS); }
+    applyConfig(config);
+  }
+
+  function merge(base, extra){
+    const out=structuredClone(base);
+    for(const [k,v] of Object.entries(extra||{})){
+      if(v && typeof v==="object" && !Array.isArray(v) && out[k] && typeof out[k]==="object") out[k]={...out[k],...v};
+      else if(v!==undefined) out[k]=v;
+    }
+    return out;
+  }
+
+  function applyConfig(c){
+    safeText("heroLocation",c.location_display);
+    safeText("rsvpDeadline",c.rsvp_deadline_display);
+    if(c.ceremony){
+      safeText("ceremonyTime",c.ceremony.time); safeText("ceremonyTitle",c.ceremony.title);
+      safeText("ceremonyPlace",c.ceremony.place); safeText("ceremonyAddress",c.ceremony.address);
+      setMap("ceremony",c.ceremony.lat,c.ceremony.lng);
+    }
+    if(c.celebration){
+      safeText("celebrationTime",c.celebration.time); safeText("celebrationTitle",c.celebration.title);
+      safeText("celebrationPlace",c.celebration.place); safeText("celebrationAddress",c.celebration.address);
+      setMap("celebration",c.celebration.lat,c.celebration.lng);
+    }
+    if(c.dress){
+      safeText("dressTitle",c.dress.title); safeText("dressConcept",c.dress.concept); safeText("dressDetails",c.dress.details);
+    }
+    const ticket=$("ticketCard");
+    const attending=document.querySelector('input[name="attendance"]:checked')?.value!=="no";
+    ticket.classList.toggle("hidden",c.ticket?.enabled===false || !attending);
+    if(c.ticket?.enabled!==false){
+      safeText("ticketPrice",money(c.ticket?.price||0));
+      safeText("ticketText",c.ticket?.text);
+    }
+    const bank=c.bank||{}, payment=$("paymentCard");
+    const hasBank=Boolean(bank.alias||bank.cbu||bank.mp_url);
+    payment.classList.toggle("hidden",!hasBank);
+    safeText("bankHolder",bank.holder); safeText("bankAlias",bank.alias); safeText("bankCbu",bank.cbu);
+    const mp=$("mpLink");
+    if(bank.mp_url){ mp.href=bank.mp_url; mp.classList.remove("hidden"); } else mp.classList.add("hidden");
+  }
+
+  function setMap(prefix,lat,lng){
+    if(!Number.isFinite(Number(lat))||!Number.isFinite(Number(lng))) return;
+    const q=`${Number(lat)},${Number(lng)}`;
+    const iframe=$(prefix+"Map"), link=$(prefix+"Directions"), address=$(prefix+"Address");
+    const directions=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`;
+    if(iframe) iframe.src=`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=17&output=embed`;
+    if(link) link.href=directions;
+    if(address && address.tagName==="A") address.href=directions;
+  }
+
+  function startCountdown(){
+    const tick=()=>{
+      const target=new Date(config.event_at||DEFAULTS.event_at).getTime();
+      const diff=Math.max(0,target-Date.now());
+      const vals={
+        cdDays:Math.floor(diff/86400000),
+        cdHours:Math.floor(diff%86400000/3600000),
+        cdMinutes:Math.floor(diff%3600000/60000),
+        cdSeconds:Math.floor(diff%60000/1000)
+      };
+      Object.entries(vals).forEach(([id,v])=>safeText(id,String(v).padStart(2,"0")));
+      if(diff===0) safeText("countdown","¡Hoy es el gran día!");
+    };
+    tick(); setInterval(tick,1000);
+  }
+
+  function syncAttendance(){
+    const yes=document.querySelector('input[name="attendance"]:checked')?.value==="yes";
+    $("attendingFields").classList.toggle("hidden",!yes);
+    $("declineMessage").classList.toggle("hidden",yes);
+    $("ticketCard").classList.toggle("hidden",!yes || config.ticket?.enabled===false);
+  }
+
+  function clientId(){
+    return (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  }
+
+  function payloadFromForm(){
+    const attendance=document.querySelector('input[name="attendance"]:checked')?.value||"yes";
+    return {
+      request_id:clientId(),
+      name:$("fullName").value.trim(),
+      phone:$("phone").value.trim(),
+      email:$("email").value.trim(),
+      attendance,
+      seats:attendance==="yes" ? Math.max(1,Number($("seats").value)||1) : 0,
+      diet:attendance==="yes" ? $("diet").value.trim() : "",
+      song:attendance==="yes" ? $("song").value.trim() : "",
+      message:$("message").value.trim(),
+      submitted_at:new Date().toISOString()
+    };
+  }
+
+  async function onRsvp(e){
+    e.preventDefault();
+    const p=payloadFromForm(), status=$("rsvpStatus"), btn=$("rsvpSubmit");
+    if(!p.name){ showStatus("Decinos tu nombre y apellido para guardar la respuesta.",false); $("fullName").focus(); return; }
+    if(p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)){ showStatus("Revisá el email: parece incompleto.",false); $("email").focus(); return; }
+    btn.disabled=true; btn.textContent="Enviando…";
+    try{
+      if(!API_BASE) throw new Error("API no configurada");
+      await fetchJson(`${API_BASE}/api/public/rsvp`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(p)
+      },5500);
+      showStatus(p.attendance==="yes" ? "Listo. Quedó confirmada tu asistencia. ¡Nos vemos el 18!" : "Listo. Gracias por avisarnos; quedó registrada tu respuesta.",true);
+      if(p.attendance==="yes") celebrate(34);
+      $("rsvpForm").reset(); syncAttendance();
+    }catch(err){
+      enqueue(p);
+      const phone=(config.fallback_whatsapp||"").replace(/\D/g,"");
+      if(phone){
+        const wa=whatsappText(p);
+        showStatus(`No pudimos conectar con el servidor en este momento. Guardamos tu respuesta en este dispositivo y podés asegurarla por WhatsApp: `,false);
+        const a=document.createElement("a"); a.href=`https://wa.me/${phone}?text=${encodeURIComponent(wa)}`; a.target="_blank"; a.rel="noopener"; a.textContent="enviar confirmación"; a.style.fontWeight="600";
+        status.appendChild(a);
+      }else{
+        showStatus("No pudimos conectar en este momento. Guardamos la respuesta en este dispositivo y la reintentaremos automáticamente cuando vuelva la conexión.",false);
+      }
+    }finally{
+      btn.disabled=false; btn.textContent="Enviar confirmación";
+    }
+  }
+
+  function showStatus(text,ok){
+    const el=$("rsvpStatus"); el.textContent=text; el.className=`form-status ${ok?"ok":"err"}`;
+  }
+
+  function enqueue(p){
+    try{
+      const q=JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]");
+      if(!q.some(x=>x.request_id===p.request_id)) q.push(p);
+      localStorage.setItem(OUTBOX_KEY,JSON.stringify(q.slice(-20)));
+    }catch(_){}
+  }
+
+  async function flushOutbox(){
+    if(!API_BASE || !navigator.onLine) return;
+    let q=[];
+    try{ q=JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]"); }catch(_){}
+    if(!q.length) return;
+    const remaining=[];
+    for(const p of q){
+      try{
+        await fetchJson(`${API_BASE}/api/public/rsvp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)},4000);
+      }catch(_){ remaining.push(p); }
+    }
+    localStorage.setItem(OUTBOX_KEY,JSON.stringify(remaining));
+  }
+
+  function whatsappText(p){
+    const lines=["Confirmación boda Julián & Carla",`Nombre: ${p.name}`,`Asistencia: ${p.attendance==="yes"?"Sí":"No"}`];
+    if(p.attendance==="yes") lines.push(`Lugares: ${p.seats}`);
+    if(p.diet) lines.push(`Menú: ${p.diet}`);
+    if(p.song) lines.push(`Canción: ${p.song}`);
+    if(p.message) lines.push(`Mensaje: ${p.message}`);
+    return lines.join("\n");
+  }
+
+  async function copyField(id,button){
+    const value=$(id)?.textContent?.trim(); if(!value) return;
+    try{ await navigator.clipboard.writeText(value); button.textContent="Copiado"; setTimeout(()=>button.textContent="Copiar",1300); }catch(_){}
+  }
+})();

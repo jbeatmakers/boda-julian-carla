@@ -1,0 +1,34 @@
+name: Deploy wedding to VPS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'admin.html'
+      - 'assets/**'
+      - 'server/**'
+      - 'deploy/**'
+      - '.github/workflows/deploy-vps.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boda-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.repository == 'jbeatmakers/boda-julian-carla' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, production-vps]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate
+        run: |
+          python3 -m py_compile server/app.py server/backup.py
+          if command -v node >/dev/null 2>&1; then
+            node --check assets/app.js
+            node --check assets/admin.js
+          fi
+          python3 -m unittest -v tests.test_server
+      - name: Deploy through restricted helper
+        run: sudo /usr/local/sbin/deploy-boda-julian-carla "$GITHUB_WORKSPACE"
