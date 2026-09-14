@@ -1,0 +1,14 @@
+[Unit]
+Description=Backup de la base de la boda
+
+[Service]
+Type=oneshot
+User=boda-wedding
+Group=boda-wedding
+EnvironmentFile=/etc/boda-julian-carla.env
+ExecStart=/usr/bin/python3 /opt/boda-julian-carla/server/backup.py
+ReadWritePaths=/var/lib/boda-julian-carla /var/backups/boda-julian-carla
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true

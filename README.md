@@ -1,67 +1,47 @@
-# Invitación — Julián & Carla
+# Boda Julián & Carla — producción v2
 
-Landing estática de casamiento + panel de administración.
+Sitio y panel para el casamiento del **18 de diciembre de 2026**.
 
-- **Sitio:** https://boda-julian-carla.bpm.red
-- **Repo:** https://github.com/jbeatmakers/boda-julian-carla
-- **Pages:** rama `main` + CNAME `boda-julian-carla.bpm.red`
+## Qué resuelve esta versión
 
-Si llegás como programador nuevo, leé [`docs/HANDOVER.md`](docs/HANDOVER.md).
+- Código público de entrada: `18DIC` (no es una contraseña administrativa).
+- Ceremonia 17:00: Iglesia San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes.
+- Celebración 18:30: nombre visible neutro `Quincho · San Pablo de Reyes`, con coordenadas exactas del predio.
+- Mapas y “Cómo llegar” para ambos puntos.
+- Confetti liviano al entrar y al abrir una ubicación; no bloquea la navegación y respeta `prefers-reduced-motion`.
+- RSVP persistente en SQLite, compartido entre dispositivos, con cola local de emergencia si el VPS no responde.
+- Copia específica para quien no asiste, sin obligación de tarjeta ni regalo.
+- Tarjeta para quien asiste + regalo voluntario, sin montos sugeridos.
+- Panel real de administración: invitados, precios especiales/sin cargo, pagos, regalos, mesas, gastos, compras, tareas y proveedores.
+- Importación del backup del panel anterior y exportación JSON/CSV.
+- Backups diarios de SQLite en el VPS, sin depender de GitHub.
+- Admin sin contraseña embebida en HTML/JavaScript: PBKDF2 en variable de entorno del VPS.
 
-## Qué hay
+## Arquitectura
 
-| Archivo | Rol |
-|---|---|
-| `index.html` | Invitación pública (gate `18dic`) |
-| `admin.html` | Panel: invitados, súper, cantidades, mesas, contrataciones, pista |
-| `pista.json` | Lista pública de temas + ID de playlist YouTube |
-| `js/public-pista.js` | Pinta la pista en la invitación, sin mostrar quién pidió el tema |
-| `CNAME` | Dominio custom |
-| `robots.txt` | Bloquea indexación |
+`GitHub` conserva código, historial y opcionalmente dispara deploy. El runtime vive en el VPS:
 
-Zero-build. HTML + Tailwind CDN + JS. Sin backend.
-
-## Correr en local
-
-```bash
-python3 -m http.server 8080
+```text
+boda-julian-carla.bpm.red  -> Nginx -> sitio estático
+boda-api.bpm.red           -> Nginx -> admin estático + API
+                                      -> Python stdlib :8787
+                                      -> SQLite WAL
+                                      -> backup systemd diario
 ```
 
-- Invitación: http://localhost:8080/
-- Admin: http://localhost:8080/admin.html
+El sitio público conserva una cola local de RSVP y puede ofrecer WhatsApp de respaldo si el API está temporalmente fuera de línea.
 
-## Evento
+## Pruebas
 
-- Público: Julián & Carla (sin apellidos en el hero)
-- Fecha: 18 de diciembre de 2026
-- 17:00 Iglesia San Pedro y San Pablo, San Pablo de Reyes
-- 18:30 El Quincho del Predio de Reyes
-- Dress code: Estética Edén
-- Regalos: voluntario, **sin montos**
+```bash
+node --check assets/app.js
+node --check assets/admin.js
+python3 -m py_compile server/app.py server/backup.py
+python3 -m unittest -v tests.test_server tests.test_static
+```
 
-## Panel (admin.html)
+## Importante antes de publicar
 
-Tabs:
+Los datos bancarios vienen vacíos a propósito para no publicar placeholders. Cargarlos desde el panel cuando correspondan. El precio inicial conservado es `$35.000`, pero se cambia desde `Sitio & tarjeta` sin tocar código.
 
-1. **Invitados** — RSVP, CSV, alta/edición
-2. **Súper y cantidades** — ofertas (lugar, precio, cantidad) + cálculo automático de fernet/bebidas/hielo/vasos según cubiertos + presupuesto por invitado
-3. **Mesas** — cubiertos ÷ personas por mesa
-4. **Contrataciones** — DJ, foto, catering, etc.
-5. **Pista** — temas anónimos + playlist YouTube (se escucha sin Premium)
-
-Datos en `localStorage` de **ese** navegador. Backup JSON desde el panel.
-
-Para que la pista se vea en todos los celulares: en Pista → “Sumar canciones de invitados” → “Descargar pista.json” → reemplazar el archivo en la raíz y push.
-
-## Copy que no hay que romper
-
-- No “Edición Nº 01”
-- No “botánico” en la tarjeta
-- No “Colegio de Abogados” en la tarjeta (decir Quincho / Predio de Reyes)
-- No montos de regalo
-- Al declinar: tono positivo
-- Menú especial oculto detrás de un toggle
-
-## Credenciales
-
-Están en constantes de `index.html` (gate invitados) y `admin.html` (`AUTH_USER` / `AUTH_PASS`). No son seguridad real: es HTML público.
+Ver `docs/DEPLOY.md` y `docs/ARCHITECTURE.md`.
