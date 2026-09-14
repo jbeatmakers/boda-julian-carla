@@ -20,7 +20,9 @@ class StaticTest(unittest.TestCase):
         self.assertIn('-24.14581,-65.39445',html)
         self.assertIn('-24.14816,-65.39326',html)
         self.assertIn('celebrate-link',html)
-        self.assertIn('Un regalo, solo si querés',html)
+        self.assertIn('Si querés tener un gesto',html)
+        self.assertIn('Celebrar con ustedes ya es mucho',html)
+        self.assertIn('seatsHint',html)
         self.assertNotRegex(js,r'\\\\["\']')
         p=Parser(); p.feed(html)
         for needed in ('gate','gateCode','rsvpForm','ticketCard','ceremonyMap','celebrationMap'):

@@ -55,8 +55,11 @@ class WeddingApiTest(unittest.TestCase):
         self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://boda-julian-carla.bpm.red")
 
     def test_rsvp_is_persistent_and_idempotent(self):
-        payload={"request_id":"test-rsvp-1","name":"Invitado Prueba","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
+        cookie,csrf=self.login(); admin_headers={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,invited,_=self.req("POST","/api/admin/guests",{"name":"Invitado Prueba","email":"guest@example.com","status":"invited","seats_allowed":2},admin_headers); self.assertEqual(s,201)
         headers={"Origin":"https://boda-julian-carla.bpm.red"}
+        s,limit,_=self.req("POST","/api/public/invite",{"name":"Invitado Prueba","email":"guest@example.com"},headers); self.assertEqual(s,200); self.assertEqual(limit["max_seats"],2)
+        payload={"request_id":"test-rsvp-1","name":"Invitado Prueba","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,201); gid=d["id"]
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,200); self.assertTrue(d["duplicate"])
         cookie,csrf=self.login()

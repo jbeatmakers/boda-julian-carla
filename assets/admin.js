@@ -134,7 +134,7 @@
       return `<tr>
         <td><strong>${esc(g.name)}</strong>${g.diet?`<small>🍽 ${esc(g.diet)}</small>`:""}</td>
         <td><span class="pill ${attr(g.status)}">${esc(statusLabel(g.status))}</span></td>
-        <td>${g.status==="declined"?"—":esc(g.seats||1)}</td>
+        <td>${g.status==="declined"?"—":`${esc(g.seats||0)} / ${esc(g.seats_allowed||1)}`}</td>
         <td>${g.phone?esc(g.phone):""}${g.email?`<small>${esc(g.email)}</small>`:""}</td>
         <td>${g.ticket_exempt?"Sin cargo":money(due)}${g.ticket_override!==null&&g.ticket_override!==undefined&&!g.ticket_exempt?`<small>especial ${money(g.ticket_override)} c/u</small>`:""}</td>
         <td>${money(paid)}${due>paid?`<small class="warn">faltan ${money(due-paid)}</small>`:"<small class='good'>cubierto</small>"}</td>
@@ -149,7 +149,7 @@
     $("guestModalTitle").textContent=g?"Editar invitado":"Nuevo invitado";
     $("guestId").value=g?.id||""; $("gName").value=g?.name||""; $("gStatus").value=g?.status||"invited";
     $("gPhone").value=g?.phone||""; $("gEmail").value=g?.email||""; $("gAttendance").value=g?.attendance||"";
-    $("gSeats").value=g?.seats??1; $("gTicketPaid").value=g?.ticket_paid||""; $("gGiftAmount").value=g?.gift_amount||"";
+    $("gSeatsAllowed").value=g?.seats_allowed??1; $("gSeats").value=g?.seats??0; $("gTicketPaid").value=g?.ticket_paid||""; $("gGiftAmount").value=g?.gift_amount||"";
     $("gTableNo").value=g?.table_no||""; $("gDiet").value=g?.diet||""; $("gSong").value=g?.song||"";
     $("gNotes").value=g?.notes||""; $("gGiftNote").value=g?.gift_note||"";
     if(g?.ticket_exempt) $("gTicketMode").value="free";
@@ -161,7 +161,7 @@
   function syncTicketMode(){const custom=$("gTicketMode").value==="custom";$("gTicketOverride").disabled=!custom; if(!custom)$("gTicketOverride").value="";}
   async function saveGuest(e){
     e.preventDefault(); const id=$("guestId").value,mode=$("gTicketMode").value;
-    const body={name:$("gName").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,gift_amount:Number($("gGiftAmount").value)||0,table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
+    const body={name:$("gName").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,seats_allowed:Math.max(1,Number($("gSeatsAllowed").value)||1),ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,gift_amount:Number($("gGiftAmount").value)||0,table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
     try{await api(id?`/api/admin/guests/${encodeURIComponent(id)}`:"/api/admin/guests",{method:id?"PATCH":"POST",body});closeGuest();await loadState();status("Invitado guardado.");}catch(err){status(err.message,"err",5000);}
   }
 

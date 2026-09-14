@@ -24,6 +24,7 @@
     $("gateForm").addEventListener("submit", onGate);
     document.querySelectorAll('input[name="attendance"]').forEach(x=>x.addEventListener("change", syncAttendance));
     $("rsvpForm").addEventListener("submit", onRsvp);
+    ["fullName","phone","email"].forEach(id=>$(id).addEventListener("blur",syncSeatLimit));
     document.querySelectorAll(".celebrate-link").forEach(a=>a.addEventListener("click",()=>celebrate(20)));
     document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>copyField(b.dataset.copy,b)));
     if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false);
@@ -158,11 +159,28 @@
     tick(); setInterval(tick,1000);
   }
 
+  async function syncSeatLimit(){
+    const select=$("seats"), hint=$("seatsHint");
+    const identity={name:$("fullName").value.trim(),phone:$("phone").value.trim(),email:$("email").value.trim()};
+    let maxSeats=1, found=false;
+    if(API_BASE && (identity.name.length>1 || identity.phone || identity.email)){
+      try{
+        const r=await fetchJson(`${API_BASE}/api/public/invite`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(identity)},3000);
+        maxSeats=Math.max(1,Math.min(12,Number(r.max_seats)||1)); found=!!r.found;
+      }catch(_){}
+    }
+    const current=Math.min(maxSeats,Math.max(1,Number(select.value)||1));
+    select.innerHTML=Array.from({length:maxSeats},(_,i)=>`<option value="${i+1}">${i+1} ${i===0?"persona":"personas"}</option>`).join("");
+    select.value=String(current);
+    hint.textContent=found ? `Tu invitación tiene hasta ${maxSeats} ${maxSeats===1?"lugar":"lugares"}.` : "La cantidad disponible se ajusta a tu invitación.";
+  }
+
   function syncAttendance(){
     const yes=document.querySelector('input[name="attendance"]:checked')?.value==="yes";
     $("attendingFields").classList.toggle("hidden",!yes);
     $("declineMessage").classList.toggle("hidden",yes);
     $("ticketCard").classList.toggle("hidden",!yes || config.ticket?.enabled===false);
+    if(yes) syncSeatLimit();
   }
 
   function clientId(){
