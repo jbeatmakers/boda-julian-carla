@@ -134,12 +134,8 @@
                 <label class="label" for="seats">Lugares a reservar</label>
                 <select class="field" id="seats">
                   <option value="1">1 persona</option>
-                  <option value="2">2 personas</option>
-                  <option value="3">3 personas</option>
-                  <option value="4">4 personas</option>
-                  <option value="5">5 personas</option>
-                  <option value="6">6 personas</option>
                 </select>
+                <div class="small muted" id="seatsHint">La cantidad disponible se ajusta a tu invitación.</div>
               </div>
               <div>
                 <label class="label" for="diet">Restricción alimentaria</label>
@@ -153,8 +149,8 @@
           </div>
 
           <div id="declineMessage" class="note-box card hidden form-row">
-            <p>Gracias por avisarnos. Está todo bien: nos alegra igual que seas parte de nuestra vida.</p>
-            <p class="small muted">No tenés que abonar ninguna tarjeta. Más abajo dejamos una opción de regalo solo para quien tenga ganas; no hace falta.</p>
+            <p>Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.</p>
+            <p class="small muted">Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.</p>
           </div>
 
           <div class="form-row">
@@ -171,20 +167,21 @@
       <div class="narrow">
         <div class="section-title">
           <div class="eyebrow">Tarjeta & regalos</div>
-          <h2 class="display">Lo importante es compartir</h2>
+          <h2 class="display">Celebrar con ustedes ya es mucho</h2>
+          <p class="muted gift-intro">Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.</p>
         </div>
         <div class="gift-grid">
-          <article id="ticketCard" class="gift-card card">
+          <article id="ticketCard" class="gift-card card gift-card-ticket">
             <div class="eyebrow">Si venís</div>
             <h3 class="display" style="font-size:2rem;margin:.4rem 0">Tarjeta de la celebración</h3>
             <div class="price" id="ticketPrice">$35.000</div>
             <p class="muted small" id="ticketText">Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso.</p>
           </article>
-          <article class="gift-card card">
-            <div class="eyebrow">Un regalo, solo si querés</div>
-            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Cualquier forma está bien</h3>
-            <p>Para nosotros, estar o hacernos llegar unas palabras ya es un regalo.</p>
-            <p class="muted small">Si además querés regalarnos algo, puede ser un detalle de cualquier tipo. Y si te resulta más práctico sumarlo a una transferencia, podés hacerlo con el monto que vos quieras, sin montos sugeridos.</p>
+          <article class="gift-card card gift-card-present">
+            <div class="eyebrow">Si querés tener un gesto</div>
+            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Regalos</h3>
+            <p>Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.</p>
+            <p class="muted small">Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.</p>
           </article>
         </div>
 

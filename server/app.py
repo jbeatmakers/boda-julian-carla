@@ -43,7 +43,7 @@ TABLE_FIELDS = {
     "songs":{"title","source","active"}
 }
 GUEST_FIELDS = {
-    "name","phone","email","status","attendance","seats","diet","song","notes",
+    "name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes",
     "ticket_override","ticket_exempt","ticket_paid","gift_amount","gift_note","table_no"
 }
 
@@ -77,7 +77,7 @@ def init_db() -> None:
           id TEXT PRIMARY KEY, request_id TEXT UNIQUE, name TEXT NOT NULL,
           phone TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
           status TEXT NOT NULL DEFAULT 'pending', attendance TEXT NOT NULL DEFAULT '',
-          seats INTEGER NOT NULL DEFAULT 1, diet TEXT NOT NULL DEFAULT '',
+          seats INTEGER NOT NULL DEFAULT 1, seats_allowed INTEGER NOT NULL DEFAULT 1, diet TEXT NOT NULL DEFAULT '',
           song TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '',
           ticket_override INTEGER, ticket_exempt INTEGER NOT NULL DEFAULT 0,
           ticket_paid INTEGER NOT NULL DEFAULT 0, gift_amount INTEGER NOT NULL DEFAULT 0,
@@ -112,6 +112,10 @@ def init_db() -> None:
           active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         );
         """)
+        guest_columns={r["name"] for r in c.execute("PRAGMA table_info(guests)")}
+        if "seats_allowed" not in guest_columns:
+            c.execute("ALTER TABLE guests ADD COLUMN seats_allowed INTEGER NOT NULL DEFAULT 1")
+            c.execute("UPDATE guests SET seats_allowed=CASE WHEN seats>0 THEN seats ELSE 1 END")
         for k,v in DEFAULT_SETTINGS.items():
             c.execute("INSERT OR IGNORE INTO settings(key,value,updated_at) VALUES(?,?,?)",
                       (k,json.dumps(v,ensure_ascii=False),now_iso()))
@@ -152,6 +156,18 @@ def rate_ok(ip: str, limit=18, window=60) -> bool:
             return False
         arr.append(now); _rate[ip]=arr
     return True
+
+def find_invited_guest(c: sqlite3.Connection, name: str, phone: str, email: str):
+    if email:
+        row=c.execute("SELECT * FROM guests WHERE lower(email)=? ORDER BY updated_at DESC LIMIT 1",(email,)).fetchone()
+        if row: return row
+    if phone:
+        row=c.execute("SELECT * FROM guests WHERE phone=? ORDER BY updated_at DESC LIMIT 1",(phone,)).fetchone()
+        if row: return row
+    if name:
+        rows=c.execute("SELECT * FROM guests WHERE lower(trim(name))=lower(trim(?)) ORDER BY updated_at DESC LIMIT 2",(name,)).fetchall()
+        if len(rows)==1: return rows[0]
+    return None
 
 def purge_sessions():
     now=time.time()
@@ -250,6 +266,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         p=urlparse(self.path).path
+        if p=="/api/public/invite":
+            if self._origin() and self._origin() not in ALLOWED_ORIGINS:
+                return self._json(403,{"error":"origin_not_allowed"},cors=True)
+            if not rate_ok("invite:"+self.client_address[0],30,60):
+                return self._json(429,{"error":"too_many_requests"},cors=True)
+            try: data=self._body()
+            except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
+            name=clean_text(data.get("name"),120)
+            phone=re.sub(r"[^\d+]","",clean_text(data.get("phone"),40))
+            email=clean_text(data.get("email"),160).lower()
+            with db() as c: match=find_invited_guest(c,name,phone,email)
+            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else 1
+            return self._json(200,{"found":bool(match),"max_seats":allowed},cors=True)
         if p=="/api/public/rsvp":
             if self._origin() and self._origin() not in ALLOWED_ORIGINS:
                 return self._json(403,{"error":"origin_not_allowed"},cors=True)
@@ -348,7 +377,7 @@ class Handler(BaseHTTPRequestHandler):
         phone=re.sub(r"[^\d+]","",clean_text(data.get("phone"),40))
         email=clean_text(data.get("email"),160).lower()
         attendance="yes" if data.get("attendance")=="yes" else "no"
-        seats=max(0,min(12,int(data.get("seats") or 0))) if attendance=="yes" else 0
+        requested_seats=max(1,min(12,int(data.get("seats") or 1))) if attendance=="yes" else 0
         if len(name)<2: return self._json(400,{"error":"name_required"},cors=True)
         if not valid_email(email): return self._json(400,{"error":"invalid_email"},cors=True)
         request_id=clean_text(data.get("request_id"),80) or str(uuid.uuid4())
@@ -357,18 +386,18 @@ class Handler(BaseHTTPRequestHandler):
         with db() as c:
             existing=c.execute("SELECT id FROM guests WHERE request_id=?",(request_id,)).fetchone()
             if existing: return self._json(200,{"ok":True,"id":existing["id"],"duplicate":True},cors=True)
-            match=None
-            if email: match=c.execute("SELECT id FROM guests WHERE lower(email)=? ORDER BY updated_at DESC LIMIT 1",(email,)).fetchone()
-            if not match and phone: match=c.execute("SELECT id FROM guests WHERE phone=? ORDER BY updated_at DESC LIMIT 1",(phone,)).fetchone()
+            match=find_invited_guest(c,name,phone,email)
+            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else 1
+            seats=min(requested_seats,allowed) if attendance=="yes" else 0
             if match:
                 gid=match["id"]
                 c.execute("""UPDATE guests SET request_id=?,name=?,phone=?,email=?,status=?,attendance=?,seats=?,diet=?,song=?,notes=?,responded_at=?,updated_at=? WHERE id=?""",
                           (request_id,name,phone,email,status,attendance,seats,diet,song,notes,now,now,gid))
             else:
                 gid=str(uuid.uuid4())
-                c.execute("""INSERT INTO guests(id,request_id,name,phone,email,status,attendance,seats,diet,song,notes,invited_at,responded_at,updated_at)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (gid,request_id,name,phone,email,status,attendance,seats,diet,song,notes,now,now,now))
+                c.execute("""INSERT INTO guests(id,request_id,name,phone,email,status,attendance,seats,seats_allowed,diet,song,notes,invited_at,responded_at,updated_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (gid,request_id,name,phone,email,status,attendance,seats,1,diet,song,notes,now,now,now))
             if song:
                 found=c.execute("SELECT id FROM songs WHERE lower(title)=lower(?)",(song,)).fetchone()
                 if not found:
@@ -382,7 +411,7 @@ def clean_for_table(table: str, data: dict) -> dict:
     for k in allowed:
         if k not in data: continue
         v=data[k]
-        if k in {"seats","ticket_override","ticket_exempt","ticket_paid","gift_amount","done","active"}:
+        if k in {"seats","seats_allowed","ticket_override","ticket_exempt","ticket_paid","gift_amount","done","active"}:
             if v in ("",None) and k=="ticket_override": out[k]=None
             else: out[k]=int(v or 0)
         elif k in {"budget","actual","paid","needed","bought","unit_cost","total"}:
@@ -395,10 +424,12 @@ def admin_create_guest(data: dict) -> dict:
     name=d.get("name","")
     if len(name)<2: raise ValueError("name_required")
     now=now_iso(); gid=str(uuid.uuid4())
-    base={"phone":"","email":"","status":"pending","attendance":"","seats":1,"diet":"","song":"","notes":"",
+    base={"phone":"","email":"","status":"pending","attendance":"","seats":1,"seats_allowed":1,"diet":"","song":"","notes":"",
           "ticket_override":None,"ticket_exempt":0,"ticket_paid":0,"gift_amount":0,"gift_note":"","table_no":""}
     base.update(d)
-    cols=["id","name","phone","email","status","attendance","seats","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","gift_amount","gift_note","table_no","invited_at","updated_at"]
+    base["seats_allowed"]=max(1,min(12,int(base.get("seats_allowed") or 1)))
+    base["seats"]=max(0,min(base["seats_allowed"],int(base.get("seats") or 0)))
+    cols=["id","name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","gift_amount","gift_note","table_no","invited_at","updated_at"]
     vals=[gid]+[base[k] for k in cols[1:-2]]+[now,now]
     with db() as c:
         c.execute(f"INSERT INTO guests({','.join(cols)}) VALUES({','.join('?' for _ in cols)})",vals)

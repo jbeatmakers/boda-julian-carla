@@ -75,8 +75,13 @@ section{padding:64px 0}
 .form-status{margin-top:14px;padding:12px 14px;border:1px solid var(--line);font-size:.95rem}
 .form-status.ok{border-color:#8ab89e;background:#edf8f1;color:#28583f}
 .form-status.err{border-color:#d6a096;background:#fff4f1;color:#7c352c}
+.gift-intro{max-width:560px;margin:.7rem auto 0}
 .gift-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.gift-card{padding:28px}
+.gift-card{position:relative;padding:30px;overflow:hidden}
+.gift-card:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--sage),transparent)}
+.gift-card-present{background:linear-gradient(145deg,rgba(255,253,248,.78),rgba(239,233,219,.72))}
+.gift-card-present p:first-of-type{font-size:1.18rem;line-height:1.45}
+#seatsHint{margin-top:.45rem}
 .price{font-family:Italiana,serif;font-size:3rem;color:var(--clay);line-height:1;margin:.5rem 0}
 .bank-grid{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin-top:16px}
 .bank-grid span:nth-child(3n+1){font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.58rem;color:var(--olive)}
