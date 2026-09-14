@@ -14,6 +14,7 @@ ADMIN_USER = os.environ.get("WEDDING_ADMIN_USER", "admin")
 ADMIN_HASH = os.environ.get("WEDDING_ADMIN_PASSWORD_HASH", "")
 HOST = os.environ.get("WEDDING_HOST", "127.0.0.1")
 PORT = int(os.environ.get("WEDDING_PORT", "8787"))
+ADMIN_ROOT = Path(os.environ.get("WEDDING_ADMIN_ROOT", "/opt/boda-admin"))
 ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.environ.get(
     "WEDDING_ALLOWED_ORIGINS",
     "https://boda-julian-carla.bpm.red"
@@ -201,6 +202,14 @@ class Handler(BaseHTTPRequestHandler):
         for k,v in (extra or {}).items(): self.send_header(k,v)
         self.end_headers(); self.wfile.write(body)
 
+    def _static(self, rel, content_type):
+        path=(ADMIN_ROOT/rel).resolve()
+        root=ADMIN_ROOT.resolve()
+        if root not in path.parents and path!=root: return self._json(404,{"error":"not_found"})
+        try: body=path.read_bytes()
+        except OSError: return self._json(404,{"error":"not_found"})
+        self.send_response(200); self.send_header("Content-Type",content_type); self.send_header("Content-Length",str(len(body))); self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.end_headers(); self.wfile.write(body)
+
     def _body(self):
         try: n=int(self.headers.get("Content-Length","0"))
         except ValueError: n=0
@@ -242,6 +251,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         p=urlparse(self.path).path
+        if p in ("/","/admin.html"):
+            return self._static("admin.html","text/html; charset=utf-8")
+        if p=="/assets/admin.css":
+            return self._static("assets/admin.css","text/css; charset=utf-8")
+        if p=="/assets/admin.js":
+            return self._static("assets/admin.js","text/javascript; charset=utf-8")
         if p=="/healthz":
             return self._json(200,{"ok":True})
         if p=="/api/public/config":
