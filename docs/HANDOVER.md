@@ -19,7 +19,7 @@ RSVP abre WhatsApp y guarda el registro en `localStorage`. No hay servidor propi
 | Ceremonia | 17:00 Iglesia San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes |
 | Fiesta | 18:30 El Quincho del Predio de Reyes (no decir “Colegio de Abogados” en la tarjeta) |
 | Dress code | Estética Edén (no usar la palabra “botánico” en el copy) |
-| Gate invitados | `18dic` (client-side) |
+| Gate invitados | `BODA` (client-side) |
 | Admin | `AUTH_USER` / `AUTH_PASS` en `admin.html` |
 
 ## Decisiones de producto (no revertir)

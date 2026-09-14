@@ -3,7 +3,7 @@
 ## Terminado en código
 
 - Invitación pública v2.
-- Acceso `18DIC`.
+- Acceso `BODA`.
 - Mapas exactos y navegación.
 - Confetti liviano al entrar y al abrir direcciones.
 - RSVP persistente + reintento offline.

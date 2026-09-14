@@ -14,7 +14,7 @@ class StaticTest(unittest.TestCase):
     def test_public_contract(self):
         html=(ROOT/'index.html').read_text(encoding='utf-8')
         js=(ROOT/'assets/app.js').read_text(encoding='utf-8')
-        self.assertIn('18DIC',js)
+        self.assertIn('BODA',js)
         self.assertNotIn('Colegio de Abogados',html)
         self.assertNotIn('Centro de Abogados',html)
         self.assertIn('-24.14581,-65.39445',html)
