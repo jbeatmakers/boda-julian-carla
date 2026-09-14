@@ -7,3 +7,6 @@ node_modules/
 .env
 *.local.json
 backup-boda-*.json
+
+__pycache__/
+*.py[cod]
