@@ -29,3 +29,19 @@ label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.09em
 .cell-input{width:100%;min-width:82px;border:1px solid transparent;background:transparent;padding:5px 6px;color:inherit}.cell-input:focus,.cell-input:hover{border-color:var(--line);background:white;outline:0}.cell-input.num{min-width:100px;text-align:right}
 .actions{white-space:nowrap}.link{border:0;background:transparent;padding:2px 5px;text-decoration:underline;color:var(--olive);font-size:11px}.danger-text{color:var(--clay)}.empty{text-align:center!important;color:#7b8078;padding:24px!important}
 .notes-cell{max-width:220px;white-space:normal}.bigline{display:flex;align-items:baseline;gap:8px;margin-top:10px}.bigline strong{font-family:Italiana,serif;font-size:28px;font-weight:400}.bigline span{font-size:11px;color:#73786f}.mini-list{list-style:none;padding:0;margin:10px 0 0}.mini-list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #e7e2d8}.mini-list span{font-size:10px;color:#73786f;white-space:nowrap}
+
+/* 2026 refinement: softer wedding-planner UI */
+body{position:relative;isolation:isolate}
+body:before,body:after{content:"";position:fixed;top:8vh;width:120px;height:76vh;z-index:-1;pointer-events:none;opacity:.22;background:
+radial-gradient(ellipse 22px 50px at 30% 9%,rgba(74,88,68,.22) 0 42%,transparent 45%),
+radial-gradient(ellipse 25px 56px at 64% 24%,rgba(124,139,111,.22) 0 42%,transparent 45%),
+radial-gradient(ellipse 21px 48px at 31% 42%,rgba(74,88,68,.17) 0 42%,transparent 45%),
+radial-gradient(ellipse 27px 58px at 65% 61%,rgba(124,139,111,.19) 0 42%,transparent 45%),
+radial-gradient(ellipse 22px 50px at 33% 80%,rgba(74,88,68,.15) 0 42%,transparent 45%),
+linear-gradient(80deg,transparent 48.5%,rgba(74,88,68,.20) 49%,rgba(74,88,68,.20) 50%,transparent 50.5%)}
+body:before{left:-36px;transform:rotate(-5deg)}body:after{right:-38px;transform:scaleX(-1) rotate(-5deg)}
+.btn,.field,.cell-input,.status{border-radius:10px}.card,.kpi,.table-wrap{border-radius:16px}.modal-box,.login-box{border-radius:20px;box-shadow:0 22px 60px rgba(39,48,38,.10)}
+.top{box-shadow:0 8px 24px rgba(39,48,38,.035)}.tab{border-radius:10px 10px 0 0}.choice{border-radius:14px}
+.back-link{display:inline-block;margin-top:14px;color:var(--olive);text-decoration:none;font-size:11px;letter-spacing:.04em}.back-link:hover{text-decoration:underline}
+.table-wrap{box-shadow:0 8px 28px rgba(39,48,38,.035)}.field:focus,.cell-input:focus{box-shadow:0 0 0 3px rgba(124,139,111,.12)}
+@media(max-width:700px){body:before,body:after{width:70px;opacity:.14}.top-inner{flex-direction:column}.toolbar{justify-content:flex-start}}
