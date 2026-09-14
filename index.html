@@ -16,13 +16,15 @@
 <body class="locked">
 <div id="gate">
   <div class="gate-box card">
-    <div class="eyebrow">Julián & Carla · 18 · XII · 2026</div>
-    <h1 class="display">Nos casamos</h1>
-    <p class="muted">Ingresá el código de la invitación para entrar.</p>
+    <div class="gate-monogram" aria-hidden="true">J <span>&</span> C</div>
+    <div class="eyebrow gate-date">18 · XII · 2026</div>
+    <p class="gate-intro">Tenemos algo para compartir con vos.</p>
+    <p class="muted gate-help">Ingresá el código de tu invitación.</p>
     <form id="gateForm">
-      <input id="gateCode" class="field gate-code" inputmode="text" autocomplete="off" maxlength="12" placeholder="Código" aria-label="Código de acceso">
+      <label class="gate-label" for="gateCode">Código de acceso</label>
+      <input id="gateCode" class="field gate-code" inputmode="text" autocomplete="off" maxlength="12" placeholder="18DIC" aria-label="Código de acceso">
       <p id="gateError" class="gate-error" aria-live="polite"></p>
-      <button class="btn primary" type="submit">Entrar</button>
+      <button class="btn primary gate-submit" type="submit">Abrir invitación</button>
     </form>
   </div>
 </div>
