@@ -55,7 +55,7 @@ Para editarlo: entrar al Admin → Pestaña **Sitio & Tarjeta** → Modificar ca
 ## Invitación (`index.html`)
 
 - Carga automáticamente `site-content.json` con fallback a `localStorage` y defaults en el cliente.
-- Gate de acceso para invitados: contraseña `18dic`.
+- Gate de acceso para invitados: contraseña `BODA`.
 - Formulario RSVP registra nombre, WhatsApp, email, cupo, restricciones alimentarias, tema musical y dedicatoria.
 - Genera mensaje preformateado y redirige al WhatsApp de los novios.
 

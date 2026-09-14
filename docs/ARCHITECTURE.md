@@ -20,7 +20,7 @@ GitHub **no es** la base de datos y no participa en cada confirmación, edición
 
 ## Seguridad
 
-- El código `18DIC` es una puerta social para invitados; no se considera secreto.
+- El código `BODA` es una puerta social para invitados; no se considera secreto.
 - La contraseña administrativa no existe en el repositorio.
 - Hash PBKDF2-SHA256 con salt e iteraciones altas en `/etc/boda-julian-carla.env`.
 - Sesión mediante cookie `HttpOnly; Secure; SameSite=Strict`.

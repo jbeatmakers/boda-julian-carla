@@ -4,7 +4,7 @@ Sitio y panel para el casamiento del **18 de diciembre de 2026**.
 
 ## Qué resuelve esta versión
 
-- Código público de entrada: `18DIC` (no es una contraseña administrativa).
+- Código público de entrada: `BODA` (no es una contraseña administrativa).
 - Ceremonia 17:00: Iglesia San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes.
 - Celebración 18:30: nombre visible neutro `Quincho · San Pablo de Reyes`, con coordenadas exactas del predio.
 - Mapas y “Cómo llegar” para ambos puntos.

@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const ACCESS_CODE = "18DIC";
+  const ACCESS_CODE = "BODA";
   const ACCESS_KEY = "boda_access_v2";
   const OUTBOX_KEY = "boda_rsvp_outbox_v2";
   const API_BASE = (document.querySelector('meta[name="wedding-api"]')?.content || "").replace(/\/+$/,"");
