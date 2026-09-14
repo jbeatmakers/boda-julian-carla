@@ -1,15 +1,6 @@
 name: Deploy wedding to VPS
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'admin.html'
-      - 'assets/**'
-      - 'server/**'
-      - 'deploy/**'
-      - '.github/workflows/deploy-vps.yml'
 permissions:
   contents: read
 concurrency:
