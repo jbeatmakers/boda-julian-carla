@@ -96,6 +96,29 @@ class WeddingApiTest(unittest.TestCase):
         s,d,_=self.req("POST","/api/admin/guests",{"name":""},h); self.assertEqual(s,400); self.assertEqual(d["error"],"name_required")
         s,d,_=self.req("POST","/api/admin/expenses",{"description":""},h); self.assertEqual(s,400); self.assertEqual(d["error"],"description_required")
 
+    def test_planner_tables_stock_and_received_contributions(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,_,_=self.req("POST","/api/admin/guests",{"name":"Familia Uno","status":"confirmed","attendance":"yes","seats_allowed":8,"seats":8},h); self.assertEqual(s,201)
+        s,_,_=self.req("PUT","/api/admin/settings",{"planning":{"planned_guests_override":20,"table_capacity":8,"drinkers_pct":50,"water_l_pp":1,"soft_l_pp":.5,"beer_l_drinker":1,"wine_l_drinker":.5,"sparkling_l_pp":.1,"spirits_l_drinker":.1,"ice_kg_pp":1,"guest_buffer_pct":5,"appetizer_pieces_pp":6,"main_portions_pp":1.05,"dessert_portions_pp":1.05,"cake_g_pp":100}},h); self.assertEqual(s,200)
+        s,_,_=self.req("POST","/api/admin/shopping",{"item":"Agua stock","planning_key":"water","unit":"botellas","planning_factor":1.5,"bought":10},h); self.assertEqual(s,201)
+        s,c,_=self.req("POST","/api/admin/contributions",{"contributor":"Tía Ana","item":"Agua","planning_key":"water","planning_factor":.5,"quantity":5,"unit":"botellas","status":"promised"},h); self.assertEqual(s,201)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200); self.assertEqual(d["planner"]["planned"],20); self.assertEqual(d["planner"]["tables"],3)
+        water=next(x for x in d["planner"]["suggestions"] if x["key"]=="water"); self.assertEqual(water["stock"],15); self.assertEqual(water["missing"],5)
+        s,_,_=self.req("PATCH",f"/api/admin/contributions/{c['id']}",{"status":"received"},h); self.assertEqual(s,200)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); water=next(x for x in d["planner"]["suggestions"] if x["key"]=="water"); self.assertEqual(water["stock"],17.5); self.assertEqual(water["missing"],2.5)
+
+    def test_ticket_credit_and_menu_planning(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,g,_=self.req("POST","/api/admin/guests",{"name":"Aporte Tarjeta","status":"confirmed","attendance":"yes","seats_allowed":2,"seats":2,"ticket_credit":20000},h); self.assertEqual(s,201)
+        s,_,_=self.req("POST","/api/admin/menu",{"item":"Empanadas","course":"appetizer","unit":"unidades","per_person":2,"stock":30},h); self.assertEqual(s,201)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
+        self.assertEqual(d["dashboard"]["ticket_expected"],50000)
+        m=next(x for x in d["planner"]["menu"] if x["item"]=="Empanadas"); self.assertEqual(m["target"],6); self.assertEqual(m["missing"],0)
+
+    def test_price_lookup_rejects_bad_barcode_without_network(self):
+        cookie,csrf=self.login()
+        s,d,_=self.req("GET","/api/admin/price-lookup?barcode=123",headers={"Cookie":cookie}); self.assertEqual(s,200); self.assertFalse(d["found"]); self.assertEqual(d["error"],"barcode_invalid")
+
     def test_security_boundaries(self):
         s,d,_=self.req("GET","/api/admin/state"); self.assertEqual(s,401)
         s,d,_=self.req("POST","/api/public/rsvp",{"name":"Origen Malo","attendance":"yes","seats":1},{"Origin":"https://evil.example"}); self.assertEqual(s,403)

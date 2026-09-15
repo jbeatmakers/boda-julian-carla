@@ -105,6 +105,11 @@
   }
 
   function applyConfig(c){
+    const editable=c.copy||{};
+    document.querySelectorAll("[data-site-copy]").forEach(el=>{
+      const key=el.dataset.siteCopy,value=editable[key];
+      if(value!==undefined && value!==null && value!=="") el.textContent=value;
+    });
     safeText("heroLocation",c.location_display);
     safeText("rsvpDeadline",c.rsvp_deadline_display);
     if(c.ceremony){
