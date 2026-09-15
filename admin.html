@@ -39,11 +39,12 @@
     <nav class="tabs" id="tabs">
       <button class="tab active" data-tab="dashboard">Resumen</button>
       <button class="tab" data-tab="guests">Invitados</button>
+      <button class="tab" data-tab="planner">Planificador</button>
+      <button class="tab" data-tab="shopping">Stock & compras</button>
+      <button class="tab" data-tab="vendors">Equipo</button>
       <button class="tab" data-tab="expenses">Gastos</button>
-      <button class="tab" data-tab="shopping">Compras</button>
       <button class="tab" data-tab="tasks">Tareas</button>
-      <button class="tab" data-tab="vendors">Proveedores</button>
-      <button class="tab" data-tab="site">Sitio & tarjeta</button>
+      <button class="tab" data-tab="site">Editar tarjeta</button>
     </nav>
   </header>
 
@@ -69,6 +70,21 @@
       <div class="table-wrap"><table class="table"><thead><tr><th>Nombre</th><th>Estado</th><th>Lugares</th><th>Contacto</th><th>Tarjeta</th><th>Pagó</th><th>Regalo</th><th>Mesa</th><th>Notas</th><th></th></tr></thead><tbody id="guestRows"></tbody></table></div>
     </section>
 
+    <section class="panel" data-panel="planner">
+      <div class="section-head"><div><h2>Planificador de la fiesta</h2><p class="muted">Calcula con confirmados reales y tus supuestos. Podés cambiar todo.</p></div><div class="toolbar"><button class="btn soft" id="syncPlanToShoppingBtn" type="button">Pasar faltantes a compras</button><button class="btn primary" id="savePlanningBtn">Guardar supuestos</button></div></div>
+      <div class="grid kpis planner-kpis" id="plannerKpis"></div>
+      <div class="grid settings-grid planner-layout">
+        <article class="card"><div class="eyebrow">Supuestos</div><div id="planningInputs" class="planning-inputs"></div></article>
+        <article class="card"><div class="eyebrow">Bebidas sugeridas</div><div id="drinkPlan"></div></article>
+        <article class="card full"><div class="eyebrow">Comida</div><p class="tiny muted">Si cargás platos propios, reemplazan las sugerencias base.</p>
+          <form id="menuForm" class="quick-form compact-form"><div class="wide"><label>Comida / preparación</label><input name="item" class="field" required></div><div><label>Momento</label><select name="course" class="field"><option value="appetizer">Recepción</option><option value="main">Principal</option><option value="dessert">Postre</option><option value="cake">Torta</option><option value="other">Otro</option></select></div><div><label>Unidad</label><input name="unit" class="field" value="porciones"></div><div><label>Por persona</label><input name="per_person" class="field" type="number" step=".01" min="0"></div><div><label>Cantidad fija</label><input name="fixed_qty" class="field" type="number" step=".01" min="0"></div><div><label>Ya tengo</label><input name="stock" class="field" type="number" step=".01" min="0"></div><button class="btn primary" type="submit">Agregar</button></form>
+          <div id="menuPlan" class="planning-table"></div></article>
+        <article class="card full"><div class="eyebrow">Aportes de invitados</div><p class="tiny muted">Prometido no cuenta como stock hasta marcarlo recibido.</p>
+          <form id="contributionForm" class="quick-form compact-form"><div><label>Quién aporta</label><input name="contributor" class="field" required></div><div class="wide"><label>Qué aporta</label><input name="item" class="field" required></div><div><label>Categoría</label><input name="category" class="field" placeholder="Bebidas, comida…"></div><div><label>Cuenta como</label><select name="planning_key" id="contributionPlanningKey" class="field"><option value="">Otro</option><option value="water">Agua</option><option value="soft">Gaseosa/mixer</option><option value="beer">Cerveza</option><option value="wine">Vino</option><option value="sparkling">Espumante</option><option value="spirits">Destilado</option><option value="ice">Hielo</option></select></div><div><label>Cantidad</label><input name="quantity" class="field" type="number" step=".01" min="0"></div><div><label>Unidad</label><input name="unit" class="field"></div><div><label>Tamaño por unidad (L/kg)</label><input name="planning_factor" id="contributionFactor" class="field" type="number" step=".001" min="0" value="1"></div><div><label>Valor acordado</label><input name="estimated_value" class="field" type="number" min="0"></div><button class="btn primary" type="submit">Agregar</button></form>
+          <div id="contributionRows" class="planning-table"></div></article>
+      </div>
+    </section>
+
     <section class="panel" data-panel="expenses">
       <div class="section-head"><h2>Gastos</h2></div>
       <form id="expenseForm" class="card quick-form">
@@ -86,16 +102,25 @@
     </section>
 
     <section class="panel" data-panel="shopping">
-      <div class="section-head"><h2>Compras</h2></div>
-      <form id="shoppingForm" class="card quick-form">
-        <div class="wide"><label>Producto / ítem</label><input name="item" class="field" required></div>
-        <div><label>Categoría</label><input name="category" class="field" placeholder="Bebidas, súper…"></div>
-        <div><label>Unidad</label><input name="unit" class="field" placeholder="botellas, kg…"></div>
+      <div class="section-head"><div><h2>Stock & compras</h2><p class="muted">Registrá lo que ya tienen, lo que falta y precios de referencia.</p></div><button class="btn soft" id="scanBarcodeBtn" type="button">Escanear código</button></div>
+      <form id="shoppingForm" class="card quick-form stock-form">
+        <div class="wide"><label>Producto / ítem</label><input name="item" id="shoppingItem" class="field" required></div>
+        <div><label>Código de barras</label><input name="barcode" id="shoppingBarcode" class="field" inputmode="numeric"></div>
+        <div><label>Tipo de cálculo</label><select name="planning_key" id="shoppingPlanningKey" class="field"><option value="">Sin cálculo</option><option value="water">Agua</option><option value="soft">Gaseosas / mixers</option><option value="beer">Cerveza</option><option value="wine">Vino</option><option value="sparkling">Espumante</option><option value="spirits">Destilados</option><option value="ice">Hielo</option></select></div>
+        <div><label>Categoría</label><input name="category" class="field" placeholder="Bebidas, comida…"></div>
+        <div><label>Unidad</label><input name="unit" class="field" placeholder="L, botellas, kg…"></div>
+        <div><label>Tamaño por unidad (L/kg)</label><input name="planning_factor" id="shoppingFactor" class="field" type="number" step=".001" min="0" value="1" title="Ej: botella de vino 0,75; gaseosa de 2,25 L = 2,25"></div>
         <div><label>Necesito</label><input name="needed" class="field" type="number" step=".01" min="0"></div>
-        <div><label>Ya tengo</label><input name="bought" class="field" type="number" step=".01" min="0"></div>
-        <button class="btn primary" type="submit">Agregar</button>
+        <div><label>Stock actual</label><input name="bought" class="field" type="number" step=".01" min="0"></div>
+        <div><label>Costo real / u.</label><input name="unit_cost" class="field" type="number" step=".01" min="0"></div>
+        <div><label>Precio referencia</label><input name="reference_price" id="shoppingRefPrice" class="field" type="number" step=".01" min="0"></div>
+        <div><label>Fuente</label><input name="source" id="shoppingSource" class="field"></div>
+        <div class="wide"><label>Notas</label><input name="notes" class="field"></div>
+        <button class="btn soft" id="lookupPriceBtn" type="button">Buscar precio</button><button class="btn primary" type="submit">Agregar</button>
       </form>
-      <div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Ítem</th><th>Categoría</th><th>Unidad</th><th>Necesito</th><th>Tengo</th><th>Falta</th><th>Costo/u.</th><th>Listo</th><th></th></tr></thead><tbody id="shoppingRows"></tbody></table></div>
+      <div id="priceLookupStatus" class="status hidden"></div>
+      <div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Ítem</th><th>Plan</th><th>Unidad</th><th>Necesito</th><th>Stock</th><th>Falta</th><th>Costo/u.</th><th>Referencia</th><th>Fuente</th><th></th></tr></thead><tbody id="shoppingRows"></tbody></table></div>
+      <div id="barcodeScanner" class="scanner hidden"><video id="barcodeVideo" playsinline></video><button class="btn danger" id="stopScanBtn" type="button">Cerrar cámara</button></div>
     </section>
 
     <section class="panel" data-panel="tasks">
@@ -112,22 +137,27 @@
     </section>
 
     <section class="panel" data-panel="vendors">
-      <div class="section-head"><h2>Proveedores</h2></div>
+      <div class="section-head"><div><h2>Equipo & proveedores</h2><p class="muted">Quién hace qué, cuánto cuesta y cómo se compensa.</p></div></div>
       <form id="vendorForm" class="card quick-form">
         <div><label>Rubro</label><input name="category" class="field" placeholder="DJ, foto…"></div>
-        <div class="wide"><label>Nombre / empresa</label><input name="name" class="field" required></div>
+        <div class="wide"><label>Persona / empresa</label><input name="name" class="field" required></div>
+        <div class="wide"><label>Qué hace</label><input name="role" class="field" placeholder="Barra, fotos, coordinación…"></div>
         <div><label>Contacto</label><input name="contact" class="field"></div>
-        <div><label>Total</label><input name="total" class="field" type="number" min="0"></div>
-        <div><label>Pagado</label><input name="paid" class="field" type="number" min="0"></div>
+        <div><label>Forma de pago</label><select name="payment_mode" class="field"><option value="cash">Dinero</option><option value="contribution">Aporte / canje</option><option value="mixed">Mixto</option><option value="free">Sin cargo</option></select></div>
+        <div><label>Total acordado</label><input name="total" class="field" type="number" min="0"></div>
+        <div><label>Pagado efectivo</label><input name="paid" class="field" type="number" min="0"></div>
         <div><label>Vence</label><input name="due_date" class="field" type="date"></div>
+        <div class="wide"><label>Aporte / acuerdo no monetario</label><input name="contribution_note" class="field" placeholder="Ej: aporta barra a cambio de entradas"></div>
         <button class="btn primary" type="submit">Agregar</button>
       </form>
-      <div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Rubro</th><th>Proveedor</th><th>Contacto</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Vence</th><th></th></tr></thead><tbody id="vendorRows"></tbody></table></div>
+      <div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Rubro</th><th>Persona</th><th>Función</th><th>Pago</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Acuerdo</th><th></th></tr></thead><tbody id="vendorRows"></tbody></table></div>
     </section>
 
     <section class="panel" data-panel="site">
       <div class="section-head"><h2>Sitio & tarjeta</h2><button class="btn primary" id="saveSettingsBtn">Guardar cambios</button></div>
       <div class="grid settings-grid">
+        <article class="card full copy-editor-card"><div class="eyebrow">Textos de la invitación</div><p class="muted">Editá títulos y frases sin tocar código. Guardás una vez y la invitación los toma sola.</p><div id="copyFields" class="copy-fields"></div></article>
+        <article class="card full preview-card"><div class="section-head"><div><div class="eyebrow">Vista previa</div><p class="tiny muted">Se actualiza después de guardar.</p></div><button class="btn soft" id="reloadPreviewBtn" type="button">Recargar vista</button></div><iframe id="sitePreview" title="Vista previa de la invitación" src="https://boda-julian-carla.bpm.red/"></iframe></article>
         <article class="card">
           <div class="eyebrow">Tarjeta</div>
           <div class="stack">
@@ -149,6 +179,7 @@
           <div class="eyebrow">Ceremonia</div>
           <div class="stack">
             <div><label>Hora</label><input id="ceremonyTimeInput" class="field"></div>
+            <div><label>Título</label><input id="ceremonyTitleInput" class="field"></div>
             <div><label>Nombre visible</label><input id="ceremonyPlaceInput" class="field"></div>
             <div><label>Dirección visible</label><input id="ceremonyAddressInput" class="field"></div>
             <div class="grid form-grid"><div><label>Latitud</label><input id="ceremonyLatInput" class="field" type="number" step=".000001"></div><div><label>Longitud</label><input id="ceremonyLngInput" class="field" type="number" step=".000001"></div></div>
@@ -159,9 +190,18 @@
           <p class="tiny muted">El nombre visible evita darle protagonismo al establecimiento. El mapa lleva al punto exacto.</p>
           <div class="stack">
             <div><label>Hora</label><input id="celebrationTimeInput" class="field"></div>
+            <div><label>Título</label><input id="celebrationTitleInput" class="field"></div>
             <div><label>Nombre visible</label><input id="celebrationPlaceInput" class="field"></div>
             <div><label>Dirección visible</label><input id="celebrationAddressInput" class="field"></div>
             <div class="grid form-grid"><div><label>Latitud</label><input id="celebrationLatInput" class="field" type="number" step=".000001"></div><div><label>Longitud</label><input id="celebrationLngInput" class="field" type="number" step=".000001"></div></div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Dress code</div>
+          <div class="stack">
+            <div><label>Título</label><input id="dressTitleInput" class="field"></div>
+            <div><label>Concepto</label><textarea id="dressConceptInput" class="field" rows="3"></textarea></div>
+            <div><label>Detalle</label><textarea id="dressDetailsInput" class="field" rows="3"></textarea></div>
           </div>
         </article>
         <article class="card">
@@ -173,7 +213,7 @@
         </article>
         <article class="card danger-zone">
           <div class="eyebrow">Seguridad</div>
-          <p>La contraseña del panel no vive en este HTML ni en GitHub. Se configura en el VPS como hash. El sitio público usa <strong>18DIC</strong> solo como puerta de invitación, no como seguridad administrativa.</p>
+          <p>La contraseña del panel no vive en este HTML ni en GitHub. Se guarda como hash en el servidor. El sitio público usa <strong>BODA</strong> solo como puerta de invitación; <strong>[REDACTED-ADMIN-CODE]</strong> abre este panel y luego exige la clave privada.</p>
         </article>
       </div>
     </section>
@@ -194,8 +234,10 @@
       <div><label>Lugares confirmados</label><input id="gSeats" class="field" type="number" min="0" max="12"></div>
       <div><label>Tarjeta</label><select id="gTicketMode" class="field"><option value="normal">Precio general</option><option value="custom">Precio especial</option><option value="free">No paga</option></select></div>
       <div><label>Precio especial por persona</label><input id="gTicketOverride" class="field" type="number" min="0"></div>
-      <div><label>Tarjeta pagada</label><input id="gTicketPaid" class="field" type="number" min="0"></div>
+      <div><label>Tarjeta pagada en efectivo</label><input id="gTicketPaid" class="field" type="number" min="0"></div>
+      <div><label>Crédito por aporte</label><input id="gTicketCredit" class="field" type="number" min="0" placeholder="Valor reconocido contra la tarjeta"></div>
       <div><label>Regalo / aporte extra</label><input id="gGiftAmount" class="field" type="number" min="0"></div>
+      <div class="full"><label>Qué aporta para cubrir tarjeta</label><input id="gContributionNote" class="field" placeholder="Ej: 6 vinos + hielo; fotógrafo; torta…"></div>
       <div><label>Mesa</label><input id="gTableNo" class="field" placeholder="Ej: 4"></div>
       <div><label>Menú / restricción</label><input id="gDiet" class="field"></div>
       <div class="full"><label>Canción</label><input id="gSong" class="field"></div>

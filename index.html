@@ -18,8 +18,8 @@
   <div class="gate-box card">
     <div class="gate-monogram" aria-hidden="true">J <span>&</span> C</div>
     <div class="eyebrow gate-date">18 · XII · 2026</div>
-    <p class="gate-intro">Tenemos algo para compartir con vos.</p>
-    <p class="muted gate-help">Ingresá el código de tu invitación.</p>
+    <p class="gate-intro" data-site-copy="gate_intro">Tenemos algo para compartir con vos.</p>
+    <p class="muted gate-help" data-site-copy="gate_help">Ingresá el código de tu invitación.</p>
     <form id="gateForm">
       <label class="gate-label" for="gateCode">Código de acceso</label>
       <input id="gateCode" class="field gate-code" inputmode="text" autocomplete="off" maxlength="12" aria-label="Código de acceso">
@@ -34,7 +34,7 @@
   <header class="hero wrap">
     <div class="eyebrow"><span id="heroLocation">San Pablo de Reyes · Jujuy</span> · <span>18 · XII · 2026</span></div>
     <h1 class="display">Julián <span class="amp">&</span> Carla</h1>
-    <p class="muted">Queremos compartir este día con vos.</p>
+    <p class="muted" data-site-copy="hero_intro">Queremos compartir este día con vos.</p>
     <div class="countdown" id="countdown" aria-label="Cuenta regresiva">
       <div><strong id="cdDays">00</strong><span class="eyebrow">Días</span></div>
       <div><strong id="cdHours">00</strong><span class="eyebrow">Hs</span></div>
@@ -42,8 +42,8 @@
       <div><strong id="cdSeconds">00</strong><span class="eyebrow">Seg</span></div>
     </div>
     <div class="hero-actions">
-      <a class="btn primary" href="#rsvp">Confirmar asistencia</a>
-      <a class="btn" href="#lugares">Horarios y mapas</a>
+      <a class="btn primary" href="#rsvp" data-site-copy="hero_confirm_btn">Confirmar asistencia</a>
+      <a class="btn" href="#lugares" data-site-copy="hero_maps_btn">Horarios y mapas</a>
     </div>
   </header>
 
@@ -51,9 +51,9 @@
     <section id="lugares">
       <div class="wrap">
         <div class="section-title">
-          <div class="eyebrow">Ceremonia & celebración</div>
-          <h2 class="display">El casamiento</h2>
-          <p class="muted">Los dos lugares quedan muy cerca entre sí.</p>
+          <div class="eyebrow" data-site-copy="places_eyebrow">Ceremonia & celebración</div>
+          <h2 class="display" data-site-copy="places_title">El casamiento</h2>
+          <p class="muted" data-site-copy="places_intro">Los dos lugares quedan muy cerca entre sí.</p>
         </div>
         <div class="event-grid">
           <article class="event card">
@@ -90,7 +90,7 @@
     <section>
       <div class="narrow">
         <div class="section-title">
-          <div class="eyebrow">Dress code</div>
+          <div class="eyebrow" data-site-copy="dress_eyebrow">Dress code</div>
           <h2 class="display" id="dressTitle">Estética Edén</h2>
         </div>
         <div class="note-box card">
@@ -103,8 +103,8 @@
     <section id="rsvp">
       <div class="narrow">
         <div class="section-title">
-          <div class="eyebrow">R.S.V.P.</div>
-          <h2 class="display">¿Nos acompañás?</h2>
+          <div class="eyebrow" data-site-copy="rsvp_eyebrow">R.S.V.P.</div>
+          <h2 class="display" data-site-copy="rsvp_title">¿Nos acompañás?</h2>
           <p class="muted">Nos ayuda mucho que respondas antes del <span id="rsvpDeadline">1 de diciembre</span>.</p>
         </div>
         <form id="rsvpForm" class="rsvp-card card" novalidate>
@@ -149,8 +149,8 @@
           </div>
 
           <div id="declineMessage" class="note-box card hidden form-row">
-            <p>Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.</p>
-            <p class="small muted">Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.</p>
+            <p data-site-copy="decline_body">Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.</p>
+            <p class="small muted" data-site-copy="decline_gift_note">Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.</p>
           </div>
 
           <div class="form-row">
@@ -166,27 +166,27 @@
     <section id="regalos">
       <div class="narrow">
         <div class="section-title">
-          <div class="eyebrow">Tarjeta & regalos</div>
-          <h2 class="display">Celebrar con ustedes ya es mucho</h2>
-          <p class="muted gift-intro">Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.</p>
+          <div class="eyebrow" data-site-copy="gift_eyebrow">Tarjeta & regalos</div>
+          <h2 class="display" data-site-copy="gift_title">Celebrar con ustedes ya es mucho</h2>
+          <p class="muted gift-intro" data-site-copy="gift_intro">Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.</p>
         </div>
         <div class="gift-grid">
           <article id="ticketCard" class="gift-card card gift-card-ticket">
-            <div class="eyebrow">Si venís</div>
-            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Tarjeta de la celebración</h3>
+            <div class="eyebrow" data-site-copy="ticket_eyebrow">Si venís</div>
+            <h3 class="display" style="font-size:2rem;margin:.4rem 0" data-site-copy="ticket_title">Tarjeta de la celebración</h3>
             <div class="price" id="ticketPrice">$35.000</div>
             <p class="muted small" id="ticketText">Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso.</p>
           </article>
           <article class="gift-card card gift-card-present">
-            <div class="eyebrow">Si querés tener un gesto</div>
-            <h3 class="display" style="font-size:2rem;margin:.4rem 0">Regalos</h3>
-            <p>Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.</p>
-            <p class="muted small">Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.</p>
+            <div class="eyebrow" data-site-copy="present_eyebrow">Si querés tener un gesto</div>
+            <h3 class="display" style="font-size:2rem;margin:.4rem 0" data-site-copy="present_title">Regalos</h3>
+            <p data-site-copy="present_body">Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.</p>
+            <p class="muted small" data-site-copy="present_transfer">Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.</p>
           </article>
         </div>
 
         <article id="paymentCard" class="gift-card card hidden" style="margin-top:18px">
-          <div class="eyebrow">Datos para transferencia</div>
+          <div class="eyebrow" data-site-copy="transfer_eyebrow">Datos para transferencia</div>
           <div class="bank-grid">
             <span>Titular</span><strong id="bankHolder"></strong><span></span>
             <span>Alias</span><strong id="bankAlias"></strong><button class="copy" type="button" data-copy="bankAlias">Copiar</button>

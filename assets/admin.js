@@ -2,7 +2,10 @@
   "use strict";
   const $=id=>document.getElementById(id);
   let csrf="";
-  let state={settings:{},dashboard:{},guests:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[]};
+  let state={settings:{},dashboard:{},planner:{},guests:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[],menu:[],contributions:[]};
+  let scanStream=null,scanTimer=null;
+  const COPY_FIELDS=[['gate_intro','Entrada · frase principal'],['gate_help','Entrada · ayuda'],['hero_intro','Portada · introducción'],['hero_confirm_btn','Botón confirmar'],['hero_maps_btn','Botón mapas'],['places_eyebrow','Lugares · etiqueta'],['places_title','Lugares · título'],['places_intro','Lugares · bajada'],['dress_eyebrow','Dress code · etiqueta'],['rsvp_eyebrow','RSVP · etiqueta'],['rsvp_title','RSVP · título'],['decline_body','Mensaje si no asiste'],['decline_gift_note','Aclaración regalo si no asiste'],['gift_eyebrow','Regalos · etiqueta'],['gift_title','Regalos · título'],['gift_intro','Regalos · introducción'],['ticket_eyebrow','Tarjeta · etiqueta'],['ticket_title','Tarjeta · título'],['present_eyebrow','Regalo · etiqueta'],['present_title','Regalo · título'],['present_body','Regalo · texto'],['present_transfer','Transferencia · texto'],['transfer_eyebrow','Transferencia · etiqueta']];
+  const PLAN_FIELDS=[['planned_guests_override','Personas para planificar',1],['guest_buffer_pct','Margen extra %',1],['table_capacity','Personas por mesa',1],['drinkers_pct','Adultos que toman alcohol %',1],['water_l_pp','Agua L/persona',.1],['soft_l_pp','Gaseosa/mixer L/persona',.1],['beer_l_drinker','Cerveza L/bebedor',.1],['wine_l_drinker','Vino L/bebedor',.05],['sparkling_l_pp','Espumante L/persona',.025],['spirits_l_drinker','Destilado L/bebedor',.02],['ice_kg_pp','Hielo kg/persona',.1],['appetizer_pieces_pp','Bocados/persona',1],['main_portions_pp','Principal/persona',.05],['dessert_portions_pp','Postre/persona',.05],['cake_g_pp','Torta g/persona',10]];
 
   document.addEventListener("DOMContentLoaded",init);
 
@@ -33,10 +36,20 @@
     $("gTicketMode").addEventListener("change",syncTicketMode);
     $("expenseForm").addEventListener("submit",e=>createFromForm(e,"expenses"));
     $("shoppingForm").addEventListener("submit",e=>createFromForm(e,"shopping"));
+    $("menuForm").addEventListener("submit",e=>createFromForm(e,"menu"));
+    $("contributionForm").addEventListener("submit",e=>createFromForm(e,"contributions"));
     $("taskForm").addEventListener("submit",e=>createFromForm(e,"tasks"));
     $("seedTasksBtn").addEventListener("click",seedWeddingTasks);
     $("vendorForm").addEventListener("submit",e=>createFromForm(e,"vendors"));
     $("saveSettingsBtn").addEventListener("click",saveSettings);
+    $("savePlanningBtn").addEventListener("click",savePlanning);
+    $("syncPlanToShoppingBtn").addEventListener("click",syncPlanToShopping);
+    $("shoppingPlanningKey").addEventListener("change",()=>suggestPlanningFactor($("shoppingPlanningKey"),$("shoppingFactor")));
+    $("contributionPlanningKey").addEventListener("change",()=>suggestPlanningFactor($("contributionPlanningKey"),$("contributionFactor")));
+    $("lookupPriceBtn").addEventListener("click",lookupPrice);
+    $("scanBarcodeBtn").addEventListener("click",startBarcodeScan);
+    $("stopScanBtn").addEventListener("click",stopBarcodeScan);
+    $("reloadPreviewBtn").addEventListener("click",()=>{$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;});
     document.body.addEventListener("click",delegatedClick);
     document.body.addEventListener("change",delegatedChange);
   }
@@ -98,7 +111,7 @@
     document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.dataset.panel===name));
   }
 
-  function renderAll(){renderDashboard();renderGuests();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
+  function renderAll(){renderDashboard();renderGuests();renderPlanner();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
   const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
   const num=n=>new Intl.NumberFormat("es-AR",{maximumFractionDigits:2}).format(Number(n)||0);
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -123,8 +136,19 @@
     $("giftSummary").innerHTML=`<div class="bigline"><strong>${money(d.gifts)}</strong><span>aportes registrados</span></div><p class="muted">Se registran aparte de la tarjeta para que el precio de la cena no se mezcle con los regalos.</p>`;
   }
 
+  function renderPlanner(){
+    const p=state.planner||{},cfg=state.settings?.planning||{};
+    const cards=[["Confirmados",p.confirmed||0,`${p.pending_capacity||0} lugares aún pendientes`],["Para planificar",p.planned||0,`incluye margen`],["Mesas",p.tables||0,`${p.table_capacity||10} personas c/u`],["Bebedores",p.drinkers||0,"estimación editable"]];
+    $("plannerKpis").innerHTML=cards.map(x=>`<article class="kpi"><div class="eyebrow">${esc(x[0])}</div><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></article>`).join("");
+    $("planningInputs").innerHTML=PLAN_FIELDS.map(([key,label,step])=>`<div><label>${esc(label)}</label><input class="field" data-plan="${attr(key)}" type="number" min="0" step="${step}" value="${attr(cfg[key]??0)}"></div>`).join("");
+    $("drinkPlan").innerHTML=(p.suggestions||[]).map(x=>`<div class="plan-row"><span><b>${esc(x.label)}</b><small>${num(x.stock)} ${esc(x.unit)} en stock</small></span><span class="plan-target">${num(x.target)} ${esc(x.unit)}</span><span class="${x.missing>0?'warn':'good'}">${x.missing>0?`faltan ${num(x.missing)}`:'cubierto'}</span></div>`).join("")||'<p class="muted">Cargá confirmados para obtener cálculo.</p>';
+    $("menuPlan").innerHTML=(p.menu||[]).map(x=>x.id?`<div class="plan-row editable-plan" data-row="menu" data-id="${attr(x.id)}"><span><b>${esc(x.item)}</b><small>${esc(x.course||'')}</small></span><span>${num(x.target)} ${esc(x.unit||'')}</span><span>${editInlineNum('stock',x.stock,.01)} <small>stock</small></span><span class="${x.missing>0?'warn':'good'}">${x.missing>0?`faltan ${num(x.missing)}`:'cubierto'}</span><button class="link danger-text" data-action="delete" data-table="menu" data-id="${attr(x.id)}">Borrar</button></div>`:`<div class="plan-row"><span><b>${esc(x.item)}</b></span><span>${num(x.target)} ${esc(x.unit||'')}</span><span class="warn">base sugerida</span></div>`).join('');
+    $("contributionRows").innerHTML=(state.contributions||[]).map(x=>`<div class="plan-row editable-plan" data-row="contributions" data-id="${attr(x.id)}"><span><b>${esc(x.contributor)}</b><small>${esc(x.item)}</small></span><span>${num(x.quantity)} ${esc(x.unit||'')}</span><span>${money(x.estimated_value)}</span><select class="cell-input" data-edit="status"><option value="promised" ${x.status==='promised'?'selected':''}>Prometido</option><option value="received" ${x.status==='received'?'selected':''}>Recibido</option></select><button class="link danger-text" data-action="delete" data-table="contributions" data-id="${attr(x.id)}">Borrar</button></div>`).join('')||'<p class="muted">Todavía no hay aportes cargados.</p>';
+  }
+  function editInlineNum(k,v,step=1){return `<input class="cell-input num mini-num" data-edit="${attr(k)}" type="number" min="0" step="${step}" value="${attr(v??0)}">`;}
+
   function guestUnit(g){const p=Number(state.settings?.ticket?.price)||0;return g.ticket_exempt?0:(g.ticket_override===null||g.ticket_override===undefined?p:Number(g.ticket_override)||0);}
-  function guestDue(g){return guestUnit(g)*Math.max(1,Number(g.seats)||1);}
+  function guestDue(g){return Math.max(0,guestUnit(g)*Math.max(1,Number(g.seats)||1)-(Number(g.ticket_credit)||0));}
   function statusLabel(s){return ({possible:"Posible",invited:"Invitado",pending:"Pendiente",confirmed:"Confirmado",declined:"No asiste"})[s]||s||"Pendiente";}
   function renderGuests(){
     const q=$("guestSearch").value.trim().toLowerCase(),f=$("guestFilter").value;
@@ -136,10 +160,10 @@
         <td><span class="pill ${attr(g.status)}">${esc(statusLabel(g.status))}</span></td>
         <td>${g.status==="declined"?"—":`${esc(g.seats||0)} / ${esc(g.seats_allowed||1)}`}</td>
         <td>${g.phone?esc(g.phone):""}${g.email?`<small>${esc(g.email)}</small>`:""}</td>
-        <td>${g.ticket_exempt?"Sin cargo":money(due)}${g.ticket_override!==null&&g.ticket_override!==undefined&&!g.ticket_exempt?`<small>especial ${money(g.ticket_override)} c/u</small>`:""}</td>
+        <td>${g.ticket_exempt?"Sin cargo":money(due)}${g.ticket_override!==null&&g.ticket_override!==undefined&&!g.ticket_exempt?`<small>especial ${money(g.ticket_override)} c/u</small>`:""}${g.ticket_credit?`<small class="good">aporte reconocido ${money(g.ticket_credit)}</small>`:""}</td>
         <td>${money(paid)}${due>paid?`<small class="warn">faltan ${money(due-paid)}</small>`:"<small class='good'>cubierto</small>"}</td>
         <td>${g.gift_amount?money(g.gift_amount):"—"}</td><td>${esc(g.table_no||"—")}</td>
-        <td class="notes-cell">${esc(g.notes||g.gift_note||"—")}</td>
+        <td class="notes-cell">${esc(g.contribution_note||g.notes||g.gift_note||"—")}</td>
         <td class="actions"><button class="link" data-action="edit-guest" data-id="${attr(g.id)}">Editar</button><button class="link danger-text" data-action="delete" data-table="guests" data-id="${attr(g.id)}">Borrar</button></td>
       </tr>`;
     }).join(""):`<tr><td colspan="10" class="empty">No hay invitados que coincidan.</td></tr>`;
@@ -149,8 +173,8 @@
     $("guestModalTitle").textContent=g?"Editar invitado":"Nuevo invitado";
     $("guestId").value=g?.id||""; $("gName").value=g?.name||""; $("gStatus").value=g?.status||"invited";
     $("gPhone").value=g?.phone||""; $("gEmail").value=g?.email||""; $("gAttendance").value=g?.attendance||"";
-    $("gSeatsAllowed").value=g?.seats_allowed??1; $("gSeats").value=g?.seats??0; $("gTicketPaid").value=g?.ticket_paid||""; $("gGiftAmount").value=g?.gift_amount||"";
-    $("gTableNo").value=g?.table_no||""; $("gDiet").value=g?.diet||""; $("gSong").value=g?.song||"";
+    $("gSeatsAllowed").value=g?.seats_allowed??1; $("gSeats").value=g?.seats??0; $("gTicketPaid").value=g?.ticket_paid||""; $("gTicketCredit").value=g?.ticket_credit||""; $("gGiftAmount").value=g?.gift_amount||"";
+    $("gContributionNote").value=g?.contribution_note||""; $("gTableNo").value=g?.table_no||""; $("gDiet").value=g?.diet||""; $("gSong").value=g?.song||"";
     $("gNotes").value=g?.notes||""; $("gGiftNote").value=g?.gift_note||"";
     if(g?.ticket_exempt) $("gTicketMode").value="free";
     else if(g?.ticket_override!==null&&g?.ticket_override!==undefined) $("gTicketMode").value="custom";
@@ -161,7 +185,7 @@
   function syncTicketMode(){const custom=$("gTicketMode").value==="custom";$("gTicketOverride").disabled=!custom; if(!custom)$("gTicketOverride").value="";}
   async function saveGuest(e){
     e.preventDefault(); const id=$("guestId").value,mode=$("gTicketMode").value;
-    const body={name:$("gName").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,seats_allowed:Math.max(1,Number($("gSeatsAllowed").value)||1),ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,gift_amount:Number($("gGiftAmount").value)||0,table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
+    const body={name:$("gName").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,seats_allowed:Math.max(1,Number($("gSeatsAllowed").value)||1),ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,ticket_credit:Number($("gTicketCredit").value)||0,gift_amount:Number($("gGiftAmount").value)||0,contribution_note:$("gContributionNote").value.trim(),table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
     try{await api(id?`/api/admin/guests/${encodeURIComponent(id)}`:"/api/admin/guests",{method:id?"PATCH":"POST",body});closeGuest();await loadState();status("Invitado guardado.");}catch(err){status(err.message,"err",5000);}
   }
 
@@ -171,14 +195,16 @@
       <td>${money(Math.max(0,(Number(x.actual)||0)-(Number(x.paid)||0)))}</td>${editDate("due_date",x.due_date)}<td class="actions"><button class="link danger-text" data-action="delete" data-table="expenses" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Todavía no hay gastos cargados.</td></tr>`;
   }
   function renderShopping(){
+    const label={water:"Agua",soft:"Gaseosa/mixer",beer:"Cerveza",wine:"Vino",sparkling:"Espumante",spirits:"Destilado",ice:"Hielo"};
     $("shoppingRows").innerHTML=(state.shopping||[]).length?state.shopping.map(x=>`<tr data-row="shopping" data-id="${attr(x.id)}">
-      ${editCell("item",x.item)}${editCell("category",x.category)}${editCell("unit",x.unit)}${editNum("needed",x.needed,.01)}${editNum("bought",x.bought,.01)}<td>${num(Math.max(0,(Number(x.needed)||0)-(Number(x.bought)||0)))}</td>${editNum("unit_cost",x.unit_cost,.01)}<td><input data-edit="done" type="checkbox" ${x.done?"checked":""}></td><td class="actions"><button class="link danger-text" data-action="delete" data-table="shopping" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Todavía no hay compras cargadas.</td></tr>`;
+      ${editCell("item",x.item)}<td>${esc(label[x.planning_key]||x.category||"—")}${x.barcode?`<small>${esc(x.barcode)}</small>`:""}</td>${editCell("unit",x.unit)}${editNum("needed",x.needed,.01)}${editNum("bought",x.bought,.01)}<td>${num(Math.max(0,(Number(x.needed)||0)-(Number(x.bought)||0)))}</td>${editNum("unit_cost",x.unit_cost,.01)}${editNum("reference_price",x.reference_price,.01)}<td>${esc(x.source||"—")}</td><td class="actions"><button class="link" data-action="lookup-row" data-id="${attr(x.id)}">Precio</button><button class="link danger-text" data-action="delete" data-table="shopping" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="10" class="empty">Todavía no hay stock o compras cargadas.</td></tr>`;
   }
   function renderTasks(){
     $("taskRows").innerHTML=(state.tasks||[]).length?state.tasks.map(x=>`<tr data-row="tasks" data-id="${attr(x.id)}">${editCell("title",x.title)}${editCell("category",x.category)}${editDate("due_date",x.due_date)}<td><select class="cell-input" data-edit="priority"><option value="low" ${x.priority==="low"?"selected":""}>Baja</option><option value="normal" ${x.priority==="normal"?"selected":""}>Normal</option><option value="high" ${x.priority==="high"?"selected":""}>Alta</option></select></td>${editCell("owner",x.owner)}<td><select class="cell-input" data-edit="status"><option value="pending" ${x.status==="pending"?"selected":""}>Pendiente</option><option value="doing" ${x.status==="doing"?"selected":""}>En curso</option><option value="done" ${x.status==="done"?"selected":""}>Lista</option></select></td><td class="actions"><button class="link danger-text" data-action="delete" data-table="tasks" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">No hay tareas cargadas.</td></tr>`;
   }
   function renderVendors(){
-    $("vendorRows").innerHTML=(state.vendors||[]).length?state.vendors.map(x=>`<tr data-row="vendors" data-id="${attr(x.id)}">${editCell("category",x.category)}${editCell("name",x.name)}${editCell("contact",x.contact)}${editNum("total",x.total)}${editNum("paid",x.paid)}<td>${money(Math.max(0,(Number(x.total)||0)-(Number(x.paid)||0)))}</td>${editDate("due_date",x.due_date)}<td class="actions"><button class="link danger-text" data-action="delete" data-table="vendors" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="8" class="empty">No hay proveedores cargados.</td></tr>`;
+    const pay={cash:"Dinero",contribution:"Aporte/canje",mixed:"Mixto",free:"Sin cargo"};
+    $("vendorRows").innerHTML=(state.vendors||[]).length?state.vendors.map(x=>`<tr data-row="vendors" data-id="${attr(x.id)}">${editCell("category",x.category)}${editCell("name",x.name)}${editCell("role",x.role)}<td>${esc(pay[x.payment_mode]||x.payment_mode||"Dinero")}</td>${editNum("total",x.total)}${editNum("paid",x.paid)}<td>${money(Math.max(0,(Number(x.total)||0)-(Number(x.paid)||0)))}</td>${editCell("contribution_note",x.contribution_note)}<td class="actions"><button class="link danger-text" data-action="delete" data-table="vendors" data-id="${attr(x.id)}">Borrar</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">No hay personas o proveedores cargados.</td></tr>`;
   }
   function editCell(k,v){return `<td><input class="cell-input" data-edit="${attr(k)}" value="${attr(v||"")}"></td>`;}
   function editNum(k,v,step=1){return `<td><input class="cell-input num" data-edit="${attr(k)}" type="number" min="0" step="${step}" value="${attr(v??0)}"></td>`;}
@@ -187,7 +213,8 @@
   async function createFromForm(e,table){
     e.preventDefault(); const form=e.currentTarget, fd=new FormData(form),body={};
     for(const [k,v] of fd) body[k]=v;
-    for(const k of ["budget","actual","paid","needed","bought","unit_cost","total"]) if(k in body)body[k]=Number(body[k])||0;
+    for(const k of ["budget","actual","paid","needed","bought","unit_cost","total","reference_price","planning_factor","per_person","fixed_qty","stock","quantity","estimated_value"]) if(k in body)body[k]=Number(body[k])||0;
+    if(table==="contributions")body.status="promised";
     try{await api(`/api/admin/${table}`,{method:"POST",body});form.reset();await loadState();status("Agregado.");}catch(err){status(err.message,"err",5000);}
   }
 
@@ -209,6 +236,7 @@
   async function delegatedClick(e){
     const b=e.target.closest("[data-action]"); if(!b)return;
     if(b.dataset.action==="edit-guest"){const g=(state.guests||[]).find(x=>x.id===b.dataset.id);if(g)openGuest(g);return;}
+    if(b.dataset.action==="lookup-row"){const x=(state.shopping||[]).find(v=>v.id===b.dataset.id);if(x?.barcode)await lookupPrice(x);else status("Ese producto no tiene código de barras.","err");return;}
     if(b.dataset.action==="delete"){
       const label=b.dataset.table==="guests"?"este invitado":"este registro";
       if(!confirm(`¿Borrar ${label}?`))return;
@@ -227,26 +255,84 @@
   }
 
   function fillSettings(){
-    const s=state.settings||{},t=s.ticket||{},b=s.bank||{},c=s.ceremony||{},f=s.celebration||{};
+    const s=state.settings||{},t=s.ticket||{},b=s.bank||{},c=s.ceremony||{},f=s.celebration||{},d=s.dress||{},copy=s.copy||{};
+    $("copyFields").innerHTML=COPY_FIELDS.map(([key,label])=>`<div class="copy-field"><label>${esc(label)}</label><textarea class="field" data-copy-key="${attr(key)}" rows="2">${esc(copy[key]||"")}</textarea></div>`).join("");
     $("ticketEnabled").checked=t.enabled!==false; $("ticketPriceInput").value=t.price??0; $("ticketTextInput").value=t.text||"";
     $("bankHolderInput").value=b.holder||""; $("bankAliasInput").value=b.alias||""; $("bankCbuInput").value=b.cbu||""; $("bankMpInput").value=b.mp_url||"";
-    $("ceremonyTimeInput").value=c.time||""; $("ceremonyPlaceInput").value=c.place||""; $("ceremonyAddressInput").value=c.address||""; $("ceremonyLatInput").value=c.lat??""; $("ceremonyLngInput").value=c.lng??"";
-    $("celebrationTimeInput").value=f.time||""; $("celebrationPlaceInput").value=f.place||""; $("celebrationAddressInput").value=f.address||""; $("celebrationLatInput").value=f.lat??""; $("celebrationLngInput").value=f.lng??"";
+    $("ceremonyTimeInput").value=c.time||""; $("ceremonyTitleInput").value=c.title||""; $("ceremonyPlaceInput").value=c.place||""; $("ceremonyAddressInput").value=c.address||""; $("ceremonyLatInput").value=c.lat??""; $("ceremonyLngInput").value=c.lng??"";
+    $("celebrationTimeInput").value=f.time||""; $("celebrationTitleInput").value=f.title||""; $("celebrationPlaceInput").value=f.place||""; $("celebrationAddressInput").value=f.address||""; $("celebrationLatInput").value=f.lat??""; $("celebrationLngInput").value=f.lng??"";
+    $("dressTitleInput").value=d.title||""; $("dressConceptInput").value=d.concept||""; $("dressDetailsInput").value=d.details||"";
     $("deadlineInput").value=s.rsvp_deadline_display||""; $("fallbackWaInput").value=s.fallback_whatsapp||"";
   }
 
   async function saveSettings(){
-    const old=state.settings||{};
-    const settings={...old,
+    const old=state.settings||{},copy={};
+    document.querySelectorAll("[data-copy-key]").forEach(x=>copy[x.dataset.copyKey]=x.value.trim());
+    const settings={...old,copy,
       rsvp_deadline_display:$("deadlineInput").value.trim(),fallback_whatsapp:$("fallbackWaInput").value.replace(/\D/g,""),
       ticket:{...(old.ticket||{}),enabled:$("ticketEnabled").checked,price:Number($("ticketPriceInput").value)||0,currency:"ARS",text:$("ticketTextInput").value.trim()},
       bank:{holder:$("bankHolderInput").value.trim(),alias:$("bankAliasInput").value.trim(),cbu:$("bankCbuInput").value.replace(/\s/g,""),mp_url:$("bankMpInput").value.trim()},
-      ceremony:{...(old.ceremony||{}),time:$("ceremonyTimeInput").value.trim(),place:$("ceremonyPlaceInput").value.trim(),address:$("ceremonyAddressInput").value.trim(),lat:Number($("ceremonyLatInput").value),lng:Number($("ceremonyLngInput").value)},
-      celebration:{...(old.celebration||{}),time:$("celebrationTimeInput").value.trim(),place:$("celebrationPlaceInput").value.trim(),address:$("celebrationAddressInput").value.trim(),lat:Number($("celebrationLatInput").value),lng:Number($("celebrationLngInput").value)}
+      ceremony:{...(old.ceremony||{}),time:$("ceremonyTimeInput").value.trim(),title:$("ceremonyTitleInput").value.trim(),place:$("ceremonyPlaceInput").value.trim(),address:$("ceremonyAddressInput").value.trim(),lat:Number($("ceremonyLatInput").value),lng:Number($("ceremonyLngInput").value)},
+      celebration:{...(old.celebration||{}),time:$("celebrationTimeInput").value.trim(),title:$("celebrationTitleInput").value.trim(),place:$("celebrationPlaceInput").value.trim(),address:$("celebrationAddressInput").value.trim(),lat:Number($("celebrationLatInput").value),lng:Number($("celebrationLngInput").value)},
+      dress:{title:$("dressTitleInput").value.trim(),concept:$("dressConceptInput").value.trim(),details:$("dressDetailsInput").value.trim()}
     };
-    try{await api("/api/admin/settings",{method:"PUT",body:settings});await loadState();status("Sitio y tarjeta actualizados.");}
+    try{await api("/api/admin/settings",{method:"PUT",body:settings});await loadState();$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;status("Sitio y tarjeta actualizados.");}
     catch(err){status(err.message,"err",5000);}
   }
+
+  async function savePlanning(){
+    const planning={...(state.settings?.planning||{})};
+    document.querySelectorAll("[data-plan]").forEach(x=>planning[x.dataset.plan]=Number(x.value)||0);
+    try{await api("/api/admin/settings",{method:"PUT",body:{planning}});await loadState();status("Planificación actualizada.");}
+    catch(err){status(err.message,"err",5000);}
+  }
+  function suggestPlanningFactor(select,input){
+    const defaults={water:1.5,soft:2.25,beer:.473,wine:.75,sparkling:.75,spirits:.75,ice:1};
+    if(select.value && (!Number(input.value)||Number(input.value)===1)) input.value=defaults[select.value]||1;
+  }
+  async function syncPlanToShopping(){
+    const suggestions=state.planner?.suggestions||[];
+    try{
+      for(const x of suggestions){
+        const row=(state.shopping||[]).find(v=>v.planning_key===x.key),factor=Math.max(.001,Number(row?.planning_factor)||1),needed=Math.ceil((Number(x.target)||0)/factor*100)/100;
+        if(row) await api(`/api/admin/shopping/${encodeURIComponent(row.id)}`,{method:"PATCH",body:{needed}});
+        else await api("/api/admin/shopping",{method:"POST",body:{item:x.label,category:"Bebidas",planning_key:x.key,unit:x.unit,planning_factor:1,needed:Number(x.target)||0,bought:0}});
+      }
+      await loadState();openTab("shopping");status("Compras actualizadas con los objetivos del planificador.");
+    }catch(err){status(err.message,"err",5000);}
+  }
+
+  function showPriceStatus(html,type="ok"){
+    const el=$("priceLookupStatus");el.className=`status ${type}`;el.innerHTML=html;el.classList.remove("hidden");
+  }
+  async function lookupPrice(row=null){
+    const barcode=(row?.barcode||$("shoppingBarcode").value||"").replace(/\D/g,"");
+    if(barcode.length<8){showPriceStatus("Ingresá o escaneá un código de barras válido.","err");return;}
+    showPriceStatus("Buscando precios de referencia cerca de Jujuy…","ok");
+    try{
+      const r=await api(`/api/admin/price-lookup?barcode=${encodeURIComponent(barcode)}`);
+      const offers=r.offers||[],best=offers[0];
+      if(row){
+        if(best)await api(`/api/admin/shopping/${encodeURIComponent(row.id)}`,{method:"PATCH",body:{reference_price:best.price,source:r.source||"Precios Claros",source_url:r.source_url||"",reference_updated_at:new Date().toISOString()}});
+        await loadState();
+      }else{
+        if(r.name&&!$("shoppingItem").value)$("shoppingItem").value=r.name;
+        if(best)$("shoppingRefPrice").value=best.price;
+        $("shoppingSource").value=r.source||"Precios Claros";
+      }
+      showPriceStatus(best?`Referencia encontrada: <b>${money(best.price)}</b>${best.store?` · ${esc(best.store)}`:""}. ${offers.length>1?`${offers.length} precios relevados.`:""}`:"No encontré precio vigente para ese código. Podés cargarlo manualmente.",best?"ok":"err");
+    }catch(err){showPriceStatus(`No se pudo consultar la fuente de precios: ${esc(err.message)}`,"err");}
+  }
+  async function startBarcodeScan(){
+    if(!('BarcodeDetector' in window)){showPriceStatus("Este navegador no admite escaneo directo. Podés escribir el código de barras y usar Buscar precio.","err");return;}
+    try{
+      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}});
+      const video=$("barcodeVideo");video.srcObject=scanStream;await video.play();$("barcodeScanner").classList.remove("hidden");
+      const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
+      scanTimer=setInterval(async()=>{try{const codes=await detector.detect(video);if(codes[0]?.rawValue){$("shoppingBarcode").value=codes[0].rawValue;stopBarcodeScan();await lookupPrice();}}catch(_){}},500);
+    }catch(err){showPriceStatus("No pude abrir la cámara. Revisá el permiso del navegador o cargá el código manualmente.","err");}
+  }
+  function stopBarcodeScan(){if(scanTimer){clearInterval(scanTimer);scanTimer=null;}if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}$("barcodeScanner").classList.add("hidden");}
 
   async function importBackup(e){
     const file=e.target.files?.[0]; e.target.value=""; if(!file)return;

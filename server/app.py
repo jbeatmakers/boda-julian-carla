@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Small persistent wedding backend: stdlib + SQLite, no runtime dependency on GitHub."""
 from __future__ import annotations
-import argparse, base64, getpass, hashlib, hmac, json, os, re, secrets, sqlite3, threading, time, uuid
+import argparse, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
+from urllib.request import Request, urlopen
 
 DB_PATH = Path(os.environ.get("WEDDING_DB_PATH", "/var/lib/boda-julian-carla/wedding.sqlite3"))
 ADMIN_USER = os.environ.get("WEDDING_ADMIN_USER", "admin")
@@ -34,18 +35,22 @@ DEFAULT_SETTINGS = {
     "dress":{"title":"Estética Edén","concept":"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.","details":"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
     "ticket":{"enabled":True,"price":35000,"currency":"ARS","text":"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
     "bank":{"holder":"","alias":"","cbu":"","mp_url":""},
-    "fallback_whatsapp":""
+    "fallback_whatsapp":"",
+    "copy":{"gate_intro":"Tenemos algo para compartir con vos.","gate_help":"Ingresá el código de tu invitación.","hero_intro":"Queremos compartir este día con vos.","hero_confirm_btn":"Confirmar asistencia","hero_maps_btn":"Horarios y mapas","places_eyebrow":"Ceremonia & celebración","places_title":"El casamiento","places_intro":"Los dos lugares quedan muy cerca entre sí.","dress_eyebrow":"Dress code","rsvp_eyebrow":"R.S.V.P.","rsvp_title":"¿Nos acompañás?","decline_body":"Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.","decline_gift_note":"Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.","gift_eyebrow":"Tarjeta & regalos","gift_title":"Celebrar con ustedes ya es mucho","gift_intro":"Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.","ticket_eyebrow":"Si venís","ticket_title":"Tarjeta de la celebración","present_eyebrow":"Si querés tener un gesto","present_title":"Regalos","present_body":"Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.","present_transfer":"Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.","transfer_eyebrow":"Datos para transferencia"},
+    "planning":{"guest_buffer_pct":5,"planned_guests_override":0,"table_capacity":10,"drinkers_pct":70,"water_l_pp":1.0,"soft_l_pp":0.8,"beer_l_drinker":1.0,"wine_l_drinker":0.45,"sparkling_l_pp":0.125,"spirits_l_drinker":0.12,"ice_kg_pp":1.0,"appetizer_pieces_pp":6,"main_portions_pp":1.05,"dessert_portions_pp":1.05,"cake_g_pp":100}
 }
 TABLE_FIELDS = {
     "expenses":{"category","description","vendor","budget","actual","paid","due_date","status","notes"},
-    "shopping":{"category","item","unit","needed","bought","unit_cost","done","notes"},
+    "shopping":{"category","item","unit","needed","bought","unit_cost","done","notes","barcode","planning_key","source","source_url","reference_price","reference_updated_at","planning_factor"},
     "tasks":{"title","category","due_date","priority","owner","status","notes"},
-    "vendors":{"category","name","contact","total","paid","due_date","status","notes"},
-    "songs":{"title","source","active"}
+    "vendors":{"category","name","contact","total","paid","due_date","status","notes","role","payment_mode","contribution_note"},
+    "songs":{"title","source","active"},
+    "menu":{"item","course","unit","per_person","fixed_qty","stock","unit_cost","contributor","notes"},
+    "contributions":{"guest_id","contributor","category","planning_key","planning_factor","item","quantity","unit","estimated_value","status","notes"}
 }
 GUEST_FIELDS = {
     "name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes",
-    "ticket_override","ticket_exempt","ticket_paid","gift_amount","gift_note","table_no"
+    "ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no"
 }
 
 def now_iso() -> str:
@@ -112,11 +117,31 @@ def init_db() -> None:
           id TEXT PRIMARY KEY, title TEXT NOT NULL, source TEXT DEFAULT 'manual',
           active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS menu(
+          id TEXT PRIMARY KEY, item TEXT NOT NULL, course TEXT DEFAULT 'other', unit TEXT DEFAULT 'porciones',
+          per_person REAL NOT NULL DEFAULT 0, fixed_qty REAL NOT NULL DEFAULT 0, stock REAL NOT NULL DEFAULT 0,
+          unit_cost REAL NOT NULL DEFAULT 0, contributor TEXT DEFAULT '', notes TEXT DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS contributions(
+          id TEXT PRIMARY KEY, guest_id TEXT DEFAULT '', contributor TEXT NOT NULL, category TEXT DEFAULT '', planning_key TEXT DEFAULT '', planning_factor REAL NOT NULL DEFAULT 1,
+          item TEXT NOT NULL, quantity REAL NOT NULL DEFAULT 0, unit TEXT DEFAULT '', estimated_value REAL NOT NULL DEFAULT 0,
+          status TEXT DEFAULT 'promised', notes TEXT DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
         """)
         guest_columns={r["name"] for r in c.execute("PRAGMA table_info(guests)")}
         if "seats_allowed" not in guest_columns:
             c.execute("ALTER TABLE guests ADD COLUMN seats_allowed INTEGER NOT NULL DEFAULT 1")
             c.execute("UPDATE guests SET seats_allowed=CASE WHEN seats>0 THEN seats ELSE 1 END")
+        migrations={
+          "guests":{"ticket_credit":"INTEGER NOT NULL DEFAULT 0","contribution_note":"TEXT NOT NULL DEFAULT ''"},
+          "shopping":{"barcode":"TEXT DEFAULT ''","planning_key":"TEXT DEFAULT ''","source":"TEXT DEFAULT ''","source_url":"TEXT DEFAULT ''","reference_price":"REAL NOT NULL DEFAULT 0","reference_updated_at":"TEXT DEFAULT ''","planning_factor":"REAL NOT NULL DEFAULT 1"},
+          "vendors":{"role":"TEXT DEFAULT ''","payment_mode":"TEXT DEFAULT 'cash'","contribution_note":"TEXT DEFAULT ''"},
+          "contributions":{"planning_key":"TEXT DEFAULT ''","planning_factor":"REAL NOT NULL DEFAULT 1"}
+        }
+        for table,cols in migrations.items():
+            existing={r["name"] for r in c.execute(f"PRAGMA table_info({table})")}
+            for col,decl in cols.items():
+                if col not in existing: c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
         for k,v in DEFAULT_SETTINGS.items():
             c.execute("INSERT OR IGNORE INTO settings(key,value,updated_at) VALUES(?,?,?)",
                       (k,json.dumps(v,ensure_ascii=False),now_iso()))
@@ -270,13 +295,19 @@ class Handler(BaseHTTPRequestHandler):
             if not self._admin_or_401(): return
             with db() as c:
                 payload={"settings":read_settings(c)}
-                for t in ("guests","expenses","shopping","tasks","vendors","songs"):
+                for t in ("guests","expenses","shopping","tasks","vendors","songs","menu","contributions"):
                     payload[t]=[dict(r) for r in c.execute(f"SELECT * FROM {t} ORDER BY updated_at DESC")]
                 payload["dashboard"]=dashboard(c,payload["settings"])
+                payload["planner"]=planner(c,payload["settings"])
             return self._json(200,payload)
         if p=="/api/admin/session":
             sess=self._session()
             return self._json(200,{"authenticated":bool(sess),"csrf":sess["csrf"] if sess else ""})
+        if p=="/api/admin/price-lookup":
+            if not self._admin_or_401(): return
+            query=urlparse(self.path).query
+            params={k:v for k,_,v in (x.partition("=") for x in query.split("&") if x)}
+            return self._json(200,price_lookup(params.get("barcode","")))
         self._json(404,{"error":"not_found"})
 
     def do_POST(self):
@@ -332,7 +363,7 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as e:
                 return self._json(400,{"error":str(e)})
             return self._json(201,row)
-        m=re.fullmatch(r"/api/admin/(expenses|shopping|tasks|vendors|songs)",p)
+        m=re.fullmatch(r"/api/admin/(expenses|shopping|tasks|vendors|songs|menu|contributions)",p)
         if m:
             if not self._admin_or_401(csrf=True): return
             try: data=self._body()
@@ -363,7 +394,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_PATCH(self):
         p=urlparse(self.path).path
-        m=re.fullmatch(r"/api/admin/(guests|expenses|shopping|tasks|vendors|songs)/([A-Za-z0-9_-]+)",p)
+        m=re.fullmatch(r"/api/admin/(guests|expenses|shopping|tasks|vendors|songs|menu|contributions)/([A-Za-z0-9_-]+)",p)
         if not m: return self._json(404,{"error":"not_found"})
         if not self._admin_or_401(csrf=True): return
         try: data=self._body()
@@ -379,7 +410,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         p=urlparse(self.path).path
-        m=re.fullmatch(r"/api/admin/(guests|expenses|shopping|tasks|vendors|songs)/([A-Za-z0-9_-]+)",p)
+        m=re.fullmatch(r"/api/admin/(guests|expenses|shopping|tasks|vendors|songs|menu|contributions)/([A-Za-z0-9_-]+)",p)
         if not m: return self._json(404,{"error":"not_found"})
         if not self._admin_or_401(csrf=True): return
         table,item_id=m.groups()
@@ -426,10 +457,10 @@ def clean_for_table(table: str, data: dict) -> dict:
     for k in allowed:
         if k not in data: continue
         v=data[k]
-        if k in {"seats","seats_allowed","ticket_override","ticket_exempt","ticket_paid","gift_amount","done","active"}:
+        if k in {"seats","seats_allowed","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","done","active"}:
             if v in ("",None) and k=="ticket_override": out[k]=None
             else: out[k]=int(v or 0)
-        elif k in {"budget","actual","paid","needed","bought","unit_cost","total"}:
+        elif k in {"budget","actual","paid","needed","bought","unit_cost","total","reference_price","planning_factor","per_person","fixed_qty","stock","quantity","estimated_value"}:
             out[k]=float(v or 0)
         else: out[k]=clean_text(v,1200 if k=="notes" else 240)
     return out
@@ -440,11 +471,11 @@ def admin_create_guest(data: dict) -> dict:
     if len(name)<2: raise ValueError("name_required")
     now=now_iso(); gid=str(uuid.uuid4())
     base={"phone":"","email":"","status":"pending","attendance":"","seats":1,"seats_allowed":1,"diet":"","song":"","notes":"",
-          "ticket_override":None,"ticket_exempt":0,"ticket_paid":0,"gift_amount":0,"gift_note":"","table_no":""}
+          "ticket_override":None,"ticket_exempt":0,"ticket_paid":0,"ticket_credit":0,"gift_amount":0,"gift_note":"","contribution_note":"","table_no":""}
     base.update(d)
     base["seats_allowed"]=max(1,min(12,int(base.get("seats_allowed") or 1)))
     base["seats"]=max(0,min(base["seats_allowed"],int(base.get("seats") or 0)))
-    cols=["id","name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","gift_amount","gift_note","table_no","invited_at","updated_at"]
+    cols=["id","name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no","invited_at","updated_at"]
     vals=[gid]+[base[k] for k in cols[1:-2]]+[now,now]
     with db() as c:
         c.execute(f"INSERT INTO guests({','.join(cols)}) VALUES({','.join('?' for _ in cols)})",vals)
@@ -452,7 +483,8 @@ def admin_create_guest(data: dict) -> dict:
 
 def create_generic(table: str, data: dict) -> dict:
     d=clean_for_table(table,data)
-    required={"expenses":"description","shopping":"item","tasks":"title","vendors":"name","songs":"title"}[table]
+    required={"expenses":"description","shopping":"item","tasks":"title","vendors":"name","songs":"title","menu":"item","contributions":"item"}[table]
+    if table=="contributions" and not d.get("contributor"): d["contributor"]="Sin asignar"
     if not d.get(required): raise ValueError(f"{required}_required")
     now=now_iso(); item_id=str(uuid.uuid4())
     d.update({"id":item_id,"created_at":now,"updated_at":now})
@@ -483,7 +515,8 @@ def dashboard(c: sqlite3.Connection, settings: dict) -> dict:
     for g in confirmed:
         seats += max(0,int(g["seats"] or 0))
         unit=0 if g["ticket_exempt"] else (g["ticket_override"] if g["ticket_override"] is not None else ticket_price)
-        expected += int(unit or 0)*max(1,int(g["seats"] or 1))
+        gross=int(unit or 0)*max(1,int(g["seats"] or 1))
+        expected += max(0,gross-int(g.get("ticket_credit",0) or 0))
         paid += int(g["ticket_paid"] or 0); gifts += int(g["gift_amount"] or 0)
     ex=c.execute("SELECT COALESCE(SUM(actual),0) actual,COALESCE(SUM(paid),0) paid FROM expenses").fetchone()
     return {
@@ -493,6 +526,77 @@ def dashboard(c: sqlite3.Connection, settings: dict) -> dict:
         "seats":seats,"ticket_expected":expected,"ticket_paid":paid,"ticket_pending":max(0,expected-paid),
         "gifts":gifts,"expenses_actual":float(ex["actual"] or 0),"expenses_paid":float(ex["paid"] or 0)
     }
+
+def _num(v, default=0.0):
+    try: return float(v)
+    except (TypeError,ValueError): return default
+
+def planner(c: sqlite3.Connection, settings: dict) -> dict:
+    p={**DEFAULT_SETTINGS["planning"],**(settings.get("planning") or {})}
+    guests=[dict(r) for r in c.execute("SELECT * FROM guests")]
+    confirmed=sum(max(0,int(g["seats"] or 0)) for g in guests if g["status"]=="confirmed")
+    pending=sum(max(1,int(g["seats_allowed"] or 1)) for g in guests if g["status"] in ("pending","invited","possible"))
+    override=int(_num(p.get("planned_guests_override"),0))
+    planned=override if override>0 else int(math.ceil(confirmed*(1+_num(p.get("guest_buffer_pct"),5)/100)))
+    planned=max(planned,confirmed)
+    drinkers=int(math.ceil(planned*_num(p.get("drinkers_pct"),70)/100))
+    cap=max(1,int(_num(p.get("table_capacity"),10)))
+    suggestions=[
+      {"key":"water","label":"Agua","unit":"L","target":round(planned*_num(p.get("water_l_pp"),1),1)},
+      {"key":"soft","label":"Gaseosas / mixers","unit":"L","target":round(planned*_num(p.get("soft_l_pp"),.8),1)},
+      {"key":"beer","label":"Cerveza","unit":"L","target":round(drinkers*_num(p.get("beer_l_drinker"),1),1)},
+      {"key":"wine","label":"Vino","unit":"L","target":round(drinkers*_num(p.get("wine_l_drinker"),.45),1)},
+      {"key":"sparkling","label":"Espumante / brindis","unit":"L","target":round(planned*_num(p.get("sparkling_l_pp"),.125),1)},
+      {"key":"spirits","label":"Destilados","unit":"L","target":round(drinkers*_num(p.get("spirits_l_drinker"),.12),1)},
+      {"key":"ice","label":"Hielo","unit":"kg","target":round(planned*_num(p.get("ice_kg_pp"),1),1)}]
+    stock={r["planning_key"]:float(r["qty"] or 0) for r in c.execute("SELECT planning_key,COALESCE(SUM(bought*CASE WHEN planning_factor>0 THEN planning_factor ELSE 1 END),0) qty FROM shopping WHERE planning_key<>'' GROUP BY planning_key")}
+    for r in c.execute("SELECT planning_key,COALESCE(SUM(quantity*CASE WHEN planning_factor>0 THEN planning_factor ELSE 1 END),0) qty FROM contributions WHERE status='received' AND planning_key<>'' GROUP BY planning_key"):
+        stock[r["planning_key"]]=stock.get(r["planning_key"],0)+float(r["qty"] or 0)
+    for x in suggestions:
+        x["stock"]=round(stock.get(x["key"],0),2); x["missing"]=round(max(0,x["target"]-x["stock"]),2)
+    menu=[]
+    for r in c.execute("SELECT * FROM menu ORDER BY course,item"):
+        x=dict(r); target=_num(x["fixed_qty"]) or (_num(x["per_person"])*planned)
+        x["target"]=round(target,2); x["missing"]=round(max(0,target-_num(x["stock"])),2); menu.append(x)
+    if not menu and planned:
+        menu=[
+          {"item":"Bocados / recepción","course":"appetizer","unit":"unidades","target":round(planned*_num(p.get("appetizer_pieces_pp"),6),0),"stock":0,"missing":round(planned*_num(p.get("appetizer_pieces_pp"),6),0)},
+          {"item":"Plato principal","course":"main","unit":"porciones","target":round(planned*_num(p.get("main_portions_pp"),1.05),0),"stock":0,"missing":round(planned*_num(p.get("main_portions_pp"),1.05),0)},
+          {"item":"Postre","course":"dessert","unit":"porciones","target":round(planned*_num(p.get("dessert_portions_pp"),1.05),0),"stock":0,"missing":round(planned*_num(p.get("dessert_portions_pp"),1.05),0)},
+          {"item":"Torta","course":"cake","unit":"kg","target":round(planned*_num(p.get("cake_g_pp"),100)/1000,1),"stock":0,"missing":round(planned*_num(p.get("cake_g_pp"),100)/1000,1)}]
+    contributions=[dict(r) for r in c.execute("SELECT * FROM contributions")]
+    return {"confirmed":confirmed,"pending_capacity":pending,"planned":planned,"tables":int(math.ceil(planned/cap)) if planned else 0,"table_capacity":cap,"drinkers":drinkers,"suggestions":suggestions,"menu":menu,"contributions_promised":sum(x["status"]=="promised" for x in contributions),"contributions_received":sum(x["status"]=="received" for x in contributions)}
+
+def price_lookup(barcode: str) -> dict:
+    barcode=re.sub(r"\D","",barcode or "")
+    if len(barcode)<8: return {"found":False,"error":"barcode_invalid","offers":[]}
+    base="https://d3e6htiiul5ek9.cloudfront.net/prod"
+    headers={"User-Agent":"Mozilla/5.0 WeddingPlanner/1.0","Referer":"https://www.preciosclaros.gob.ar/","Origin":"https://www.preciosclaros.gob.ar"}
+    try:
+        def get(path,params):
+            req=Request(base+path+"?"+urlencode(params),headers=headers)
+            with urlopen(req,timeout=6) as r: return json.loads(r.read().decode("utf-8","replace"))
+        branches=get("/sucursales",{"lat":-24.14816,"lng":-65.39326,"limit":20}).get("sucursales",[])
+        ids=",".join(str(x.get("id","")) for x in branches if x.get("id"))
+        detail=get("/producto",{"limit":30,"id_producto":barcode,"array_sucursales":ids})
+        product=detail.get("producto") or {}
+        if not product: return {"found":False,"barcode":barcode,"offers":[],"source":"Precios Claros","source_url":"https://www.preciosclaros.gob.ar/"}
+        name=clean_text(product.get("nombre") or "",160); offers=[]
+        for branch in detail.get("sucursales") or []:
+            if not isinstance(branch,dict): continue
+            price=_num((branch.get("preciosProducto") or {}).get("precioLista"))
+            if price<=0: continue
+            store=clean_text(branch.get("banderaDescripcion") or branch.get("sucursalNombre") or branch.get("comercioRazonSocial") or "",120)
+            address=clean_text(branch.get("direccion") or "",120)
+            offers.append({"price":price,"store":store,"address":address,"updated_today":bool(branch.get("actualizadoHoy"))})
+        if not offers:
+            low=_num(product.get("precioMin")); high=_num(product.get("precioMax"))
+            if low>0: offers.append({"price":low,"store":"mínimo relevado","address":"","updated_today":False})
+            if high>0 and high!=low: offers.append({"price":high,"store":"máximo relevado","address":"","updated_today":False})
+        offers=sorted(offers,key=lambda x:x["price"])[:12]
+        return {"found":True,"barcode":barcode,"name":name,"offers":offers,"source":"Precios Claros","source_url":"https://www.preciosclaros.gob.ar/"}
+    except Exception:
+        return {"found":False,"barcode":barcode,"offers":[],"source":"Precios Claros","source_url":"https://www.preciosclaros.gob.ar/","error":"price_source_unavailable"}
 
 def main():
     parser=argparse.ArgumentParser()
