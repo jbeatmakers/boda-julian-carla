@@ -111,15 +111,15 @@
     const el=$("instagramAdminStatus"),btn=$("instagramConnectBtn"); if(!el||!btn)return;
     try{
       const out=await api("/api/admin/instagram/status");
-      if(out.connected){el.textContent=`Conectado a @${out.username||out.target_username}${out.page_name?` Â· PÃ¡gina: ${out.page_name}`:""}.`;btn.textContent="Reconectar con Meta";btn.disabled=false;}
+      if(out.connected){el.textContent=`Conectado a @${out.username||out.target_username}${out.page_name?` · Página: ${out.page_name}`:""}.`;btn.textContent="Reconectar con Meta";btn.disabled=false;}
       else if(out.configured){el.textContent=`Listo para autorizar @${out.target_username} con tu cuenta de Meta.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=false;}
-      else{el.textContent=`Cuenta objetivo: @${out.target_username}. Falta crear/configurar la App de Meta para iniciar el permiso.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=true;}
+      else if(out.app_created){el.textContent=`Meta ya está preparada para @${out.target_username}. Falta completar la autorización segura de la cuenta.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=true;}else{el.textContent=`Cuenta objetivo: @${out.target_username}. La App de Meta todavía no está configurada.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=true;}
     }catch(err){el.textContent=err.message;btn.disabled=true;}
   }
 
   async function connectInstagram(){
     const btn=$("instagramConnectBtn"); if(!btn)return; btn.disabled=true;
-    try{const out=await api("/api/admin/instagram/connect"); if(out.url)window.location.href=out.url; else throw new Error("No se recibiÃ³ la URL de Meta.");}
+    try{const out=await api("/api/admin/instagram/connect"); if(out.url)window.location.href=out.url; else throw new Error("No se recibió la URL de Meta.");}
     catch(err){status(err.message,"err",6000);btn.disabled=false;}
   }
 

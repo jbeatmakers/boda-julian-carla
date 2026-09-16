@@ -296,19 +296,30 @@
     if(!section || !API_BASE) return;
     try{
       const feed=await fetchJson(`${API_BASE}/api/public/instagram`,{cache:"no-store"},4000);
-      if(!feed.enabled || !Array.isArray(feed.items) || !feed.items.length) return;
-      safeText("instagramHeading",feed.heading||"Momentos de la boda");
-      safeText("instagramIntro",feed.intro||"Fotos y videos compartidos desde nuestro Instagram.");
+      const items=Array.isArray(feed.items)?feed.items:[];
+      const username=String(feed.username||"juli.y.carli").replace(/^@/,"");
+      const profileUrl=feed.profile_url||`https://www.instagram.com/${username}/`;
+      if(!profileUrl && !items.length) return;
+      safeText("instagramHeading",feed.heading||"Nuestro Instagram");
+      safeText("instagramIntro",feed.intro||"Seguinos para acompa\u00f1arnos en la previa y revivir la fiesta.");
       const grid=$("instagramGrid"); grid.textContent="";
-      feed.items.slice(0,6).forEach(item=>{
-        const href=item.permalink||feed.profile_url, media=item.thumbnail_url||item.media_url;
-        if(!href || !media) return;
-        const a=document.createElement("a"); a.className="instagram-card"; a.href=href; a.target="_blank"; a.rel="noopener noreferrer";
-        const img=document.createElement("img"); img.loading="lazy"; img.src=media; img.alt=(item.caption||"Publicaci\u00f3n de Instagram").slice(0,120); a.appendChild(img);
-        if(item.media_type==="VIDEO"){ const b=document.createElement("span"); b.className="instagram-badge"; b.textContent="Reel \u25b6"; a.appendChild(b); }
-        grid.appendChild(a);
-      });
-      const profile=$("instagramProfile"); if(feed.profile_url){ profile.href=feed.profile_url; profile.classList.remove("hidden"); }
+      if(items.length){
+        items.slice(0,6).forEach(item=>{
+          const href=item.permalink||profileUrl, media=item.thumbnail_url||item.media_url;
+          if(!href || !media) return;
+          const a=document.createElement("a"); a.className="instagram-card"; a.href=href; a.target="_blank"; a.rel="noopener noreferrer";
+          const img=document.createElement("img"); img.loading="lazy"; img.src=media; img.alt=(item.caption||"Publicaci\u00f3n de Instagram").slice(0,120); a.appendChild(img);
+          if(item.media_type==="VIDEO"){ const b=document.createElement("span"); b.className="instagram-badge"; b.textContent="Reel \u25b6"; a.appendChild(b); }
+          grid.appendChild(a);
+        });
+      }else{
+        const empty=document.createElement("div"); empty.className="instagram-empty card";
+        const strong=document.createElement("strong"); strong.textContent=`@${username}`;
+        const text=document.createElement("p"); text.className="muted"; text.textContent="Todav\u00eda no hay publicaciones. Cuando empecemos a compartir fotos y videos, van a aparecer ac\u00e1 autom\u00e1ticamente.";
+        empty.append(strong,text); grid.appendChild(empty);
+      }
+      const profile=$("instagramProfile");
+      if(profileUrl){profile.href=profileUrl;profile.textContent=`Abrir @${username} en Instagram \u2197`;profile.classList.remove("hidden");}
       section.classList.remove("hidden");
     }catch(_){}
   }

@@ -29,7 +29,7 @@ INSTAGRAM_PROFILE_URL = os.environ.get("WEDDING_INSTAGRAM_PROFILE_URL", "").stri
 INSTAGRAM_FEED_PATH = Path(os.environ.get("WEDDING_INSTAGRAM_FEED_PATH", "/var/lib/boda-julian-carla/instagram-feed.json"))
 INSTAGRAM_AUTH_PATH = Path(os.environ.get("WEDDING_INSTAGRAM_AUTH_PATH", "/var/lib/boda-julian-carla/instagram-auth.json"))
 INSTAGRAM_TARGET_USERNAME = os.environ.get("WEDDING_INSTAGRAM_TARGET_USERNAME", "juli.y.carli").strip().lstrip("@")
-META_APP_ID = os.environ.get("WEDDING_META_APP_ID", "").strip()
+META_APP_ID = os.environ.get("WEDDING_META_APP_ID", "4388236648154471").strip()
 META_APP_SECRET = os.environ.get("WEDDING_META_APP_SECRET", "").strip()
 META_GRAPH_VERSION = os.environ.get("WEDDING_META_GRAPH_VERSION", "v26.0").strip() or "v26.0"
 META_REDIRECT_URI = os.environ.get("WEDDING_META_REDIRECT_URI", "https://boda-api.13-140-183-198.sslip.io/api/admin/instagram/callback").strip()
@@ -261,7 +261,7 @@ def refresh_instagram_feed(force=False):
         return False
 
 def instagram_status_payload():
-    out={"configured":bool(META_APP_ID and META_APP_SECRET),"target_username":INSTAGRAM_TARGET_USERNAME,"connected":False,"username":"","page_name":""}
+    out={"app_created":bool(META_APP_ID),"configured":bool(META_APP_ID and META_APP_SECRET),"target_username":INSTAGRAM_TARGET_USERNAME,"profile_url":INSTAGRAM_PROFILE_URL or f"https://www.instagram.com/{INSTAGRAM_TARGET_USERNAME}/","connected":False,"username":"","page_name":""}
     try:
         auth=json.loads(INSTAGRAM_AUTH_PATH.read_text(encoding="utf-8"))
         out.update({"connected":bool(auth.get("access_token") and auth.get("ig_user_id")),"username":clean_text(auth.get("username"),120),"page_name":clean_text(auth.get("page_name"),160)})
@@ -300,7 +300,7 @@ def instagram_complete_oauth(code, state):
 
 def instagram_public_payload():
     if INSTAGRAM_AUTH_PATH.exists(): refresh_instagram_feed(False)
-    payload={"enabled":False,"heading":INSTAGRAM_HEADING,"intro":INSTAGRAM_INTRO,"profile_url":INSTAGRAM_PROFILE_URL,"items":[]}
+    payload={"enabled":False,"heading":INSTAGRAM_HEADING,"intro":INSTAGRAM_INTRO,"username":INSTAGRAM_TARGET_USERNAME,"profile_url":INSTAGRAM_PROFILE_URL or f"https://www.instagram.com/{INSTAGRAM_TARGET_USERNAME}/","items":[]}
     try:
         raw=json.loads(INSTAGRAM_FEED_PATH.read_text(encoding="utf-8"))
         items=[]

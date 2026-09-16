@@ -54,6 +54,10 @@ class WeddingApiTest(unittest.TestCase):
         s,d,h=self.req("GET","/api/public/config",headers={"Origin":"https://boda-julian-carla.bpm.red"})
         self.assertEqual(s,200); self.assertEqual(d["ticket"]["price"],35000)
         self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://boda-julian-carla.bpm.red")
+        s,ig,h=self.req("GET","/api/public/instagram",headers={"Origin":"https://boda-julian-carla.bpm.red"})
+        self.assertEqual(s,200); self.assertEqual(ig["username"],"juli.y.carli")
+        self.assertEqual(ig["profile_url"],"https://www.instagram.com/juli.y.carli/")
+        self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://boda-julian-carla.bpm.red")
 
     def test_rsvp_is_persistent_and_idempotent(self):
         cookie,csrf=self.login(); admin_headers={"Cookie":cookie,"X-CSRF-Token":csrf}

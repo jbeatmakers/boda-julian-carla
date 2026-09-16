@@ -139,3 +139,5 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
 @media(max-width:760px){#site:before,#site:after{width:86px;opacity:.40;background-size:82px 470px;top:110px;bottom:50px}.hero{min-height:72vh}.hero:before{font-size:clamp(7rem,42vw,12rem)}main>section:nth-child(even){background:rgba(255,253,248,.42)}}
 
 .instagram-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.instagram-card{position:relative;display:block;aspect-ratio:1;border-radius:22px;overflow:hidden;background:#eee}.instagram-card img{width:100%;height:100%;object-fit:cover;display:block}.instagram-badge{position:absolute;right:10px;top:10px;background:rgba(35,40,33,.78);color:#fff;padding:6px 9px;border-radius:999px}.instagram-actions{text-align:center;margin-top:18px}@media(max-width:720px){.instagram-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.instagram-card{border-radius:16px}}
+
+.instagram-empty{grid-column:1/-1;text-align:center;padding:28px 22px;border-radius:22px}.instagram-empty strong{font-family:Italiana,serif;font-size:clamp(1.7rem,4vw,2.4rem);font-weight:400}.instagram-empty p{max-width:620px;margin:10px auto 0}
