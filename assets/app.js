@@ -65,6 +65,7 @@
     if(withCelebration) requestAnimationFrame(()=>celebrate(42));
     startCountdown();
     loadPublicConfig();
+    loadInstagram();
     flushOutbox();
   }
 
@@ -288,6 +289,28 @@
     if(p.song) lines.push(`Canción: ${p.song}`);
     if(p.message) lines.push(`Mensaje: ${p.message}`);
     return lines.join("\n");
+  }
+
+  async function loadInstagram(){
+    const section=$("instagramSection");
+    if(!section || !API_BASE) return;
+    try{
+      const feed=await fetchJson(`${API_BASE}/api/public/instagram`,{cache:"no-store"},4000);
+      if(!feed.enabled || !Array.isArray(feed.items) || !feed.items.length) return;
+      safeText("instagramHeading",feed.heading||"Momentos de la boda");
+      safeText("instagramIntro",feed.intro||"Fotos y videos compartidos desde nuestro Instagram.");
+      const grid=$("instagramGrid"); grid.textContent="";
+      feed.items.slice(0,6).forEach(item=>{
+        const href=item.permalink||feed.profile_url, media=item.thumbnail_url||item.media_url;
+        if(!href || !media) return;
+        const a=document.createElement("a"); a.className="instagram-card"; a.href=href; a.target="_blank"; a.rel="noopener noreferrer";
+        const img=document.createElement("img"); img.loading="lazy"; img.src=media; img.alt=(item.caption||"Publicaci\u00f3n de Instagram").slice(0,120); a.appendChild(img);
+        if(item.media_type==="VIDEO"){ const b=document.createElement("span"); b.className="instagram-badge"; b.textContent="Reel \u25b6"; a.appendChild(b); }
+        grid.appendChild(a);
+      });
+      const profile=$("instagramProfile"); if(feed.profile_url){ profile.href=feed.profile_url; profile.classList.remove("hidden"); }
+      section.classList.remove("hidden");
+    }catch(_){}
   }
 
   async function copyField(id,button){

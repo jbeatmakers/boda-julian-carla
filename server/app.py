@@ -22,6 +22,14 @@ ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.environ.get(
     "WEDDING_ALLOWED_ORIGINS",
     "https://boda-julian-carla.bpm.red"
 ).split(",") if x.strip()}
+INSTAGRAM_USER_ID = os.environ.get("WEDDING_INSTAGRAM_USER_ID", "").strip()
+INSTAGRAM_ACCESS_TOKEN = os.environ.get("WEDDING_INSTAGRAM_ACCESS_TOKEN", "").strip()
+INSTAGRAM_GRAPH_VERSION = os.environ.get("WEDDING_META_GRAPH_VERSION", "").strip()
+INSTAGRAM_PROFILE_URL = os.environ.get("WEDDING_INSTAGRAM_PROFILE_URL", "").strip()
+INSTAGRAM_FEED_PATH = Path(os.environ.get("WEDDING_INSTAGRAM_FEED_PATH", "/var/lib/boda-julian-carla/instagram-feed.json"))
+INSTAGRAM_HEADING = os.environ.get("WEDDING_INSTAGRAM_HEADING", "Momentos de la boda").strip()
+INSTAGRAM_INTRO = os.environ.get("WEDDING_INSTAGRAM_INTRO", "Fotos y videos compartidos desde nuestro Instagram.").strip()
+_instagram_cache = {"at":0.0,"payload":{"enabled":False,"items":[]}}
 SESSION_TTL = 8 * 3600
 MAX_BODY = 16_384
 _lock = threading.RLock()
@@ -211,6 +219,19 @@ def purge_sessions():
         for k in list(_entry_tokens):
             if _entry_tokens[k] < now: _entry_tokens.pop(k,None)
 
+def instagram_public_payload():
+    payload={"enabled":False,"heading":INSTAGRAM_HEADING,"intro":INSTAGRAM_INTRO,"profile_url":INSTAGRAM_PROFILE_URL,"items":[]}
+    try:
+        raw=json.loads(INSTAGRAM_FEED_PATH.read_text(encoding="utf-8"))
+        items=[]
+        for row in (raw.get("items") or [])[:6]:
+            item={k:clean_text(row.get(k),1000) for k in ("caption","media_type","media_url","thumbnail_url","permalink","timestamp")}
+            if item.get("permalink") and (item.get("media_url") or item.get("thumbnail_url")): items.append(item)
+        payload["items"]=items; payload["enabled"]=bool(items)
+        if raw.get("profile_url"): payload["profile_url"]=clean_text(raw.get("profile_url"),500)
+    except (OSError,ValueError,TypeError): pass
+    return payload
+
 class Handler(BaseHTTPRequestHandler):
     server_version="WeddingAPI/2.0"
 
@@ -233,6 +254,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length",str(len(body)))
         self.send_header("Cache-Control","no-store")
         self.send_header("X-Content-Type-Options","nosniff")
+        self.send_header("X-Robots-Tag","noindex, nofollow, noarchive, nosnippet, noimageindex")
         if cors: self._cors()
         for k,v in (extra or {}).items(): self.send_header(k,v)
         self.end_headers(); self.wfile.write(body)
@@ -243,7 +265,7 @@ class Handler(BaseHTTPRequestHandler):
         if root not in path.parents and path!=root: return self._json(404,{"error":"not_found"})
         try: body=path.read_bytes()
         except OSError: return self._json(404,{"error":"not_found"})
-        self.send_response(200); self.send_header("Content-Type",content_type); self.send_header("Content-Length",str(len(body))); self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.end_headers(); self.wfile.write(body)
+        self.send_response(200); self.send_header("Content-Type",content_type); self.send_header("Content-Length",str(len(body))); self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.send_header("X-Robots-Tag","noindex, nofollow, noarchive, nosnippet, noimageindex"); self.end_headers(); self.wfile.write(body)
 
     def _body(self):
         try: n=int(self.headers.get("Content-Length","0"))
@@ -313,6 +335,8 @@ class Handler(BaseHTTPRequestHandler):
         if p=="/api/public/config":
             with db() as c: settings=read_settings(c)
             return self._json(200,settings,cors=True)
+        if p=="/api/public/instagram":
+            return self._json(200,instagram_public_payload(),cors=True)
         if p=="/api/public/songs":
             with db() as c:
                 rows=[dict(r) for r in c.execute("SELECT id,title FROM songs WHERE active=1 ORDER BY created_at")]
