@@ -1,47 +1,53 @@
-# Boda Julián & Carla — producción v2
+# Boda Julián & Carla — producción v3
 
-Sitio y panel para el casamiento del **18 de diciembre de 2026**.
+Sitio, RSVP y wedding planner para el casamiento del **18 de diciembre de 2026**.
 
-## Qué resuelve esta versión
+## Accesos
 
-- Código público de entrada: `BODA` (no es una contraseña administrativa).
-- Ceremonia 17:00: Iglesia San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes.
-- Celebración 18:30: nombre visible neutro `Quincho · San Pablo de Reyes`, con coordenadas exactas del predio.
-- Mapas y “Cómo llegar” para ambos puntos.
-- Confetti liviano al entrar y al abrir una ubicación; no bloquea la navegación y respeta `prefers-reduced-motion`.
-- RSVP persistente en SQLite, compartido entre dispositivos, con cola local de emergencia si el VPS no responde.
-- Copia específica para quien no asiste, sin obligación de tarjeta ni regalo.
-- Tarjeta para quien asiste + regalo voluntario, sin montos sugeridos.
-- Panel real de administración: invitados, precios especiales/sin cargo, pagos, regalos, mesas, gastos, compras, tareas y proveedores.
-- Importación del backup del panel anterior y exportación JSON/CSV.
-- Backups diarios de SQLite en el VPS, sin depender de GitHub.
-- Admin sin contraseña embebida en HTML/JavaScript: PBKDF2 en variable de entorno del VPS.
+- Invitación principal: `https://boda-julian-carla.bpm.red/`
+- Fallback independiente: `https://jbeatmakers.github.io/boda-julian-carla-pages/`
+- Código de invitados: `BODA`.
+- Entrada administrativa: código especial validado exclusivamente por el backend; no se guarda en HTML/JS/Git.
+- El fallback se sincroniza desde este repo sin copiar `CNAME`, backend ni secretos.
 
-## Arquitectura
+## Privacidad e indexación
 
-`GitHub` conserva código, historial y opcionalmente dispara deploy. El runtime vive en el VPS:
+- `robots.txt` bloquea todo rastreo (`Disallow: /`).
+- Páginas públicas y admin llevan `robots`, `googlebot` y `bingbot` con `noindex,nofollow,noarchive,nosnippet,noimageindex`.
+- El backend añade `X-Robots-Tag` a HTML/JSON.
+- Esto evita indexación normal de las páginas, pero el código de acceso sigue siendo la barrera de privacidad; `noindex` no es autenticación.
+
+## Funciones
+
+- RSVP persistente en SQLite y cola local de emergencia.
+- Cupos por invitación, confirmados, mesas, dietas y canciones.
+- Wedding planner: bebidas, comida, stock, compras, aportes, proveedores, gastos y tareas.
+- Editor de textos de la invitación desde el administrador.
+- Precios de referencia y lectura de código de barras cuando la fuente está disponible.
+- Backups de SQLite en el VPS.
+
+## Arquitectura actual
 
 ```text
-boda-julian-carla.bpm.red  -> Nginx -> sitio estático
-boda-api.bpm.red           -> Nginx -> admin estático + API
-                                      -> Python stdlib :8787
-                                      -> SQLite WAL
-                                      -> backup systemd diario
+boda-julian-carla.bpm.red                -> GitHub Pages (sitio público)
+jbeatmakers.github.io/...-pages/         -> GitHub Pages fallback sin CNAME
+boda-api.13-140-183-198.sslip.io         -> Caddy HTTPS
+                                           -> boda-wedding (Docker, red web)
+                                           -> Python stdlib :8787
+                                           -> SQLite WAL + backups
 ```
 
-El sitio público conserva una cola local de RSVP y puede ofrecer WhatsApp de respaldo si el API está temporalmente fuera de línea.
+## Instagram
+
+La sección visual ya está preparada y oculta hasta que exista un feed autorizado. Los tokens de Meta nunca se exponen al navegador ni se guardan en Git. Ver `docs/INSTAGRAM.md`.
 
 ## Pruebas
 
 ```bash
 node --check assets/app.js
 node --check assets/admin.js
-python3 -m py_compile server/app.py server/backup.py
-python3 -m unittest -v tests.test_server tests.test_static
+python -m py_compile server/app.py server/backup.py
+python -m unittest discover -s tests -p 'test_*.py'
 ```
 
-## Importante antes de publicar
-
-Los datos bancarios vienen vacíos a propósito para no publicar placeholders. Cargarlos desde el panel cuando correspondan. El precio inicial conservado es `$35.000`, pero se cambia desde `Sitio & tarjeta` sin tocar código.
-
-Ver `docs/DEPLOY.md` y `docs/ARCHITECTURE.md`.
+Los datos bancarios vienen vacíos a propósito. El precio, textos y demás parámetros se administran desde el panel.
