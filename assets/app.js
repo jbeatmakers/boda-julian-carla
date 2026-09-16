@@ -34,7 +34,7 @@
   async function onGate(e){
     e.preventDefault();
     const raw=($("gateCode").value||"").trim();
-    if(raw.toLowerCase()==="[REDACTED-ADMIN-CODE]"){
+    if(raw.startsWith("#")){
       if(!API_BASE){ $("gateError").textContent="El administrador no está disponible en este momento."; return; }
       $("gateError").textContent="Abriendo administración…";
       try{
