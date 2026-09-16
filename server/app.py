@@ -14,6 +14,7 @@ DB_PATH = Path(os.environ.get("WEDDING_DB_PATH", "/var/lib/boda-julian-carla/wed
 ADMIN_USER = os.environ.get("WEDDING_ADMIN_USER", "admin")
 ADMIN_HASH = os.environ.get("WEDDING_ADMIN_PASSWORD_HASH", "")
 ADMIN_ENTRY_HASH = os.environ.get("WEDDING_ADMIN_ENTRY_HASH", "")
+ADMIN_ENTRY_HASH_FILE = Path(os.environ.get("WEDDING_ADMIN_ENTRY_HASH_FILE", "/var/lib/boda-julian-carla/admin-entry.hash"))
 HOST = os.environ.get("WEDDING_HOST", "127.0.0.1")
 PORT = int(os.environ.get("WEDDING_PORT", "8787"))
 ADMIN_ROOT = Path(os.environ.get("WEDDING_ADMIN_ROOT", "/opt/boda-admin"))
@@ -168,6 +169,11 @@ def verify_password(password: str, encoded: str) -> bool:
         return hmac.compare_digest(calc,base64.urlsafe_b64decode(digest))
     except Exception:
         return False
+
+def admin_entry_hash() -> str:
+    if ADMIN_ENTRY_HASH: return ADMIN_ENTRY_HASH
+    try: return ADMIN_ENTRY_HASH_FILE.read_text(encoding="utf-8").strip()
+    except OSError: return ""
 
 def clean_text(v, n=500) -> str:
     return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]","",str(v or "")).strip()[:n]
@@ -362,7 +368,8 @@ class Handler(BaseHTTPRequestHandler):
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
             code=str(data.get("code") or "").strip().upper()
-            if not ADMIN_ENTRY_HASH or not verify_password(code,ADMIN_ENTRY_HASH):
+            entry_hash=admin_entry_hash()
+            if not entry_hash or not verify_password(code,entry_hash):
                 time.sleep(.25); return self._json(401,{"error":"invalid_entry"},cors=True)
             token=secrets.token_urlsafe(32)
             with _lock: _entry_tokens[token]=time.time()+60
