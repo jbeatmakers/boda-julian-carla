@@ -13,7 +13,7 @@
     bindStatic();
     try{
       const s=await api("/api/admin/session");
-      if(s.authenticated){csrf=s.csrf||"";showApp();await loadState();}
+      if(s.authenticated){csrf=s.csrf||"";showApp();await loadState();await loadInstagramAdminStatus();}
       else showLogin();
     }catch(e){showLogin();setLoginStatus("No se pudo conectar con el servidor de administración.");}
   }
@@ -50,6 +50,7 @@
     $("scanBarcodeBtn").addEventListener("click",startBarcodeScan);
     $("stopScanBtn").addEventListener("click",stopBarcodeScan);
     $("reloadPreviewBtn").addEventListener("click",()=>{$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;});
+    $("instagramConnectBtn")?.addEventListener("click",connectInstagram);
     document.body.addEventListener("click",delegatedClick);
     document.body.addEventListener("change",delegatedChange);
   }
@@ -81,7 +82,7 @@
     e.preventDefault(); setLoginStatus("");
     try{
       const out=await api("/api/admin/login",{method:"POST",body:{user:$("loginUser").value.trim(),password:$("loginPassword").value}});
-      csrf=out.csrf||""; $("loginPassword").value=""; showApp(); await loadState();
+      csrf=out.csrf||""; $("loginPassword").value=""; showApp(); await loadState(); await loadInstagramAdminStatus();
     }catch(err){setLoginStatus(err.message);}
   }
 
@@ -104,6 +105,22 @@
       state=await api("/api/admin/state");
       renderAll(); $("lastUpdated").textContent=`Actualizado ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}`;
     }catch(err){status(err.message,"err",5000);}
+  }
+
+  async function loadInstagramAdminStatus(){
+    const el=$("instagramAdminStatus"),btn=$("instagramConnectBtn"); if(!el||!btn)return;
+    try{
+      const out=await api("/api/admin/instagram/status");
+      if(out.connected){el.textContent=`Conectado a @${out.username||out.target_username}${out.page_name?` Â· PÃ¡gina: ${out.page_name}`:""}.`;btn.textContent="Reconectar con Meta";btn.disabled=false;}
+      else if(out.configured){el.textContent=`Listo para autorizar @${out.target_username} con tu cuenta de Meta.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=false;}
+      else{el.textContent=`Cuenta objetivo: @${out.target_username}. Falta crear/configurar la App de Meta para iniciar el permiso.`;btn.textContent="Conectar Instagram con Meta";btn.disabled=true;}
+    }catch(err){el.textContent=err.message;btn.disabled=true;}
+  }
+
+  async function connectInstagram(){
+    const btn=$("instagramConnectBtn"); if(!btn)return; btn.disabled=true;
+    try{const out=await api("/api/admin/instagram/connect"); if(out.url)window.location.href=out.url; else throw new Error("No se recibiÃ³ la URL de Meta.");}
+    catch(err){status(err.message,"err",6000);btn.disabled=false;}
   }
 
   function openTab(name){

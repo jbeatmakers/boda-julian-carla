@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 DB_PATH = Path(os.environ.get("WEDDING_DB_PATH", "/var/lib/boda-julian-carla/wedding.sqlite3"))
@@ -27,6 +27,12 @@ INSTAGRAM_ACCESS_TOKEN = os.environ.get("WEDDING_INSTAGRAM_ACCESS_TOKEN", "").st
 INSTAGRAM_GRAPH_VERSION = os.environ.get("WEDDING_META_GRAPH_VERSION", "").strip()
 INSTAGRAM_PROFILE_URL = os.environ.get("WEDDING_INSTAGRAM_PROFILE_URL", "").strip()
 INSTAGRAM_FEED_PATH = Path(os.environ.get("WEDDING_INSTAGRAM_FEED_PATH", "/var/lib/boda-julian-carla/instagram-feed.json"))
+INSTAGRAM_AUTH_PATH = Path(os.environ.get("WEDDING_INSTAGRAM_AUTH_PATH", "/var/lib/boda-julian-carla/instagram-auth.json"))
+INSTAGRAM_TARGET_USERNAME = os.environ.get("WEDDING_INSTAGRAM_TARGET_USERNAME", "juli.y.carli").strip().lstrip("@")
+META_APP_ID = os.environ.get("WEDDING_META_APP_ID", "").strip()
+META_APP_SECRET = os.environ.get("WEDDING_META_APP_SECRET", "").strip()
+META_GRAPH_VERSION = os.environ.get("WEDDING_META_GRAPH_VERSION", "v26.0").strip() or "v26.0"
+META_REDIRECT_URI = os.environ.get("WEDDING_META_REDIRECT_URI", "https://boda-api.13-140-183-198.sslip.io/api/admin/instagram/callback").strip()
 INSTAGRAM_HEADING = os.environ.get("WEDDING_INSTAGRAM_HEADING", "Momentos de la boda").strip()
 INSTAGRAM_INTRO = os.environ.get("WEDDING_INSTAGRAM_INTRO", "Fotos y videos compartidos desde nuestro Instagram.").strip()
 _instagram_cache = {"at":0.0,"payload":{"enabled":False,"items":[]}}
@@ -35,6 +41,7 @@ MAX_BODY = 16_384
 _lock = threading.RLock()
 _sessions: dict[str, dict] = {}
 _entry_tokens: dict[str, float] = {}
+_oauth_states: dict[str, float] = {}
 _rate: dict[str, list[float]] = {}
 
 DEFAULT_SETTINGS = {
@@ -218,8 +225,81 @@ def purge_sessions():
             if _sessions[k]["expires"]<now: _sessions.pop(k,None)
         for k in list(_entry_tokens):
             if _entry_tokens[k] < now: _entry_tokens.pop(k,None)
+        for k in list(_oauth_states):
+            if _oauth_states[k] < now: _oauth_states.pop(k,None)
+
+def _graph_json(path, params):
+    url=f"https://graph.facebook.com/{META_GRAPH_VERSION}/{path.lstrip('/')}?{urlencode(params)}"
+    req=Request(url,headers={"User-Agent":"WeddingPlanner/1.0"})
+    with urlopen(req,timeout=10) as r:
+        return json.loads(r.read().decode("utf-8","replace"))
+
+def _save_private_json(path: Path, payload: dict):
+    path.parent.mkdir(parents=True,exist_ok=True)
+    tmp=path.with_suffix(path.suffix+".tmp")
+    tmp.write_text(json.dumps(payload,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
+    try: os.chmod(tmp,0o600)
+    except OSError: pass
+    os.replace(tmp,path)
+
+def refresh_instagram_feed(force=False):
+    try:
+        if not force and INSTAGRAM_FEED_PATH.exists() and time.time()-INSTAGRAM_FEED_PATH.stat().st_mtime<900:
+            return True
+        auth=json.loads(INSTAGRAM_AUTH_PATH.read_text(encoding="utf-8"))
+        token=clean_text(auth.get("access_token"),4096); ig_id=clean_text(auth.get("ig_user_id"),80)
+        if not token or not ig_id: return False
+        data=_graph_json(f"{ig_id}/media",{"fields":"id,caption,media_type,media_url,thumbnail_url,permalink,timestamp","limit":12,"access_token":token})
+        items=[]
+        for row in (data.get("data") or []):
+            item={k:clean_text(row.get(k),2000) for k in ("caption","media_type","media_url","thumbnail_url","permalink","timestamp")}
+            if item.get("permalink") and (item.get("media_url") or item.get("thumbnail_url")): items.append(item)
+        feed={"profile_url":INSTAGRAM_PROFILE_URL or f"https://www.instagram.com/{INSTAGRAM_TARGET_USERNAME}/","updated_at":now_iso(),"items":items[:6]}
+        _save_private_json(INSTAGRAM_FEED_PATH,feed)
+        return bool(items)
+    except Exception:
+        return False
+
+def instagram_status_payload():
+    out={"configured":bool(META_APP_ID and META_APP_SECRET),"target_username":INSTAGRAM_TARGET_USERNAME,"connected":False,"username":"","page_name":""}
+    try:
+        auth=json.loads(INSTAGRAM_AUTH_PATH.read_text(encoding="utf-8"))
+        out.update({"connected":bool(auth.get("access_token") and auth.get("ig_user_id")),"username":clean_text(auth.get("username"),120),"page_name":clean_text(auth.get("page_name"),160)})
+    except (OSError,ValueError,TypeError): pass
+    return out
+
+def instagram_oauth_url():
+    if not META_APP_ID or not META_APP_SECRET: raise ValueError("meta_not_configured")
+    purge_sessions(); state=secrets.token_urlsafe(24)
+    with _lock: _oauth_states[state]=time.time()+600
+    params={"client_id":META_APP_ID,"redirect_uri":META_REDIRECT_URI,"state":state,"response_type":"code","scope":"pages_show_list,instagram_basic,pages_read_engagement"}
+    return f"https://www.facebook.com/{META_GRAPH_VERSION}/dialog/oauth?{urlencode(params)}"
+
+def instagram_complete_oauth(code, state):
+    purge_sessions()
+    with _lock: expires=_oauth_states.pop(state,None)
+    if not expires or expires<time.time(): raise ValueError("oauth_state_invalid")
+    token_data=_graph_json("oauth/access_token",{"client_id":META_APP_ID,"redirect_uri":META_REDIRECT_URI,"client_secret":META_APP_SECRET,"code":code})
+    user_token=clean_text(token_data.get("access_token"),4096)
+    if not user_token: raise ValueError("oauth_token_missing")
+    try:
+        long_data=_graph_json("oauth/access_token",{"grant_type":"fb_exchange_token","client_id":META_APP_ID,"client_secret":META_APP_SECRET,"fb_exchange_token":user_token})
+        user_token=clean_text(long_data.get("access_token"),4096) or user_token
+    except Exception: pass
+    pages=_graph_json("me/accounts",{"fields":"id,name,access_token,instagram_business_account{id,username}","limit":100,"access_token":user_token}).get("data") or []
+    target=None
+    for row in pages:
+        ig=row.get("instagram_business_account") or {}
+        if str(ig.get("username") or "").lower()==INSTAGRAM_TARGET_USERNAME.lower(): target=(row,ig); break
+    if not target: raise ValueError("instagram_target_not_found")
+    page,ig=target; page_token=clean_text(page.get("access_token"),4096)
+    if not page_token: raise ValueError("page_token_missing")
+    auth={"ig_user_id":clean_text(ig.get("id"),80),"username":clean_text(ig.get("username"),120),"page_id":clean_text(page.get("id"),80),"page_name":clean_text(page.get("name"),160),"access_token":page_token,"connected_at":now_iso()}
+    _save_private_json(INSTAGRAM_AUTH_PATH,auth); refresh_instagram_feed(True)
+    return auth
 
 def instagram_public_payload():
+    if INSTAGRAM_AUTH_PATH.exists(): refresh_instagram_feed(False)
     payload={"enabled":False,"heading":INSTAGRAM_HEADING,"intro":INSTAGRAM_INTRO,"profile_url":INSTAGRAM_PROFILE_URL,"items":[]}
     try:
         raw=json.loads(INSTAGRAM_FEED_PATH.read_text(encoding="utf-8"))
@@ -310,6 +390,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed=urlparse(self.path); p=parsed.path
+        if p=="/api/admin/instagram/callback":
+            q=parse_qs(parsed.query); code=(q.get("code") or [""])[0]; state=(q.get("state") or [""])[0]
+            ok=False
+            if code and state:
+                try: instagram_complete_oauth(code,state); ok=True
+                except Exception: ok=False
+            self.send_response(303); self.send_header("Location","/?instagram="+("connected" if ok else "error")); self.send_header("Cache-Control","no-store"); self.end_headers(); return
         if p=="/" and parsed.query.startswith("entry="):
             token=parsed.query.partition("=")[2]
             purge_sessions()
@@ -337,6 +424,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200,settings,cors=True)
         if p=="/api/public/instagram":
             return self._json(200,instagram_public_payload(),cors=True)
+        if p=="/api/admin/instagram/status":
+            if not self._admin_or_401(): return
+            return self._json(200,instagram_status_payload())
+        if p=="/api/admin/instagram/connect":
+            if not self._admin_or_401(): return
+            try: return self._json(200,{"url":instagram_oauth_url(),**instagram_status_payload()})
+            except ValueError as e: return self._json(503,{"error":str(e),**instagram_status_payload()})
         if p=="/api/public/songs":
             with db() as c:
                 rows=[dict(r) for r in c.execute("SELECT id,title FROM songs WHERE active=1 ORDER BY created_at")]
