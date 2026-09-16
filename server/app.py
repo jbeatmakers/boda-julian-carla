@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 DB_PATH = Path(os.environ.get("WEDDING_DB_PATH", "/var/lib/boda-julian-carla/wedding.sqlite3"))
 ADMIN_USER = os.environ.get("WEDDING_ADMIN_USER", "admin")
 ADMIN_HASH = os.environ.get("WEDDING_ADMIN_PASSWORD_HASH", "")
+ADMIN_ENTRY_HASH = os.environ.get("WEDDING_ADMIN_ENTRY_HASH", "")
 HOST = os.environ.get("WEDDING_HOST", "127.0.0.1")
 PORT = int(os.environ.get("WEDDING_PORT", "8787"))
 ADMIN_ROOT = Path(os.environ.get("WEDDING_ADMIN_ROOT", "/opt/boda-admin"))
@@ -24,6 +25,7 @@ SESSION_TTL = 8 * 3600
 MAX_BODY = 16_384
 _lock = threading.RLock()
 _sessions: dict[str, dict] = {}
+_entry_tokens: dict[str, float] = {}
 _rate: dict[str, list[float]] = {}
 
 DEFAULT_SETTINGS = {
@@ -200,6 +202,8 @@ def purge_sessions():
     with _lock:
         for k in list(_sessions):
             if _sessions[k]["expires"]<now: _sessions.pop(k,None)
+        for k in list(_entry_tokens):
+            if _entry_tokens[k] < now: _entry_tokens.pop(k,None)
 
 class Handler(BaseHTTPRequestHandler):
     server_version="WeddingAPI/2.0"
@@ -265,7 +269,9 @@ class Handler(BaseHTTPRequestHandler):
         return sess
 
     def do_OPTIONS(self):
-        if not self.path.startswith("/api/public/"):
+        p=urlparse(self.path).path
+        cors_ok=p.startswith("/api/public/") or p=="/api/admin/entry"
+        if not cors_ok:
             self.send_response(HTTPStatus.NO_CONTENT); self.end_headers(); return
         self.send_response(HTTPStatus.NO_CONTENT)
         self._cors()
@@ -275,7 +281,21 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        p=urlparse(self.path).path
+        parsed=urlparse(self.path); p=parsed.path
+        if p=="/" and parsed.query.startswith("entry="):
+            token=parsed.query.partition("=")[2]
+            purge_sessions()
+            with _lock:
+                expires=_entry_tokens.pop(token,None)
+            if expires and expires>=time.time():
+                session=secrets.token_urlsafe(32); csrf=secrets.token_urlsafe(24)
+                with _lock: _sessions[session]={"csrf":csrf,"expires":time.time()+SESSION_TTL}
+                self.send_response(303)
+                self.send_header("Location","/")
+                self.send_header("Cache-Control","no-store")
+                self.send_header("Set-Cookie",f"wedding_session={session}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age={SESSION_TTL}")
+                self.end_headers(); return
+            self.send_response(303); self.send_header("Location","/"); self.send_header("Cache-Control","no-store"); self.end_headers(); return
         if p in ("/","/admin.html"):
             return self._static("admin.html","text/html; charset=utf-8")
         if p=="/assets/admin.css":
@@ -333,6 +353,20 @@ class Handler(BaseHTTPRequestHandler):
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
             return self._public_rsvp(data)
+        if p=="/api/admin/entry":
+            origin=self._origin()
+            if origin not in ALLOWED_ORIGINS:
+                return self._json(403,{"error":"origin_not_allowed"},cors=True)
+            if not rate_ok("entry:"+self.client_address[0],8,300):
+                return self._json(429,{"error":"too_many_attempts"},cors=True)
+            try: data=self._body()
+            except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
+            code=str(data.get("code") or "").strip().upper()
+            if not ADMIN_ENTRY_HASH or not verify_password(code,ADMIN_ENTRY_HASH):
+                time.sleep(.25); return self._json(401,{"error":"invalid_entry"},cors=True)
+            token=secrets.token_urlsafe(32)
+            with _lock: _entry_tokens[token]=time.time()+60
+            return self._json(200,{"ok":True,"entry_token":token},cors=True)
         if p=="/api/admin/login":
             if not rate_ok("login:"+self.client_address[0],8,300):
                 return self._json(429,{"error":"too_many_attempts"})

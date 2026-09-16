@@ -12,6 +12,7 @@ class WeddingApiTest(unittest.TestCase):
         app.DB_PATH=Path(cls.tmp.name)/"wedding.sqlite3"
         app.ADMIN_USER="admin"
         app.ADMIN_HASH=app.hash_password("very-secure-test-password")
+        app.ADMIN_ENTRY_HASH=app.hash_password("[REDACTED-ADMIN-CODE]")
         app.ALLOWED_ORIGINS={"https://boda-julian-carla.bpm.red"}
         app._rate.clear(); app._sessions.clear()
         app.init_db()
@@ -24,7 +25,7 @@ class WeddingApiTest(unittest.TestCase):
         cls.server.shutdown(); cls.server.server_close(); cls.tmp.cleanup()
 
     def setUp(self):
-        app._rate.clear(); app._sessions.clear()
+        app._rate.clear(); app._sessions.clear(); app._entry_tokens.clear()
         with app.db() as c:
             for table in ("guests","expenses","shopping","tasks","vendors","songs","settings"):
                 c.execute(f"DELETE FROM {table}")
@@ -118,6 +119,19 @@ class WeddingApiTest(unittest.TestCase):
     def test_price_lookup_rejects_bad_barcode_without_network(self):
         cookie,csrf=self.login()
         s,d,_=self.req("GET","/api/admin/price-lookup?barcode=123",headers={"Cookie":cookie}); self.assertEqual(s,200); self.assertFalse(d["found"]); self.assertEqual(d["error"],"barcode_invalid")
+
+    def test_special_entry_creates_admin_session_without_login_form(self):
+        origin={"Origin":"https://boda-julian-carla.bpm.red"}
+        s,d,h=self.req("POST","/api/admin/entry",{"code":"[REDACTED-ADMIN-CODE]"},origin)
+        self.assertEqual(s,200); self.assertTrue(d["entry_token"])
+        s,d,h=self.req("GET",f"/?entry={d['entry_token']}")
+        self.assertEqual(s,303); self.assertEqual(h.get("Location"),"/")
+        self.assertIn("wedding_session=",h.get("Set-Cookie",""))
+        cookie=h["Set-Cookie"].split(";",1)[0]
+        s,d,_=self.req("GET","/api/admin/session",headers={"Cookie":cookie})
+        self.assertEqual(s,200); self.assertTrue(d["authenticated"])
+        s,d,_=self.req("POST","/api/admin/entry",{"code":"wrong"},origin)
+        self.assertEqual(s,401)
 
     def test_security_boundaries(self):
         s,d,_=self.req("GET","/api/admin/state"); self.assertEqual(s,401)

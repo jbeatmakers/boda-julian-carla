@@ -31,10 +31,23 @@
     window.addEventListener("online", flushOutbox);
   });
 
-  function onGate(e){
+  async function onGate(e){
     e.preventDefault();
     const raw=($("gateCode").value||"").trim();
-    if(raw.toLowerCase()==="[REDACTED-ADMIN-CODE]"){ window.location.href=API_BASE ? `${API_BASE}/` : "admin.html"; return; }
+    if(raw.toLowerCase()==="[REDACTED-ADMIN-CODE]"){
+      if(!API_BASE){ $("gateError").textContent="El administrador no está disponible en este momento."; return; }
+      $("gateError").textContent="Abriendo administración…";
+      try{
+        const res=await fetch(`${API_BASE}/api/admin/entry`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:raw})});
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok || !data.entry_token) throw new Error(data.error||"entry_failed");
+        window.location.href=`${API_BASE}/?entry=${encodeURIComponent(data.entry_token)}`;
+      }catch(_){
+        $("gateError").textContent="No pude abrir la administración. Probá nuevamente.";
+        $("gateCode").select();
+      }
+      return;
+    }
     const code=raw.toUpperCase();
     if(code!==ACCESS_CODE){
       $("gateError").textContent="Ese código no coincide. Probá de nuevo.";
