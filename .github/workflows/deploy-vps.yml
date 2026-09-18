@@ -1,25 +1,29 @@
-name: Deploy wedding to VPS
+name: Validate wedding release
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: boda-production
-  cancel-in-progress: false
+  group: boda-validation-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  deploy:
-    if: github.repository == 'jbeatmakers/boda-julian-carla' && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, linux, x64, production-vps]
+  validate:
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Validate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate syntax and tests
         run: |
-          python3 -m py_compile server/app.py server/backup.py
-          if command -v node >/dev/null 2>&1; then
-            node --check assets/app.js
-            node --check assets/admin.js
-          fi
-          python3 -m unittest -v tests.test_server
-      - name: Deploy through restricted helper
-        run: sudo /usr/local/sbin/deploy-boda-julian-carla "$GITHUB_WORKSPACE"
+          python -m py_compile server/app.py server/backup.py
+          node --check assets/app.js
+          node --check assets/admin.js
+          python -m unittest discover -s tests -v

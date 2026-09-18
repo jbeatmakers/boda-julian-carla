@@ -165,10 +165,14 @@ def init_db() -> None:
                       (k,json.dumps(v,ensure_ascii=False),now_iso()))
 
 def read_settings(c: sqlite3.Connection) -> dict:
-    out={}
+    out=json.loads(json.dumps(DEFAULT_SETTINGS,ensure_ascii=False))
     for r in c.execute("SELECT key,value FROM settings"):
-        try: out[r["key"]]=json.loads(r["value"])
-        except json.JSONDecodeError: out[r["key"]]=r["value"]
+        try: value=json.loads(r["value"])
+        except json.JSONDecodeError: value=r["value"]
+        if isinstance(out.get(r["key"]),dict) and isinstance(value,dict):
+            out[r["key"]].update(value)
+        else:
+            out[r["key"]]=value
     return out
 
 def hash_password(password: str, iterations: int = 310_000) -> str:
@@ -311,6 +315,54 @@ def instagram_public_payload():
         if raw.get("profile_url"): payload["profile_url"]=clean_text(raw.get("profile_url"),500)
     except (OSError,ValueError,TypeError): pass
     return payload
+
+def sanitize_settings_payload(data: dict) -> dict:
+    if not isinstance(data,dict): raise ValueError("invalid_payload")
+    out={}
+    for key,value in data.items():
+        if key not in DEFAULT_SETTINGS: continue
+        if key=="planning":
+            if not isinstance(value,dict): raise ValueError("invalid_planning")
+            clean={}
+            for k,v in value.items():
+                if k not in DEFAULT_SETTINGS["planning"]: continue
+                try: n=float(v)
+                except (TypeError,ValueError): raise ValueError("invalid_number")
+                if n<0: raise ValueError("negative_value")
+                if k in {"guest_buffer_pct","drinkers_pct"} and n>100: raise ValueError("invalid_percentage")
+                if k=="table_capacity" and not 1<=n<=50: raise ValueError("invalid_table_capacity")
+                if k=="planned_guests_override" and n>5000: raise ValueError("invalid_guest_count")
+                if n>10000: raise ValueError("invalid_number")
+                clean[k]=n
+            out[key]=clean
+        elif key=="ticket":
+            if not isinstance(value,dict): raise ValueError("invalid_ticket")
+            price=value.get("price",DEFAULT_SETTINGS["ticket"]["price"])
+            try: price=int(price or 0)
+            except (TypeError,ValueError): raise ValueError("invalid_number")
+            if price<0: raise ValueError("negative_value")
+            out[key]={"enabled":bool(value.get("enabled",True)),"price":price,"currency":"ARS","text":clean_text(value.get("text"),1200)}
+        elif key=="bank":
+            if not isinstance(value,dict): raise ValueError("invalid_bank")
+            url=clean_text(value.get("mp_url"),1000)
+            if url and not re.match(r"^https://",url,re.I): raise ValueError("invalid_url")
+            out[key]={"holder":clean_text(value.get("holder"),200),"alias":clean_text(value.get("alias"),120),"cbu":clean_text(value.get("cbu"),80),"mp_url":url}
+        elif key in {"ceremony","celebration"}:
+            if not isinstance(value,dict): raise ValueError("invalid_location")
+            base=DEFAULT_SETTINGS[key]; loc={k:clean_text(value.get(k,base.get(k)),500) for k in ("time","title","place","address")}
+            try: lat=float(value.get("lat",base["lat"])); lng=float(value.get("lng",base["lng"]))
+            except (TypeError,ValueError): raise ValueError("invalid_coordinates")
+            if not -90<=lat<=90 or not -180<=lng<=180: raise ValueError("invalid_coordinates")
+            loc.update({"lat":lat,"lng":lng}); out[key]=loc
+        elif key=="copy":
+            if not isinstance(value,dict): raise ValueError("invalid_copy")
+            out[key]={k:clean_text(v,1200) for k,v in value.items() if k in DEFAULT_SETTINGS["copy"]}
+        elif key=="dress":
+            if not isinstance(value,dict): raise ValueError("invalid_dress")
+            out[key]={k:clean_text(value.get(k),1200) for k in ("title","concept","details")}
+        else:
+            out[key]=clean_text(value,500)
+    return out
 
 class Handler(BaseHTTPRequestHandler):
     server_version="WeddingAPI/2.0"
@@ -541,10 +593,21 @@ class Handler(BaseHTTPRequestHandler):
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)})
             if not isinstance(data,dict): return self._json(400,{"error":"invalid_payload"})
-            allowed=set(DEFAULT_SETTINGS)
+            try:
+                with db() as c:
+                    current=read_settings(c)
+                merged={}
+                for k,v in data.items():
+                    if k not in DEFAULT_SETTINGS: continue
+                    if isinstance(v,dict) and isinstance(current.get(k),dict):
+                        merged[k]={**current[k],**v}
+                    else:
+                        merged[k]=v
+                data=sanitize_settings_payload(merged)
+            except ValueError as e:
+                return self._json(400,{"error":str(e)})
             with db() as c:
                 for k,v in data.items():
-                    if k not in allowed: continue
                     c.execute("""INSERT INTO settings(key,value,updated_at) VALUES(?,?,?)
                     ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
                     (k,json.dumps(v,ensure_ascii=False),now_iso()))
@@ -617,12 +680,41 @@ def clean_for_table(table: str, data: dict) -> dict:
         if k not in data: continue
         v=data[k]
         if k in {"seats","seats_allowed","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","done","active"}:
-            if v in ("",None) and k=="ticket_override": out[k]=None
-            else: out[k]=int(v or 0)
+            if v in ("",None) and k=="ticket_override":
+                out[k]=None
+            else:
+                try: n=int(v or 0)
+                except (TypeError,ValueError): raise ValueError("invalid_number")
+                if k in {"ticket_exempt","done","active"}: out[k]=1 if n else 0
+                elif k in {"seats","seats_allowed"}: out[k]=n
+                elif n<0: raise ValueError("negative_value")
+                else: out[k]=n
         elif k in {"budget","actual","paid","needed","bought","unit_cost","total","reference_price","planning_factor","per_person","fixed_qty","stock","quantity","estimated_value"}:
-            out[k]=float(v or 0)
+            try: n=float(v or 0)
+            except (TypeError,ValueError): raise ValueError("invalid_number")
+            if n<0: raise ValueError("negative_value")
+            out[k]=n
         else: out[k]=clean_text(v,1200 if k=="notes" else 240)
     return out
+
+def normalize_guest_values(base: dict) -> dict:
+    status=base.get("status") or "pending"
+    attendance=base.get("attendance") or ""
+    if status not in {"possible","invited","pending","confirmed","declined"}: raise ValueError("invalid_status")
+    if attendance not in {"","yes","no"}: raise ValueError("invalid_attendance")
+    email=str(base.get("email") or "").lower()
+    if email and not valid_email(email): raise ValueError("invalid_email")
+    allowed=int(base.get("seats_allowed") or 1)
+    seats=int(base.get("seats") or 0)
+    if not 1<=allowed<=12: raise ValueError("invalid_seats_allowed")
+    if attendance=="no" or status=="declined":
+        status,attendance,seats="declined","no",0
+    elif attendance=="yes" or status=="confirmed":
+        status,attendance="confirmed","yes"
+        seats=max(1,seats)
+    if not 0<=seats<=allowed: raise ValueError("invalid_seats")
+    base.update({"status":status,"attendance":attendance,"seats_allowed":allowed,"seats":seats,"email":email})
+    return base
 
 def admin_create_guest(data: dict) -> dict:
     d=clean_for_table("guests",data)
@@ -632,8 +724,9 @@ def admin_create_guest(data: dict) -> dict:
     base={"phone":"","email":"","status":"pending","attendance":"","seats":1,"seats_allowed":1,"diet":"","song":"","notes":"",
           "ticket_override":None,"ticket_exempt":0,"ticket_paid":0,"ticket_credit":0,"gift_amount":0,"gift_note":"","contribution_note":"","table_no":""}
     base.update(d)
-    base["seats_allowed"]=max(1,min(12,int(base.get("seats_allowed") or 1)))
-    base["seats"]=max(0,min(base["seats_allowed"],int(base.get("seats") or 0)))
+    if "seats_allowed" not in d and "seats" in d:
+        base["seats_allowed"]=max(int(base.get("seats_allowed") or 1),int(base.get("seats") or 0))
+    base=normalize_guest_values(base)
     cols=["id","name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no","invited_at","updated_at"]
     vals=[gid]+[base[k] for k in cols[1:-2]]+[now,now]
     with db() as c:
@@ -643,7 +736,11 @@ def admin_create_guest(data: dict) -> dict:
 def create_generic(table: str, data: dict) -> dict:
     d=clean_for_table(table,data)
     required={"expenses":"description","shopping":"item","tasks":"title","vendors":"name","songs":"title","menu":"item","contributions":"item"}[table]
-    if table=="contributions" and not d.get("contributor"): d["contributor"]="Sin asignar"
+    if table=="contributions":
+        if not d.get("contributor"): d["contributor"]="Sin asignar"
+        if d.get("status") and d["status"] not in {"promised","received"}: raise ValueError("invalid_status")
+    if table=="vendors" and d.get("payment_mode") and d["payment_mode"] not in {"cash","contribution","mixed","free"}:
+        raise ValueError("invalid_payment_mode")
     if not d.get(required): raise ValueError(f"{required}_required")
     now=now_iso(); item_id=str(uuid.uuid4())
     d.update({"id":item_id,"created_at":now,"updated_at":now})
@@ -654,16 +751,20 @@ def create_generic(table: str, data: dict) -> dict:
 
 def update_row(table: str, item_id: str, data: dict) -> dict:
     d=clean_for_table(table,data)
-    if not d:
-        with db() as c:
-            r=c.execute(f"SELECT * FROM {table} WHERE id=?",(item_id,)).fetchone()
-            if not r: raise KeyError
-            return dict(r)
-    d["updated_at"]=now_iso()
-    sets=",".join(f"{k}=?" for k in d)
     with db() as c:
-        cur=c.execute(f"UPDATE {table} SET {sets} WHERE id=?",[d[k] for k in d]+[item_id])
-        if not cur.rowcount: raise KeyError
+        current=c.execute(f"SELECT * FROM {table} WHERE id=?",(item_id,)).fetchone()
+        if not current: raise KeyError
+        if not d: return dict(current)
+        if table=="guests":
+            merged=dict(current); merged.update(d); merged=normalize_guest_values(merged)
+            for k in ("status","attendance","seats","seats_allowed","email"): d[k]=merged[k]
+        elif table=="contributions" and "status" in d and d["status"] not in {"promised","received"}:
+            raise ValueError("invalid_status")
+        elif table=="vendors" and "payment_mode" in d and d["payment_mode"] not in {"cash","contribution","mixed","free"}:
+            raise ValueError("invalid_payment_mode")
+        d["updated_at"]=now_iso()
+        sets=",".join(f"{k}=?" for k in d)
+        c.execute(f"UPDATE {table} SET {sets} WHERE id=?",[d[k] for k in d]+[item_id])
         return dict(c.execute(f"SELECT * FROM {table} WHERE id=?",(item_id,)).fetchone())
 
 def dashboard(c: sqlite3.Connection, settings: dict) -> dict:
@@ -694,9 +795,12 @@ def planner(c: sqlite3.Connection, settings: dict) -> dict:
     p={**DEFAULT_SETTINGS["planning"],**(settings.get("planning") or {})}
     guests=[dict(r) for r in c.execute("SELECT * FROM guests")]
     confirmed=sum(max(0,int(g["seats"] or 0)) for g in guests if g["status"]=="confirmed")
-    pending=sum(max(1,int(g["seats_allowed"] or 1)) for g in guests if g["status"] in ("pending","invited","possible"))
+    invited_capacity=sum(max(1,int(g["seats_allowed"] or 1)) for g in guests if g["status"] in ("pending","invited"))
+    possible_capacity=sum(max(1,int(g["seats_allowed"] or 1)) for g in guests if g["status"]=="possible")
+    pending=invited_capacity+possible_capacity
     override=int(_num(p.get("planned_guests_override"),0))
-    planned=override if override>0 else int(math.ceil(confirmed*(1+_num(p.get("guest_buffer_pct"),5)/100)))
+    forecast_base=confirmed+invited_capacity
+    planned=override if override>0 else int(math.ceil(forecast_base*(1+_num(p.get("guest_buffer_pct"),5)/100)))
     planned=max(planned,confirmed)
     drinkers=int(math.ceil(planned*_num(p.get("drinkers_pct"),70)/100))
     cap=max(1,int(_num(p.get("table_capacity"),10)))
@@ -724,7 +828,7 @@ def planner(c: sqlite3.Connection, settings: dict) -> dict:
           {"item":"Postre","course":"dessert","unit":"porciones","target":round(planned*_num(p.get("dessert_portions_pp"),1.05),0),"stock":0,"missing":round(planned*_num(p.get("dessert_portions_pp"),1.05),0)},
           {"item":"Torta","course":"cake","unit":"kg","target":round(planned*_num(p.get("cake_g_pp"),100)/1000,1),"stock":0,"missing":round(planned*_num(p.get("cake_g_pp"),100)/1000,1)}]
     contributions=[dict(r) for r in c.execute("SELECT * FROM contributions")]
-    return {"confirmed":confirmed,"pending_capacity":pending,"planned":planned,"tables":int(math.ceil(planned/cap)) if planned else 0,"table_capacity":cap,"drinkers":drinkers,"suggestions":suggestions,"menu":menu,"contributions_promised":sum(x["status"]=="promised" for x in contributions),"contributions_received":sum(x["status"]=="received" for x in contributions)}
+    return {"confirmed":confirmed,"pending_capacity":pending,"invited_capacity":invited_capacity,"possible_capacity":possible_capacity,"forecast_base":forecast_base,"planned":planned,"tables":int(math.ceil(planned/cap)) if planned else 0,"table_capacity":cap,"drinkers":drinkers,"suggestions":suggestions,"menu":menu,"contributions_promised":sum(x["status"]=="promised" for x in contributions),"contributions_received":sum(x["status"]=="received" for x in contributions)}
 
 def price_lookup(barcode: str) -> dict:
     barcode=re.sub(r"\D","",barcode or "")

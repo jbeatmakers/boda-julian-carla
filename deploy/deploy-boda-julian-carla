@@ -1,17 +1,36 @@
 #!/usr/bin/env bash
-# Root-owned helper. Grant the self-hosted runner sudo access ONLY to this command.
+# Helper root para actualizar backend/admin Docker sin tocar otros servicios.
 set -euo pipefail
 SRC=${1:?workspace requerido}
-case "$SRC" in /*) ;; *) echo "workspace inválido" >&2; exit 2;; esac
-for f in index.html admin.html assets/styles.css assets/app.js assets/admin.css assets/admin.js server/app.py server/backup.py; do
+[[ "$SRC" = /* ]] || { echo "workspace inválido" >&2; exit 2; }
+for f in admin.html assets/admin.css assets/admin.js server/app.py server/backup.py; do
   [[ -f "$SRC/$f" ]] || { echo "falta $f" >&2; exit 3; }
 done
-install -d -o root -g root -m 0755 /opt/boda-julian-carla/{public,public/assets,admin,admin/assets,server}
-install -m 0644 "$SRC/index.html" /opt/boda-julian-carla/public/index.html
-install -m 0644 "$SRC/assets/styles.css" "$SRC/assets/app.js" /opt/boda-julian-carla/public/assets/
+python3 -m py_compile "$SRC/server/app.py" "$SRC/server/backup.py"
+docker inspect boda-wedding >/dev/null
+docker inspect caddy >/dev/null
+STAMP=$(date -u +%Y%m%d-%H%M%S)
+ROLL=/var/backups/boda-julian-carla/release-$STAMP
+install -d -m 0700 "$ROLL"
+cp -a /opt/boda-julian-carla/server "$ROLL/server"
+cp -a /opt/boda-julian-carla/admin "$ROLL/admin"
+systemctl start boda-wedding-backup.service
+install -d -o root -g root -m 0755 /opt/boda-julian-carla/{admin,admin/assets,server}
 install -m 0644 "$SRC/admin.html" /opt/boda-julian-carla/admin/admin.html
 install -m 0644 "$SRC/assets/admin.css" "$SRC/assets/admin.js" /opt/boda-julian-carla/admin/assets/
 install -m 0755 "$SRC/server/app.py" "$SRC/server/backup.py" /opt/boda-julian-carla/server/
-systemctl restart boda-wedding.service
-systemctl is-active --quiet boda-wedding.service
-curl --fail --silent --show-error http://127.0.0.1:8787/healthz >/dev/null
+docker restart boda-wedding >/dev/null
+ok=0
+for _ in $(seq 1 20); do
+  if docker exec caddy wget -qO- http://boda-wedding:8787/healthz | grep -q '"ok":true'; then ok=1; break; fi
+  sleep 1
+done
+if [[ $ok -ne 1 ]]; then
+  echo "Health-check falló; restaurando release anterior." >&2
+  rm -rf /opt/boda-julian-carla/server /opt/boda-julian-carla/admin
+  cp -a "$ROLL/server" /opt/boda-julian-carla/server
+  cp -a "$ROLL/admin" /opt/boda-julian-carla/admin
+  docker restart boda-wedding >/dev/null
+  exit 4
+fi
+echo "Deploy boda OK · backup de código: $ROLL"

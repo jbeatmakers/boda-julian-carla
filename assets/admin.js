@@ -5,12 +5,13 @@
   let state={settings:{},dashboard:{},planner:{},guests:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[],menu:[],contributions:[]};
   let scanStream=null,scanTimer=null;
   const COPY_FIELDS=[['gate_intro','Entrada · frase principal'],['gate_help','Entrada · ayuda'],['hero_intro','Portada · introducción'],['hero_confirm_btn','Botón confirmar'],['hero_maps_btn','Botón mapas'],['places_eyebrow','Lugares · etiqueta'],['places_title','Lugares · título'],['places_intro','Lugares · bajada'],['dress_eyebrow','Dress code · etiqueta'],['rsvp_eyebrow','RSVP · etiqueta'],['rsvp_title','RSVP · título'],['decline_body','Mensaje si no asiste'],['decline_gift_note','Aclaración regalo si no asiste'],['gift_eyebrow','Regalos · etiqueta'],['gift_title','Regalos · título'],['gift_intro','Regalos · introducción'],['ticket_eyebrow','Tarjeta · etiqueta'],['ticket_title','Tarjeta · título'],['present_eyebrow','Regalo · etiqueta'],['present_title','Regalo · título'],['present_body','Regalo · texto'],['present_transfer','Transferencia · texto'],['transfer_eyebrow','Transferencia · etiqueta']];
-  const PLAN_FIELDS=[['planned_guests_override','Personas para planificar',1],['guest_buffer_pct','Margen extra %',1],['table_capacity','Personas por mesa',1],['drinkers_pct','Adultos que toman alcohol %',1],['water_l_pp','Agua L/persona',.1],['soft_l_pp','Gaseosa/mixer L/persona',.1],['beer_l_drinker','Cerveza L/bebedor',.1],['wine_l_drinker','Vino L/bebedor',.05],['sparkling_l_pp','Espumante L/persona',.025],['spirits_l_drinker','Destilado L/bebedor',.02],['ice_kg_pp','Hielo kg/persona',.1],['appetizer_pieces_pp','Bocados/persona',1],['main_portions_pp','Principal/persona',.05],['dessert_portions_pp','Postre/persona',.05],['cake_g_pp','Torta g/persona',10]];
+  const PLAN_FIELDS=[['planned_guests_override','Personas para planificar (0 = automático)',1],['guest_buffer_pct','Margen extra %',1],['table_capacity','Personas por mesa',1],['drinkers_pct','Adultos que toman alcohol %',1],['water_l_pp','Agua L/persona',.1],['soft_l_pp','Gaseosa/mixer L/persona',.1],['beer_l_drinker','Cerveza L/bebedor',.1],['wine_l_drinker','Vino L/bebedor',.05],['sparkling_l_pp','Espumante L/persona',.025],['spirits_l_drinker','Destilado L/bebedor',.02],['ice_kg_pp','Hielo kg/persona',.1],['appetizer_pieces_pp','Bocados/persona',1],['main_portions_pp','Principal/persona',.05],['dessert_portions_pp','Postre/persona',.05],['cake_g_pp','Torta g/persona',10]];
 
   document.addEventListener("DOMContentLoaded",init);
 
   async function init(){
     bindStatic();
+    ensureAccessibleNames();
     try{
       const s=await api("/api/admin/session");
       if(s.authenticated){csrf=s.csrf||"";showApp();await loadState();await loadInstagramAdminStatus();}
@@ -74,7 +75,7 @@
   }
 
   function errorText(e){
-    const m={invalid_credentials:"Usuario o contraseña incorrectos.",too_many_attempts:"Demasiados intentos. Probá nuevamente en unos minutos.",unauthorized:"Sesión no válida.",name_required:"Falta el nombre.",invalid_email:"Email inválido.",description_required:"Falta el concepto.",item_required:"Falta el ítem.",title_required:"Falta el título.",not_found:"No se encontró el registro."};
+    const m={invalid_credentials:"Usuario o contraseña incorrectos.",too_many_attempts:"Demasiados intentos. Probá nuevamente en unos minutos.",unauthorized:"Sesión no válida.",name_required:"Falta el nombre.",invalid_email:"Email inválido.",description_required:"Falta el concepto.",item_required:"Falta el ítem.",title_required:"Falta el título.",negative_value:"Ese valor no puede ser negativo.",invalid_number:"Revisá el número ingresado.",invalid_seats:"Los lugares confirmados deben estar entre 0 y el cupo asignado.",invalid_seats_allowed:"El cupo debe ser de 1 a 12 lugares.",invalid_status:"Ese estado no es válido.",invalid_attendance:"La asistencia indicada no es válida.",invalid_payment_mode:"La forma de pago no es válida.",invalid_percentage:"El porcentaje debe estar entre 0 y 100.",invalid_table_capacity:"La cantidad por mesa debe estar entre 1 y 50.",invalid_guest_count:"La cantidad de personas es demasiado alta.",invalid_url:"El enlace debe empezar con https://.",invalid_coordinates:"Revisá latitud y longitud.",invalid_planning:"La configuración del planificador no es válida.",invalid_ticket:"La configuración de la tarjeta no es válida.",invalid_bank:"Los datos de transferencia no son válidos.",not_found:"No se encontró el registro."};
     return m[e]||String(e||"Ocurrió un error.");
   }
 
@@ -100,10 +101,23 @@
   function setLoginStatus(msg){const e=$("loginStatus");e.textContent=msg;e.classList.toggle("hidden",!msg);}
   function status(msg,type="ok",ms=2600){const e=$("globalStatus");e.textContent=msg;e.className=`status ${type}`;if(!msg)e.classList.add("hidden");if(msg&&ms)setTimeout(()=>{if(e.textContent===msg)e.classList.add("hidden");},ms);}
 
+  const A11Y_NAMES={guestFilter:"Filtrar invitados",item:"Ítem",course:"Etapa del menú",unit:"Unidad",per_person:"Cantidad por persona",fixed_qty:"Cantidad fija",stock:"Stock",contributor:"Aporta",planning_key:"Categoría planificada",planning_factor:"Equivalencia por unidad",quantity:"Cantidad",estimated_value:"Valor estimado",description:"Concepto",vendor:"Proveedor",budget:"Presupuesto",actual:"Costo real",paid:"Pagado",due_date:"Fecha límite",status:"Estado",barcode:"Código de barras",needed:"Necesario",bought:"Comprado",unit_cost:"Costo por unidad",reference_price:"Precio de referencia",source:"Fuente",notes:"Notas",title:"Título",category:"Categoría",priority:"Prioridad",owner:"Responsable",name:"Nombre",contact:"Contacto",payment_mode:"Forma de pago",total:"Total"};
+  function ensureAccessibleNames(root=document){
+    root.querySelectorAll('input:not([type="hidden"]),select,textarea').forEach(el=>{
+      if(el.getAttribute("aria-label")||el.getAttribute("aria-labelledby")||(el.labels&&el.labels.length)) return;
+      let label=""; const parent=el.parentElement, local=parent?.querySelector("label");
+      if(local) label=local.textContent||"";
+      const key=el.dataset.edit||el.name||el.dataset.plan||el.id;
+      if(!label) label=A11Y_NAMES[key]||el.placeholder||key||"Campo editable";
+      label=String(label).replace(/\s+/g," ").trim();
+      if(label) el.setAttribute("aria-label",label);
+    });
+  }
+
   async function loadState(){
     try{
       state=await api("/api/admin/state");
-      renderAll(); $("lastUpdated").textContent=`Actualizado ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}`;
+      renderAll(); ensureAccessibleNames(); $("lastUpdated").textContent=`Actualizado ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}`;
     }catch(err){status(err.message,"err",5000);}
   }
 
@@ -155,10 +169,10 @@
 
   function renderPlanner(){
     const p=state.planner||{},cfg=state.settings?.planning||{};
-    const cards=[["Confirmados",p.confirmed||0,`${p.pending_capacity||0} lugares aún pendientes`],["Para planificar",p.planned||0,`incluye margen`],["Mesas",p.tables||0,`${p.table_capacity||10} personas c/u`],["Bebedores",p.drinkers||0,"estimación editable"]];
+    const cards=[["Confirmados",p.confirmed||0,"lugares confirmados"],["A confirmar",p.invited_capacity||0,"incluidos en la previsión"],["Para planificar",p.planned||0,"confirmados + invitados + margen"],["Mesas",p.tables||0,`${p.table_capacity||10} personas c/u`],["Bebedores",p.drinkers||0,"estimación editable"]];
     $("plannerKpis").innerHTML=cards.map(x=>`<article class="kpi"><div class="eyebrow">${esc(x[0])}</div><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></article>`).join("");
     $("planningInputs").innerHTML=PLAN_FIELDS.map(([key,label,step])=>`<div><label>${esc(label)}</label><input class="field" data-plan="${attr(key)}" type="number" min="0" step="${step}" value="${attr(cfg[key]??0)}"></div>`).join("");
-    $("drinkPlan").innerHTML=(p.suggestions||[]).map(x=>`<div class="plan-row"><span><b>${esc(x.label)}</b><small>${num(x.stock)} ${esc(x.unit)} en stock</small></span><span class="plan-target">${num(x.target)} ${esc(x.unit)}</span><span class="${x.missing>0?'warn':'good'}">${x.missing>0?`faltan ${num(x.missing)}`:'cubierto'}</span></div>`).join("")||'<p class="muted">Cargá confirmados para obtener cálculo.</p>';
+    $("drinkPlan").innerHTML=(p.suggestions||[]).map(x=>`<div class="plan-row"><span><b>${esc(x.label)}</b><small>${num(x.stock)} ${esc(x.unit)} en stock</small></span><span class="plan-target">${num(x.target)} ${esc(x.unit)}</span><span class="${x.missing>0?'warn':'good'}">${x.missing>0?`faltan ${num(x.missing)}`:'cubierto'}</span></div>`).join("")||'<p class="muted">Agregá confirmados o invitados para obtener el cálculo.</p>';
     $("menuPlan").innerHTML=(p.menu||[]).map(x=>x.id?`<div class="plan-row editable-plan" data-row="menu" data-id="${attr(x.id)}"><span><b>${esc(x.item)}</b><small>${esc(x.course||'')}</small></span><span>${num(x.target)} ${esc(x.unit||'')}</span><span>${editInlineNum('stock',x.stock,.01)} <small>stock</small></span><span class="${x.missing>0?'warn':'good'}">${x.missing>0?`faltan ${num(x.missing)}`:'cubierto'}</span><button class="link danger-text" data-action="delete" data-table="menu" data-id="${attr(x.id)}">Borrar</button></div>`:`<div class="plan-row"><span><b>${esc(x.item)}</b></span><span>${num(x.target)} ${esc(x.unit||'')}</span><span class="warn">base sugerida</span></div>`).join('');
     $("contributionRows").innerHTML=(state.contributions||[]).map(x=>`<div class="plan-row editable-plan" data-row="contributions" data-id="${attr(x.id)}"><span><b>${esc(x.contributor)}</b><small>${esc(x.item)}</small></span><span>${num(x.quantity)} ${esc(x.unit||'')}</span><span>${money(x.estimated_value)}</span><select class="cell-input" data-edit="status"><option value="promised" ${x.status==='promised'?'selected':''}>Prometido</option><option value="received" ${x.status==='received'?'selected':''}>Recibido</option></select><button class="link danger-text" data-action="delete" data-table="contributions" data-id="${attr(x.id)}">Borrar</button></div>`).join('')||'<p class="muted">Todavía no hay aportes cargados.</p>';
   }
@@ -284,13 +298,14 @@
 
   async function saveSettings(){
     const old=state.settings||{},copy={};
+    const numOr=(id,fallback)=>{const raw=$(id).value.trim();if(raw==="")return Number(fallback);const n=Number(raw);return Number.isFinite(n)?n:Number(fallback);};
     document.querySelectorAll("[data-copy-key]").forEach(x=>copy[x.dataset.copyKey]=x.value.trim());
     const settings={...old,copy,
       rsvp_deadline_display:$("deadlineInput").value.trim(),fallback_whatsapp:$("fallbackWaInput").value.replace(/\D/g,""),
       ticket:{...(old.ticket||{}),enabled:$("ticketEnabled").checked,price:Number($("ticketPriceInput").value)||0,currency:"ARS",text:$("ticketTextInput").value.trim()},
       bank:{holder:$("bankHolderInput").value.trim(),alias:$("bankAliasInput").value.trim(),cbu:$("bankCbuInput").value.replace(/\s/g,""),mp_url:$("bankMpInput").value.trim()},
-      ceremony:{...(old.ceremony||{}),time:$("ceremonyTimeInput").value.trim(),title:$("ceremonyTitleInput").value.trim(),place:$("ceremonyPlaceInput").value.trim(),address:$("ceremonyAddressInput").value.trim(),lat:Number($("ceremonyLatInput").value),lng:Number($("ceremonyLngInput").value)},
-      celebration:{...(old.celebration||{}),time:$("celebrationTimeInput").value.trim(),title:$("celebrationTitleInput").value.trim(),place:$("celebrationPlaceInput").value.trim(),address:$("celebrationAddressInput").value.trim(),lat:Number($("celebrationLatInput").value),lng:Number($("celebrationLngInput").value)},
+      ceremony:{...(old.ceremony||{}),time:$("ceremonyTimeInput").value.trim(),title:$("ceremonyTitleInput").value.trim(),place:$("ceremonyPlaceInput").value.trim(),address:$("ceremonyAddressInput").value.trim(),lat:numOr("ceremonyLatInput",old.ceremony?.lat),lng:numOr("ceremonyLngInput",old.ceremony?.lng)},
+      celebration:{...(old.celebration||{}),time:$("celebrationTimeInput").value.trim(),title:$("celebrationTitleInput").value.trim(),place:$("celebrationPlaceInput").value.trim(),address:$("celebrationAddressInput").value.trim(),lat:numOr("celebrationLatInput",old.celebration?.lat),lng:numOr("celebrationLngInput",old.celebration?.lng)},
       dress:{title:$("dressTitleInput").value.trim(),concept:$("dressConceptInput").value.trim(),details:$("dressDetailsInput").value.trim()}
     };
     try{await api("/api/admin/settings",{method:"PUT",body:settings});await loadState();$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;status("Sitio y tarjeta actualizados.");}

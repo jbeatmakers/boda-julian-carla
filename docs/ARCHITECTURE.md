@@ -1,40 +1,53 @@
 # Arquitectura de producción
 
-## Decisión principal
+## Fuente de verdad
 
-No usar `localStorage` como base de datos. Solo se usa como cola temporal de emergencia para un RSVP que no pudo llegar al servidor.
+SQLite vive en el VPS en `/var/lib/boda-julian-carla/wedding.sqlite3`, con WAL y `busy_timeout`. `localStorage` se usa sólo como cola temporal si un RSVP no pudo llegar al servidor.
 
-### Fuente de verdad
+## Frontend
 
-SQLite en el VPS (`/var/lib/boda-julian-carla/wedding.sqlite3`) con WAL y `busy_timeout`.
+La invitación es estática:
+- principal: GitHub Pages + `boda-julian-carla.bpm.red`;
+- fallback: repo Pages separado, sin CNAME, en `jbeatmakers.github.io/boda-julian-carla-pages/`.
 
-### GitHub
+Ambas llevan `robots.txt: Disallow /` y meta `noindex`. El fallback acepta RSVP y el acceso administrativo especial igual que la principal.
 
-GitHub sirve para:
+## Backend/admin
 
-- versionado y auditoría;
-- conservar el código;
-- opcionalmente disparar un deploy con runner self-hosted.
+Caddy (contenedor `caddy`) termina TLS y proxyfica `boda-api.13-140-183-198.sslip.io` hacia `boda-wedding:8787` dentro de la red Docker `web`.
 
-GitHub **no es** la base de datos y no participa en cada confirmación, edición o consulta del admin.
+`boda-wedding`:
+- imagen `python:3.12-alpine`;
+- sin puertos publicados;
+- `--restart unless-stopped`;
+- código/admin montados read-only desde `/opt/boda-julian-carla`;
+- SQLite montada read-write desde `/var/lib/boda-julian-carla`;
+- secretos sólo por entorno privado del VPS.
 
 ## Seguridad
 
-- El código `BODA` es una puerta social para invitados; no se considera secreto.
-- La contraseña administrativa no existe en el repositorio.
-- Hash PBKDF2-SHA256 con salt e iteraciones altas en `/etc/boda-julian-carla.env`.
-- Sesión mediante cookie `HttpOnly; Secure; SameSite=Strict`.
-- Mutaciones del panel requieren token CSRF adicional.
-- Rate limiting básico para login y RSVP.
-- El servicio corre con usuario sin login y hardening de systemd.
-- El backend escucha solo en `127.0.0.1`; Nginx es el único frente público.
+- `BODA` es sólo la puerta social de invitados.
+- El código especial de administración se valida en servidor y no se publica en HTML, JavaScript, tests ni documentación.
+- La entrada especial emite un token de un solo uso y luego una cookie `HttpOnly; Secure; SameSite=Strict`.
+- Las mutaciones admin requieren CSRF.
+- Login, entrada especial y RSVP tienen rate limiting.
+- Admin/API envían `X-Robots-Tag: noindex`.
+- La contraseña administrativa se conserva sólo como PBKDF2.
 
-## Consistencia de RSVP
+## RSVP
 
-Cada envío genera un `request_id` único. Si el navegador reintenta por una caída de red, el servidor reconoce el mismo ID y no duplica la confirmación.
+Cada envío usa `request_id` para idempotencia. Email/teléfono/nombre único pueden enlazar una respuesta con una invitación existente. El servidor vuelve a limitar los lugares según `seats_allowed`; no confía sólo en el selector del navegador.
 
-Si teléfono o email coincide con un invitado ya cargado, se actualiza ese invitado en vez de insertar uno nuevo.
+## Planificador
+
+Sin override manual, la previsión usa lugares confirmados + cupos de invitados/pendientes y luego aplica el margen. Los registros marcados sólo como `possible` se muestran aparte y no inflan comida/bebida hasta convertirse en invitación real.
+
+Stock comprado y aportes recibidos descuentan faltantes; aportes sólo prometidos no cuentan como stock.
+
+## Instagram
+
+El perfil objetivo es `@juli.y.carli`. La tarjeta siempre puede enlazar el perfil; si el OAuth de Meta queda conectado y existen publicaciones, el backend entrega hasta seis piezas al frontend. Tokens/secret nunca se sirven al navegador ni se versionan.
 
 ## Backups
 
-Timer de systemd diario. Usa la API `sqlite3.backup`, por lo que obtiene una copia coherente incluso con la base activa. Retención inicial: 45 días.
+El timer systemd de backup permanece fuera del runtime Docker y ejecuta `sqlite3.backup` diariamente. El deploy hace además un backup previo.

@@ -1,50 +1,51 @@
-# Deploy al VPS
+# Deploy actual de la boda
 
-La release está preparada para sacar el runtime de GitHub Pages y dejar GitHub solo como repositorio/versionado.
+## Producción
 
-## 1. DNS
+- Invitación principal: `https://boda-julian-carla.bpm.red/` (GitHub Pages).
+- Respaldo independiente: `https://jbeatmakers.github.io/boda-julian-carla-pages/`.
+- Admin/API: `https://boda-api.13-140-183-198.sslip.io/`.
+- Runtime: contenedor Docker `boda-wedding` en la red privada `web`.
+- Proxy/TLS: Caddy existente del VPS.
+- Datos: `/var/lib/boda-julian-carla/wedding.sqlite3`.
+- Entorno privado: `/etc/boda-julian-carla.env`.
 
-Apuntar al VPS:
+GitHub no participa en RSVP, admin ni SQLite. Una caída de GitHub no afecta el backend; la URL Pages alternativa cubre el frontend.
 
-- `boda-api.bpm.red`
-- `boda-julian-carla.bpm.red` cuando se haga el corte definitivo desde GitHub Pages al VPS.
+## Actualizar código
 
-Durante la transición el frontend ya apunta a `https://boda-api.bpm.red`, por lo que el backend compartido puede empezar a funcionar antes del corte final del dominio público.
-
-## 2. Primera instalación
-
-Desde una copia de esta release en el VPS:
+En el VPS, el helper actual copia sólo backend/admin, hace backup, reinicia únicamente `boda-wedding`, verifica salud desde Caddy y revierte código si falla:
 
 ```bash
-sudo ./deploy/deploy-release.sh /ruta/a/la/release
-sudo ./deploy/configure-admin.sh
+sudo /usr/local/sbin/deploy-boda-julian-carla /ruta/al/checkout
 ```
 
-`configure-admin.sh` solicita la contraseña sin imprimirla y guarda únicamente el hash PBKDF2 en `/etc/boda-julian-carla.env`.
+El frontend público se publica con GitHub Pages al hacer push a `main`. El repo espejo sincroniza sólo los archivos públicos y nunca copia CNAME, backend ni secretos.
 
-## 3. Nginx y TLS
+## Cambiar variables privadas
 
-El archivo `deploy/nginx-boda.conf` contiene los dos virtual hosts y cabeceras de seguridad. Requiere certificados Let's Encrypt para ambos dominios. No se incluyen claves ni certificados en el repo.
-
-Luego de instalar/verificar certificados, habilitar el site, ejecutar `nginx -t` y recargar Nginx.
-
-## 4. Comprobar
+Editar `/etc/boda-julian-carla.env` y luego **recrear** el contenedor; un simple `docker restart` no recarga variables:
 
 ```bash
-curl -fsS http://127.0.0.1:8787/healthz
-systemctl is-active boda-wedding.service
+sudo /usr/local/sbin/recreate-boda-wedding
+```
+
+Para cambiar usuario/contraseña administrativa puede usarse `deploy/configure-admin.sh`, que guarda sólo PBKDF2 y recrea el contenedor.
+
+## Caddy
+
+El bloque canónico está en `deploy/Caddyfile.boda`. Debe integrarse en el Caddyfile general sin alterar otros hosts. El upstream es `boda-wedding:8787`; no se publica ningún puerto del contenedor.
+
+## Backups
+
+`boda-wedding-backup.timer` corre diariamente y usa `sqlite3.backup`. Antes de cada deploy también se ejecuta un backup. Retención configurada: 45 días.
+
+## Checks
+
+```bash
+docker ps --filter name=boda-wedding
+docker exec caddy wget -qO- http://boda-wedding:8787/healthz
 systemctl is-active boda-wedding-backup.timer
 ```
 
-En navegador:
-
-- invitación: `https://boda-julian-carla.bpm.red/`
-- admin: `https://boda-api.bpm.red/`
-
-## 5. Runner self-hosted opcional
-
-La workflow `.github/workflows/deploy-vps.yml` solo acepta `push` a `main` del repo exacto o ejecución manual. No usa GitHub-hosted runners.
-
-El runner debe tener permiso `sudo` únicamente para `/usr/local/sbin/deploy-boda-julian-carla`; el helper root copia archivos conocidos y reinicia únicamente el servicio de la boda.
-
-Si el runner se cae o GitHub no responde, **el sitio, RSVP, panel y base siguen funcionando**. Solo queda pendiente el próximo deploy.
+La workflow de GitHub **sólo valida** sintaxis/tests. No despliega ni depende de un runner del VPS.

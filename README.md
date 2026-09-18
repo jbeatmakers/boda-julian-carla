@@ -39,7 +39,7 @@ boda-api.13-140-183-198.sslip.io         -> Caddy HTTPS
 
 ## Instagram
 
-La sección visual ya está preparada y oculta hasta que exista un feed autorizado. Los tokens de Meta nunca se exponen al navegador ni se guardan en Git. Ver `docs/INSTAGRAM.md`.
+La invitación enlaza siempre `@juli.y.carli`. Si el OAuth de Meta está conectado y hay publicaciones, el mismo bloque muestra automáticamente la galería; si está vacío, no inventa contenido. Los tokens de Meta nunca se exponen al navegador ni se guardan en Git. Ver `docs/INSTAGRAM.md`.
 
 ## Pruebas
 

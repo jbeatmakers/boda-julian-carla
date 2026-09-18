@@ -12,7 +12,7 @@ class WeddingApiTest(unittest.TestCase):
         app.DB_PATH=Path(cls.tmp.name)/"wedding.sqlite3"
         app.ADMIN_USER="admin"
         app.ADMIN_HASH=app.hash_password("very-secure-test-password")
-        app.ADMIN_ENTRY_HASH=app.hash_password("[REDACTED-ADMIN-CODE]")
+        app.ADMIN_ENTRY_HASH=app.hash_password("#TEST-ENTRY-ONLY")
         app.ALLOWED_ORIGINS={"https://boda-julian-carla.bpm.red"}
         app._rate.clear(); app._sessions.clear()
         app.init_db()
@@ -112,6 +112,16 @@ class WeddingApiTest(unittest.TestCase):
         s,_,_=self.req("PATCH",f"/api/admin/contributions/{c['id']}",{"status":"received"},h); self.assertEqual(s,200)
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); water=next(x for x in d["planner"]["suggestions"] if x["key"]=="water"); self.assertEqual(water["stock"],17.5); self.assertEqual(water["missing"],2.5)
 
+    def test_planner_forecasts_confirmed_plus_invited_but_not_possible(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        self.req("POST","/api/admin/guests",{"name":"Confirmado","status":"confirmed","attendance":"yes","seats_allowed":2,"seats":2},h)
+        self.req("POST","/api/admin/guests",{"name":"Invitado","status":"invited","seats_allowed":3,"seats":0},h)
+        self.req("POST","/api/admin/guests",{"name":"Posible","status":"possible","seats_allowed":4,"seats":0},h)
+        self.req("PUT","/api/admin/settings",{"planning":{"planned_guests_override":0,"guest_buffer_pct":10,"table_capacity":4}},h)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
+        p=d["planner"]; self.assertEqual(p["confirmed"],2); self.assertEqual(p["invited_capacity"],3); self.assertEqual(p["possible_capacity"],4)
+        self.assertEqual(p["forecast_base"],5); self.assertEqual(p["planned"],6); self.assertEqual(p["tables"],2)
+
     def test_ticket_credit_and_menu_planning(self):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,g,_=self.req("POST","/api/admin/guests",{"name":"Aporte Tarjeta","status":"confirmed","attendance":"yes","seats_allowed":2,"seats":2,"ticket_credit":20000},h); self.assertEqual(s,201)
@@ -124,9 +134,31 @@ class WeddingApiTest(unittest.TestCase):
         cookie,csrf=self.login()
         s,d,_=self.req("GET","/api/admin/price-lookup?barcode=123",headers={"Cookie":cookie}); self.assertEqual(s,200); self.assertFalse(d["found"]); self.assertEqual(d["error"],"barcode_invalid")
 
+    def test_rejects_negative_money_and_impossible_guest_limits(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,d,_=self.req("POST","/api/admin/shopping",{"item":"Vino","bought":-1},h); self.assertEqual(s,400); self.assertEqual(d["error"],"negative_value")
+        s,d,_=self.req("POST","/api/admin/guests",{"name":"Cupo Malo","seats_allowed":99},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_seats_allowed")
+        s,g,_=self.req("POST","/api/admin/guests",{"name":"Cupo Bien","status":"confirmed","attendance":"yes","seats_allowed":3,"seats":3},h); self.assertEqual(s,201)
+        s,d,_=self.req("PATCH",f"/api/admin/guests/{g['id']}",{"seats_allowed":2},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_seats")
+
+    def test_guest_attendance_normalizes_status_and_seats(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,g,_=self.req("POST","/api/admin/guests",{"name":"No viene","status":"pending","attendance":"no","seats_allowed":4,"seats":3},h)
+        self.assertEqual(s,201); self.assertEqual(g["status"],"declined"); self.assertEqual(g["attendance"],"no"); self.assertEqual(g["seats"],0)
+        s,g,_=self.req("POST","/api/admin/guests",{"name":"Sí viene","status":"pending","attendance":"yes","seats_allowed":2,"seats":0},h)
+        self.assertEqual(s,201); self.assertEqual(g["status"],"confirmed"); self.assertEqual(g["attendance"],"yes"); self.assertEqual(g["seats"],1)
+
+    def test_settings_validation_and_partial_merge(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,d,_=self.req("PUT","/api/admin/settings",{"ticket":{"price":42000}},h); self.assertEqual(s,200)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(d["settings"]["ticket"]["price"],42000); self.assertTrue(d["settings"]["ticket"]["enabled"]); self.assertTrue(d["settings"]["ticket"]["text"])
+        s,d,_=self.req("PUT","/api/admin/settings",{"planning":{"drinkers_pct":150}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_percentage")
+        s,d,_=self.req("PUT","/api/admin/settings",{"planning":{"table_capacity":0}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_table_capacity")
+        s,d,_=self.req("PUT","/api/admin/settings",{"bank":{"mp_url":"javascript:alert(1)"}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_url")
+
     def test_special_entry_creates_admin_session_without_login_form(self):
         origin={"Origin":"https://boda-julian-carla.bpm.red"}
-        s,d,h=self.req("POST","/api/admin/entry",{"code":"[REDACTED-ADMIN-CODE]"},origin)
+        s,d,h=self.req("POST","/api/admin/entry",{"code":"#TEST-ENTRY-ONLY"},origin)
         self.assertEqual(s,200); self.assertTrue(d["entry_token"])
         s,d,h=self.req("GET",f"/?entry={d['entry_token']}")
         self.assertEqual(s,303); self.assertEqual(h.get("Location"),"/")

@@ -1,0 +1,14 @@
+# Bloque de producción actual. Se integra en el Caddyfile general del VPS.
+boda-api.13-140-183-198.sslip.io {
+    header {
+        X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
+        Strict-Transport-Security "max-age=31536000"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+        -Server
+    }
+    reverse_proxy boda-wedding:8787
+    encode zstd gzip
+}
