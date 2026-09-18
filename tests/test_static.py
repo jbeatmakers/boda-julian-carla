@@ -58,5 +58,14 @@ class StaticTest(unittest.TestCase):
         self.assertIn('rel="icon"',html)
         self.assertIn('ensureAccessibleNames',js)
         self.assertIn('numOr("ceremonyLatInput"',js)
+        p=Parser(); p.feed(html)
+        for needed in ('viewAdminBtn','viewCardBtn','cardView','fullCardPreview','guestGroupFilter','gGroup','guestGroups'):
+            self.assertIn(needed,p.ids)
+        self.assertIn('group_name',js)
+
+    def test_admin_preview_bridge_is_restricted_to_api_origin(self):
+        js=(ROOT/'assets/app.js').read_text(encoding='utf-8')
+        self.assertIn('wedding-admin-preview',js)
+        self.assertIn('e.origin===API_BASE',js)
 
 if __name__=='__main__': unittest.main(verbosity=2)

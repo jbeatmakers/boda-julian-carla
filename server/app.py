@@ -67,7 +67,7 @@ TABLE_FIELDS = {
     "contributions":{"guest_id","contributor","category","planning_key","planning_factor","item","quantity","unit","estimated_value","status","notes"}
 }
 GUEST_FIELDS = {
-    "name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes",
+    "name","group_name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes",
     "ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no"
 }
 
@@ -99,7 +99,7 @@ def init_db() -> None:
         );
         CREATE TABLE IF NOT EXISTS guests(
           id TEXT PRIMARY KEY, request_id TEXT UNIQUE, name TEXT NOT NULL,
-          phone TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+          group_name TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
           status TEXT NOT NULL DEFAULT 'pending', attendance TEXT NOT NULL DEFAULT '',
           seats INTEGER NOT NULL DEFAULT 1, seats_allowed INTEGER NOT NULL DEFAULT 1, diet TEXT NOT NULL DEFAULT '',
           song TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '',
@@ -151,7 +151,7 @@ def init_db() -> None:
             c.execute("ALTER TABLE guests ADD COLUMN seats_allowed INTEGER NOT NULL DEFAULT 1")
             c.execute("UPDATE guests SET seats_allowed=CASE WHEN seats>0 THEN seats ELSE 1 END")
         migrations={
-          "guests":{"ticket_credit":"INTEGER NOT NULL DEFAULT 0","contribution_note":"TEXT NOT NULL DEFAULT ''"},
+          "guests":{"ticket_credit":"INTEGER NOT NULL DEFAULT 0","contribution_note":"TEXT NOT NULL DEFAULT ''","group_name":"TEXT NOT NULL DEFAULT ''"},
           "shopping":{"barcode":"TEXT DEFAULT ''","planning_key":"TEXT DEFAULT ''","source":"TEXT DEFAULT ''","source_url":"TEXT DEFAULT ''","reference_price":"REAL NOT NULL DEFAULT 0","reference_updated_at":"TEXT DEFAULT ''","planning_factor":"REAL NOT NULL DEFAULT 1"},
           "vendors":{"role":"TEXT DEFAULT ''","payment_mode":"TEXT DEFAULT 'cash'","contribution_note":"TEXT DEFAULT ''"},
           "contributions":{"planning_key":"TEXT DEFAULT ''","planning_factor":"REAL NOT NULL DEFAULT 1"}
@@ -721,13 +721,13 @@ def admin_create_guest(data: dict) -> dict:
     name=d.get("name","")
     if len(name)<2: raise ValueError("name_required")
     now=now_iso(); gid=str(uuid.uuid4())
-    base={"phone":"","email":"","status":"pending","attendance":"","seats":1,"seats_allowed":1,"diet":"","song":"","notes":"",
+    base={"group_name":"","phone":"","email":"","status":"pending","attendance":"","seats":1,"seats_allowed":1,"diet":"","song":"","notes":"",
           "ticket_override":None,"ticket_exempt":0,"ticket_paid":0,"ticket_credit":0,"gift_amount":0,"gift_note":"","contribution_note":"","table_no":""}
     base.update(d)
     if "seats_allowed" not in d and "seats" in d:
         base["seats_allowed"]=max(int(base.get("seats_allowed") or 1),int(base.get("seats") or 0))
     base=normalize_guest_values(base)
-    cols=["id","name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no","invited_at","updated_at"]
+    cols=["id","name","group_name","phone","email","status","attendance","seats","seats_allowed","diet","song","notes","ticket_override","ticket_exempt","ticket_paid","ticket_credit","gift_amount","gift_note","contribution_note","table_no","invited_at","updated_at"]
     vals=[gid]+[base[k] for k in cols[1:-2]]+[now,now]
     with db() as c:
         c.execute(f"INSERT INTO guests({','.join(cols)}) VALUES({','.join('?' for _ in cols)})",vals)

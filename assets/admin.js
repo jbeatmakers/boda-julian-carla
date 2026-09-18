@@ -29,6 +29,10 @@
     $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)openTab(b.dataset.tab);});
     $("guestSearch").addEventListener("input",renderGuests);
     $("guestFilter").addEventListener("change",renderGuests);
+    $("guestGroupFilter").addEventListener("change",renderGuests);
+    $("viewAdminBtn").addEventListener("click",()=>setViewMode("admin"));
+    $("viewCardBtn").addEventListener("click",()=>setViewMode("card"));
+    $("fullCardPreview").addEventListener("load",sendCardPreviewUnlock);
     $("addGuestBtn").addEventListener("click",()=>openGuest());
     $("closeGuestModal").addEventListener("click",closeGuest);
     $("cancelGuest").addEventListener("click",closeGuest);
@@ -93,15 +97,36 @@
   }
 
   function showLogin(){
+    setViewMode("admin",false);
     $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden");
   }
   function showApp(){
     $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden");
+    setViewMode("admin",false);
+  }
+
+  function sendCardPreviewUnlock(){
+    const frame=$("fullCardPreview");
+    try{frame?.contentWindow?.postMessage({type:"wedding-admin-preview"},"https://boda-julian-carla.bpm.red");}catch(_){}
+  }
+  function setViewMode(mode,reload=true){
+    const card=mode==="card";
+    $("cardView")?.classList.toggle("hidden",!card);
+    $("adminShell")?.classList.toggle("hidden",card);
+    $("tabs")?.classList.toggle("hidden",card);
+    $("viewAdminBtn")?.classList.toggle("primary",!card);
+    $("viewAdminBtn")?.classList.toggle("soft",card);
+    $("viewCardBtn")?.classList.toggle("primary",card);
+    $("viewCardBtn")?.classList.toggle("soft",!card);
+    if(card&&reload){
+      const frame=$("fullCardPreview");
+      frame.src="https://boda-julian-carla.bpm.red/?admin-preview="+Date.now();
+    }
   }
   function setLoginStatus(msg){const e=$("loginStatus");e.textContent=msg;e.classList.toggle("hidden",!msg);}
   function status(msg,type="ok",ms=2600){const e=$("globalStatus");e.textContent=msg;e.className=`status ${type}`;if(!msg)e.classList.add("hidden");if(msg&&ms)setTimeout(()=>{if(e.textContent===msg)e.classList.add("hidden");},ms);}
 
-  const A11Y_NAMES={guestFilter:"Filtrar invitados",item:"Ítem",course:"Etapa del menú",unit:"Unidad",per_person:"Cantidad por persona",fixed_qty:"Cantidad fija",stock:"Stock",contributor:"Aporta",planning_key:"Categoría planificada",planning_factor:"Equivalencia por unidad",quantity:"Cantidad",estimated_value:"Valor estimado",description:"Concepto",vendor:"Proveedor",budget:"Presupuesto",actual:"Costo real",paid:"Pagado",due_date:"Fecha límite",status:"Estado",barcode:"Código de barras",needed:"Necesario",bought:"Comprado",unit_cost:"Costo por unidad",reference_price:"Precio de referencia",source:"Fuente",notes:"Notas",title:"Título",category:"Categoría",priority:"Prioridad",owner:"Responsable",name:"Nombre",contact:"Contacto",payment_mode:"Forma de pago",total:"Total"};
+  const A11Y_NAMES={guestFilter:"Filtrar invitados",guestGroupFilter:"Filtrar por grupo",item:"Ítem",course:"Etapa del menú",unit:"Unidad",per_person:"Cantidad por persona",fixed_qty:"Cantidad fija",stock:"Stock",contributor:"Aporta",planning_key:"Categoría planificada",planning_factor:"Equivalencia por unidad",quantity:"Cantidad",estimated_value:"Valor estimado",description:"Concepto",vendor:"Proveedor",budget:"Presupuesto",actual:"Costo real",paid:"Pagado",due_date:"Fecha límite",status:"Estado",barcode:"Código de barras",needed:"Necesario",bought:"Comprado",unit_cost:"Costo por unidad",reference_price:"Precio de referencia",source:"Fuente",notes:"Notas",title:"Título",category:"Categoría",priority:"Prioridad",owner:"Responsable",name:"Nombre",contact:"Contacto",payment_mode:"Forma de pago",total:"Total"};
   function ensureAccessibleNames(root=document){
     root.querySelectorAll('input:not([type="hidden"]),select,textarea').forEach(el=>{
       if(el.getAttribute("aria-label")||el.getAttribute("aria-labelledby")||(el.labels&&el.labels.length)) return;
@@ -142,7 +167,7 @@
     document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.dataset.panel===name));
   }
 
-  function renderAll(){renderDashboard();renderGuests();renderPlanner();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
+  function renderAll(){renderDashboard();renderGuestGroupOptions();renderGuests();renderPlanner();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
   const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
   const num=n=>new Intl.NumberFormat("es-AR",{maximumFractionDigits:2}).format(Number(n)||0);
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -181,13 +206,36 @@
   function guestUnit(g){const p=Number(state.settings?.ticket?.price)||0;return g.ticket_exempt?0:(g.ticket_override===null||g.ticket_override===undefined?p:Number(g.ticket_override)||0);}
   function guestDue(g){return Math.max(0,guestUnit(g)*Math.max(1,Number(g.seats)||1)-(Number(g.ticket_credit)||0));}
   function statusLabel(s){return ({possible:"Posible",invited:"Invitado",pending:"Pendiente",confirmed:"Confirmado",declined:"No asiste"})[s]||s||"Pendiente";}
+  function guestGroupNames(){
+    return [...new Set((state.guests||[]).map(g=>(g.group_name||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es",{sensitivity:"base"}));
+  }
+  function renderGuestGroupOptions(){
+    const groups=guestGroupNames(),filter=$("guestGroupFilter"),current=filter.value;
+    filter.innerHTML='<option value="">Todos los grupos</option>'+groups.map(g=>`<option value="${attr(g)}">${esc(g)}</option>`).join("")+'<option value="__ungrouped__">Sin grupo</option>';
+    if([...filter.options].some(o=>o.value===current)) filter.value=current;
+    $("guestGroups").innerHTML=groups.map(g=>`<option value="${attr(g)}"></option>`).join("");
+  }
   function renderGuests(){
-    const q=$("guestSearch").value.trim().toLowerCase(),f=$("guestFilter").value;
-    const rows=(state.guests||[]).filter(g=>(!f||g.status===f)&&(!q||[g.name,g.phone,g.email,g.notes,g.song,g.table_no].join(" ").toLowerCase().includes(q)));
-    $("guestRows").innerHTML=rows.length?rows.map(g=>{
-      const due=guestDue(g),paid=Number(g.ticket_paid)||0;
-      return `<tr>
+    const q=$("guestSearch").value.trim().toLowerCase(),f=$("guestFilter").value,gf=$("guestGroupFilter").value;
+    const rows=(state.guests||[]).filter(g=>{
+      const group=(g.group_name||"").trim();
+      const groupOk=!gf||(gf==="__ungrouped__"?!group:group===gf);
+      const searchOk=!q||[g.name,group,g.phone,g.email,g.notes,g.song,g.table_no].join(" ").toLowerCase().includes(q);
+      return (!f||g.status===f)&&groupOk&&searchOk;
+    }).sort((a,b)=>{
+      const ga=(a.group_name||"").trim(),gb=(b.group_name||"").trim();
+      if(!ga&&gb)return 1;if(ga&&!gb)return -1;
+      return ga.localeCompare(gb,"es",{sensitivity:"base"})||String(a.name||"").localeCompare(String(b.name||""),"es",{sensitivity:"base"});
+    });
+    if(!rows.length){$("guestRows").innerHTML='<tr><td colspan="11" class="empty">No hay invitados que coincidan.</td></tr>';return;}
+    const counts=new Map(); rows.forEach(g=>{const k=(g.group_name||"").trim()||"Sin grupo";counts.set(k,(counts.get(k)||0)+1);});
+    let last="",html="";
+    rows.forEach(g=>{
+      const group=(g.group_name||"").trim()||"Sin grupo",due=guestDue(g),paid=Number(g.ticket_paid)||0;
+      if(group!==last){html+=`<tr class="guest-group-row"><td colspan="11"><strong>${esc(group)}</strong><span>${counts.get(group)} invitado${counts.get(group)===1?"":"s"}</span></td></tr>`;last=group;}
+      html+=`<tr>
         <td><strong>${esc(g.name)}</strong>${g.diet?`<small>🍽 ${esc(g.diet)}</small>`:""}</td>
+        <td><span class="group-pill">${esc(group)}</span></td>
         <td><span class="pill ${attr(g.status)}">${esc(statusLabel(g.status))}</span></td>
         <td>${g.status==="declined"?"—":`${esc(g.seats||0)} / ${esc(g.seats_allowed||1)}`}</td>
         <td>${g.phone?esc(g.phone):""}${g.email?`<small>${esc(g.email)}</small>`:""}</td>
@@ -197,12 +245,13 @@
         <td class="notes-cell">${esc(g.contribution_note||g.notes||g.gift_note||"—")}</td>
         <td class="actions"><button class="link" data-action="edit-guest" data-id="${attr(g.id)}">Editar</button><button class="link danger-text" data-action="delete" data-table="guests" data-id="${attr(g.id)}">Borrar</button></td>
       </tr>`;
-    }).join(""):`<tr><td colspan="10" class="empty">No hay invitados que coincidan.</td></tr>`;
+    });
+    $("guestRows").innerHTML=html;
   }
 
   function openGuest(g=null){
     $("guestModalTitle").textContent=g?"Editar invitado":"Nuevo invitado";
-    $("guestId").value=g?.id||""; $("gName").value=g?.name||""; $("gStatus").value=g?.status||"invited";
+    $("guestId").value=g?.id||""; $("gName").value=g?.name||""; $("gGroup").value=g?.group_name||""; $("gStatus").value=g?.status||"invited";
     $("gPhone").value=g?.phone||""; $("gEmail").value=g?.email||""; $("gAttendance").value=g?.attendance||"";
     $("gSeatsAllowed").value=g?.seats_allowed??1; $("gSeats").value=g?.seats??0; $("gTicketPaid").value=g?.ticket_paid||""; $("gTicketCredit").value=g?.ticket_credit||""; $("gGiftAmount").value=g?.gift_amount||"";
     $("gContributionNote").value=g?.contribution_note||""; $("gTableNo").value=g?.table_no||""; $("gDiet").value=g?.diet||""; $("gSong").value=g?.song||"";
@@ -216,7 +265,7 @@
   function syncTicketMode(){const custom=$("gTicketMode").value==="custom";$("gTicketOverride").disabled=!custom; if(!custom)$("gTicketOverride").value="";}
   async function saveGuest(e){
     e.preventDefault(); const id=$("guestId").value,mode=$("gTicketMode").value;
-    const body={name:$("gName").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,seats_allowed:Math.max(1,Number($("gSeatsAllowed").value)||1),ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,ticket_credit:Number($("gTicketCredit").value)||0,gift_amount:Number($("gGiftAmount").value)||0,contribution_note:$("gContributionNote").value.trim(),table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
+    const body={name:$("gName").value.trim(),group_name:$("gGroup").value.trim(),status:$("gStatus").value,phone:$("gPhone").value.trim(),email:$("gEmail").value.trim().toLowerCase(),attendance:$("gAttendance").value,seats:Number($("gSeats").value)||0,seats_allowed:Math.max(1,Number($("gSeatsAllowed").value)||1),ticket_exempt:mode==="free"?1:0,ticket_override:mode==="custom"?(Number($("gTicketOverride").value)||0):null,ticket_paid:Number($("gTicketPaid").value)||0,ticket_credit:Number($("gTicketCredit").value)||0,gift_amount:Number($("gGiftAmount").value)||0,contribution_note:$("gContributionNote").value.trim(),table_no:$("gTableNo").value.trim(),diet:$("gDiet").value.trim(),song:$("gSong").value.trim(),notes:$("gNotes").value.trim(),gift_note:$("gGiftNote").value.trim()};
     try{await api(id?`/api/admin/guests/${encodeURIComponent(id)}`:"/api/admin/guests",{method:id?"PATCH":"POST",body});closeGuest();await loadState();status("Invitado guardado.");}catch(err){status(err.message,"err",5000);}
   }
 
@@ -378,7 +427,7 @@
     const src=raw.state||raw;
     for(const g of (src.guests||[])){
       push("guests",{
-        name:g.name||"Invitado",phone:g.phone||"",email:g.email||"",
+        name:g.name||"Invitado",group_name:g.group_name||g.group||g.grupo||"",phone:g.phone||"",email:g.email||"",
         status:statusMap[g.listStatus]||g.status||((g.attendance||"").toLowerCase().includes("no")?"declined":"pending"),
         attendance:g.attendance==="yes"||String(g.attendance||"").toLowerCase().includes("sí")||String(g.attendance||"").toLowerCase().includes("confirmo")?"yes":(g.attendance==="no"||String(g.attendance||"").toLowerCase().includes("no")?"no":""),
         seats:Number(g.seats)||places(g.places),diet:g.diet||"",song:g.song||"",notes:g.notes||"",
@@ -416,8 +465,8 @@
   function downloadBackup(){download(`boda-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(state,null,2));}
   function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
   function downloadGuestsCsv(){
-    const head=["Nombre","Estado","Asistencia","Lugares","Telefono","Email","TarjetaUnit","TarjetaPagada","Regalo","Mesa","Menu","Cancion","Notas"];
-    const rows=(state.guests||[]).map(g=>[g.name,statusLabel(g.status),g.attendance,g.seats,g.phone,g.email,guestUnit(g),g.ticket_paid,g.gift_amount,g.table_no,g.diet,g.song,g.notes].map(csvCell).join(","));
+    const head=["Nombre","Grupo","Estado","Asistencia","Lugares","Telefono","Email","TarjetaUnit","TarjetaPagada","Regalo","Mesa","Menu","Cancion","Notas"];
+    const rows=(state.guests||[]).map(g=>[g.name,g.group_name||"",statusLabel(g.status),g.attendance,g.seats,g.phone,g.email,guestUnit(g),g.ticket_paid,g.gift_amount,g.table_no,g.diet,g.song,g.notes].map(csvCell).join(","));
     download("invitados-boda.csv","\ufeff"+[head.map(csvCell).join(","),...rows].join("\r\n"),"text/csv;charset=utf-8");
   }
 })();

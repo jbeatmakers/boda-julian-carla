@@ -32,6 +32,10 @@
     <div class="top-inner">
       <div><div class="brand">Julián & Carla</div><div class="eyebrow">Administración de la boda · 18 de diciembre</div></div>
       <div class="toolbar">
+        <div class="view-switch" role="group" aria-label="Vista del panel">
+          <button class="btn primary view-switch-btn active" id="viewAdminBtn" type="button">Administrador</button>
+          <button class="btn soft view-switch-btn" id="viewCardBtn" type="button">Tarjeta</button>
+        </div>
         <button class="btn soft" id="refreshBtn">Actualizar</button>
         <button class="btn soft" id="backupBtn">Backup</button><label class="btn soft" style="cursor:pointer">Importar<input id="importFile" type="file" accept=".json,application/json" hidden></label>
         <button class="btn soft" id="csvBtn">CSV invitados</button>
@@ -51,7 +55,11 @@
     </nav>
   </header>
 
-  <main class="shell">
+  <section id="cardView" class="admin-card-view hidden" aria-label="Vista de la tarjeta">
+    <iframe id="fullCardPreview" title="Tarjeta de casamiento" src="https://boda-julian-carla.bpm.red/"></iframe>
+  </section>
+
+  <main class="shell" id="adminShell">
     <div id="globalStatus" class="status hidden"></div>
 
     <section class="panel active" data-panel="dashboard">
@@ -68,13 +76,13 @@
     <section class="panel" data-panel="guests">
       <div class="section-head">
         <h2>Invitados</h2>
-        <div class="toolbar"><input id="guestSearch" class="field" style="width:220px" placeholder="Buscar…"><select id="guestFilter" class="field" style="width:160px"><option value="">Todos</option><option value="confirmed">Confirmados</option><option value="pending">Pendientes</option><option value="invited">Invitados</option><option value="possible">Posibles</option><option value="declined">No asisten</option></select><button class="btn primary" id="addGuestBtn">+ Invitado</button></div>
+        <div class="toolbar"><input id="guestSearch" class="field" style="width:220px" placeholder="Buscar…"><select id="guestFilter" class="field" style="width:160px"><option value="">Todos los estados</option><option value="confirmed">Confirmados</option><option value="pending">Pendientes</option><option value="invited">Invitados</option><option value="possible">Posibles</option><option value="declined">No asisten</option></select><select id="guestGroupFilter" class="field" style="width:180px"><option value="">Todos los grupos</option></select><button class="btn primary" id="addGuestBtn">+ Invitado</button></div>
       </div>
-      <div class="table-wrap"><table class="table"><thead><tr><th>Nombre</th><th>Estado</th><th>Lugares</th><th>Contacto</th><th>Tarjeta</th><th>Pagó</th><th>Regalo</th><th>Mesa</th><th>Notas</th><th></th></tr></thead><tbody id="guestRows"></tbody></table></div>
+      <div class="table-wrap"><table class="table"><thead><tr><th>Nombre</th><th>Grupo</th><th>Estado</th><th>Lugares</th><th>Contacto</th><th>Tarjeta</th><th>Pagó</th><th>Regalo</th><th>Mesa</th><th>Notas</th><th></th></tr></thead><tbody id="guestRows"></tbody></table></div>
     </section>
 
     <section class="panel" data-panel="planner">
-      <div class="section-head"><div><h2>Planificador de la fiesta</h2><p class="muted">Calcula con confirmados reales y tus supuestos. Podés cambiar todo.</p></div><div class="toolbar"><button class="btn soft" id="syncPlanToShoppingBtn" type="button">Pasar faltantes a compras</button><button class="btn primary" id="savePlanningBtn">Guardar supuestos</button></div></div>
+      <div class="section-head"><div><h2>Planificador de la fiesta</h2><p class="muted">Calcula con confirmados + invitados pendientes, aplica tu margen y deja los “posibles” fuera hasta que los invites. Podés cambiar todo.</p></div><div class="toolbar"><button class="btn soft" id="syncPlanToShoppingBtn" type="button">Pasar faltantes a compras</button><button class="btn primary" id="savePlanningBtn">Guardar supuestos</button></div></div>
       <div class="grid kpis planner-kpis" id="plannerKpis"></div>
       <div class="grid settings-grid planner-layout">
         <article class="card"><div class="eyebrow">Supuestos</div><div id="planningInputs" class="planning-inputs"></div></article>
@@ -227,6 +235,7 @@
     <input type="hidden" id="guestId">
     <div class="grid form-grid" style="margin-top:14px">
       <div><label>Nombre y apellido *</label><input id="gName" class="field" required></div>
+      <div><label>Grupo</label><input id="gGroup" class="field" list="guestGroups" placeholder="Familia 1, Basket amigos…"><datalist id="guestGroups"></datalist></div>
       <div><label>Estado</label><select id="gStatus" class="field"><option value="possible">Posible</option><option value="invited">Invitado</option><option value="pending">Pendiente</option><option value="confirmed">Confirmado</option><option value="declined">No asiste</option></select></div>
       <div><label>Teléfono</label><input id="gPhone" class="field"></div>
       <div><label>Email</label><input id="gEmail" class="field" type="email"></div>

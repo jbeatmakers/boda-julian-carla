@@ -28,6 +28,9 @@
     document.querySelectorAll(".celebrate-link").forEach(a=>a.addEventListener("click",()=>celebrate(20)));
     document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>copyField(b.dataset.copy,b)));
     if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false);
+    window.addEventListener("message",e=>{
+      if(e.origin===API_BASE && e.data?.type==="wedding-admin-preview") unlock(false);
+    });
     window.addEventListener("online", flushOutbox);
   });
 

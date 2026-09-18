@@ -57,3 +57,12 @@ body:before{left:-36px;transform:rotate(-5deg)}body:after{right:-38px;transform:
 .panel>.section-head>div>h2{margin-bottom:2px}.panel>.section-head>div>p{margin:0}.kpi{box-shadow:0 10px 30px rgba(39,48,38,.045)}
 @media(max-width:1050px){.planner-kpis{grid-template-columns:repeat(2,1fr)}.plan-row{grid-template-columns:minmax(140px,1.4fr) repeat(2,minmax(80px,.8fr));}.plan-row>:nth-child(4),.plan-row>:nth-child(5){grid-column:auto}.stock-form{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.planning-inputs,.copy-fields{grid-template-columns:1fr}.planner-kpis{grid-template-columns:1fr 1fr}.plan-row{grid-template-columns:1fr 1fr}.plan-row>:first-child{grid-column:1/-1}.preview-card iframe{height:520px}.stock-form{grid-template-columns:1fr}.stock-form .wide{grid-column:auto}}
+
+/* Admin/card mode switch + guest groups */
+.view-switch{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55)}
+.view-switch .btn{border-radius:8px}.admin-card-view{max-width:1500px;height:calc(100vh - 112px);margin:0 auto;padding:12px 18px 18px}
+.admin-card-view iframe{width:100%;height:100%;border:1px solid var(--line);border-radius:18px;background:white;box-shadow:0 12px 34px rgba(39,48,38,.07)}
+.guest-group-row td{background:#efeadf!important;color:var(--olive);padding:7px 10px!important;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.guest-group-row strong{font-family:Italiana,serif;font-size:18px;font-weight:400}.guest-group-row span{margin-left:8px;font-size:10px;color:#74796f}
+.group-pill{display:inline-block;padding:3px 7px;border-radius:99px;background:#edf1e9;color:#53604d;font-size:10px;white-space:nowrap}
+@media(max-width:900px){.view-switch{order:-1;width:100%}.view-switch .btn{flex:1}.admin-card-view{height:calc(100vh - 165px);padding:8px 10px 12px}}

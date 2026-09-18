@@ -96,6 +96,15 @@ class WeddingApiTest(unittest.TestCase):
         s,_,_=self.req("PUT","/api/admin/settings",{"ticket":{"enabled":True,"price":42000,"currency":"ARS","text":"Texto nuevo"}},h); self.assertEqual(s,200)
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(d["settings"]["ticket"]["price"],42000)
 
+    def test_guest_group_roundtrip_and_rsvp_preserves_group(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        s,g,_=self.req("POST","/api/admin/guests",{"name":"Amigo Basket","group_name":"Basket amigos","status":"invited","email":"basket@example.com","seats_allowed":2},h); self.assertEqual(s,201)
+        self.assertEqual(g["group_name"],"Basket amigos")
+        s,_,_=self.req("POST","/api/public/rsvp",{"request_id":"group-rsvp","name":"Amigo Basket","email":"basket@example.com","attendance":"yes","seats":2},{"Origin":"https://boda-julian-carla.bpm.red"}); self.assertEqual(s,201)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
+        saved=next(x for x in d["guests"] if x["email"]=="basket@example.com")
+        self.assertEqual(saved["group_name"],"Basket amigos"); self.assertEqual(saved["status"],"confirmed")
+
     def test_bad_admin_payload_is_400_not_connection_drop(self):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,d,_=self.req("POST","/api/admin/guests",{"name":""},h); self.assertEqual(s,400); self.assertEqual(d["error"],"name_required")
