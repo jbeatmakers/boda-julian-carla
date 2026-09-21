@@ -54,7 +54,7 @@
     $("lookupPriceBtn").addEventListener("click",lookupPrice);
     $("scanBarcodeBtn").addEventListener("click",startBarcodeScan);
     $("stopScanBtn").addEventListener("click",stopBarcodeScan);
-    $("reloadPreviewBtn").addEventListener("click",()=>{$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;});
+    $("reloadPreviewBtn").addEventListener("click",()=>{$("sitePreview").src=`https://bodajulianycarla.bpm.red/?preview=${Date.now()}`;});
     $("instagramConnectBtn")?.addEventListener("click",connectInstagram);
     document.body.addEventListener("click",delegatedClick);
     document.body.addEventListener("change",delegatedChange);
@@ -107,7 +107,7 @@
 
   function sendCardPreviewUnlock(){
     const frame=$("fullCardPreview");
-    try{frame?.contentWindow?.postMessage({type:"wedding-admin-preview"},"https://boda-julian-carla.bpm.red");}catch(_){}
+    try{frame?.contentWindow?.postMessage({type:"wedding-admin-preview"},"https://bodajulianycarla.bpm.red");}catch(_){}
   }
   function setViewMode(mode,reload=true){
     const card=mode==="card";
@@ -120,7 +120,7 @@
     $("viewCardBtn")?.classList.toggle("soft",!card);
     if(card&&reload){
       const frame=$("fullCardPreview");
-      frame.src="https://boda-julian-carla.bpm.red/?admin-preview="+Date.now();
+      frame.src="https://bodajulianycarla.bpm.red/?admin-preview="+Date.now();
     }
   }
   function setLoginStatus(msg){const e=$("loginStatus");e.textContent=msg;e.classList.toggle("hidden",!msg);}
@@ -357,7 +357,7 @@
       celebration:{...(old.celebration||{}),time:$("celebrationTimeInput").value.trim(),title:$("celebrationTitleInput").value.trim(),place:$("celebrationPlaceInput").value.trim(),address:$("celebrationAddressInput").value.trim(),lat:numOr("celebrationLatInput",old.celebration?.lat),lng:numOr("celebrationLngInput",old.celebration?.lng)},
       dress:{title:$("dressTitleInput").value.trim(),concept:$("dressConceptInput").value.trim(),details:$("dressDetailsInput").value.trim()}
     };
-    try{await api("/api/admin/settings",{method:"PUT",body:settings});await loadState();$("sitePreview").src=`https://boda-julian-carla.bpm.red/?preview=${Date.now()}`;status("Sitio y tarjeta actualizados.");}
+    try{await api("/api/admin/settings",{method:"PUT",body:settings});await loadState();$("sitePreview").src=`https://bodajulianycarla.bpm.red/?preview=${Date.now()}`;status("Sitio y tarjeta actualizados.");}
     catch(err){status(err.message,"err",5000);}
   }
 

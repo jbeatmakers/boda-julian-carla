@@ -4,7 +4,7 @@ Sitio, RSVP y wedding planner para el casamiento del **18 de diciembre de 2026**
 
 ## Accesos
 
-- Invitación principal: `https://boda-julian-carla.bpm.red/`
+- Invitación principal: `https://bodajulianycarla.bpm.red/`
 - Fallback independiente: `https://jbeatmakers.github.io/boda-julian-carla-pages/`
 - Código de invitados: `BODA`.
 - Entrada administrativa: código especial validado exclusivamente por el backend; no se guarda en HTML/JS/Git.
@@ -29,7 +29,7 @@ Sitio, RSVP y wedding planner para el casamiento del **18 de diciembre de 2026**
 ## Arquitectura actual
 
 ```text
-boda-julian-carla.bpm.red                -> GitHub Pages (sitio público)
+bodajulianycarla.bpm.red                -> GitHub Pages (sitio público)
 jbeatmakers.github.io/...-pages/         -> GitHub Pages fallback sin CNAME
 boda-api.13-140-183-198.sslip.io         -> Caddy HTTPS
                                            -> boda-wedding (Docker, red web)

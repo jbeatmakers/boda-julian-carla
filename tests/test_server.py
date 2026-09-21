@@ -13,7 +13,7 @@ class WeddingApiTest(unittest.TestCase):
         app.ADMIN_USER="admin"
         app.ADMIN_HASH=app.hash_password("very-secure-test-password")
         app.ADMIN_ENTRY_HASH=app.hash_password("#TEST-ENTRY-ONLY")
-        app.ALLOWED_ORIGINS={"https://boda-julian-carla.bpm.red"}
+        app.ALLOWED_ORIGINS={"https://bodajulianycarla.bpm.red"}
         app._rate.clear(); app._sessions.clear()
         app.init_db()
         cls.server=app.ThreadingHTTPServer(("127.0.0.1",0),app.Handler)
@@ -51,18 +51,18 @@ class WeddingApiTest(unittest.TestCase):
 
     def test_health_and_public_config(self):
         s,d,_=self.req("GET","/healthz"); self.assertEqual((s,d["ok"]),(200,True))
-        s,d,h=self.req("GET","/api/public/config",headers={"Origin":"https://boda-julian-carla.bpm.red"})
+        s,d,h=self.req("GET","/api/public/config",headers={"Origin":"https://bodajulianycarla.bpm.red"})
         self.assertEqual(s,200); self.assertEqual(d["ticket"]["price"],35000)
-        self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://boda-julian-carla.bpm.red")
-        s,ig,h=self.req("GET","/api/public/instagram",headers={"Origin":"https://boda-julian-carla.bpm.red"})
+        self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://bodajulianycarla.bpm.red")
+        s,ig,h=self.req("GET","/api/public/instagram",headers={"Origin":"https://bodajulianycarla.bpm.red"})
         self.assertEqual(s,200); self.assertEqual(ig["username"],"juli.y.carli")
         self.assertEqual(ig["profile_url"],"https://www.instagram.com/juli.y.carli/")
-        self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://boda-julian-carla.bpm.red")
+        self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://bodajulianycarla.bpm.red")
 
     def test_rsvp_is_persistent_and_idempotent(self):
         cookie,csrf=self.login(); admin_headers={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,invited,_=self.req("POST","/api/admin/guests",{"name":"Invitado Prueba","email":"guest@example.com","status":"invited","seats_allowed":2},admin_headers); self.assertEqual(s,201)
-        headers={"Origin":"https://boda-julian-carla.bpm.red"}
+        headers={"Origin":"https://bodajulianycarla.bpm.red"}
         s,limit,_=self.req("POST","/api/public/invite",{"name":"Invitado Prueba","email":"guest@example.com"},headers); self.assertEqual(s,200); self.assertEqual(limit["max_seats"],2)
         payload={"request_id":"test-rsvp-1","name":"Invitado Prueba","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,201); gid=d["id"]
@@ -100,7 +100,7 @@ class WeddingApiTest(unittest.TestCase):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,g,_=self.req("POST","/api/admin/guests",{"name":"Amigo Basket","group_name":"Basket amigos","status":"invited","email":"basket@example.com","seats_allowed":2},h); self.assertEqual(s,201)
         self.assertEqual(g["group_name"],"Basket amigos")
-        s,_,_=self.req("POST","/api/public/rsvp",{"request_id":"group-rsvp","name":"Amigo Basket","email":"basket@example.com","attendance":"yes","seats":2},{"Origin":"https://boda-julian-carla.bpm.red"}); self.assertEqual(s,201)
+        s,_,_=self.req("POST","/api/public/rsvp",{"request_id":"group-rsvp","name":"Amigo Basket","email":"basket@example.com","attendance":"yes","seats":2},{"Origin":"https://bodajulianycarla.bpm.red"}); self.assertEqual(s,201)
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
         saved=next(x for x in d["guests"] if x["email"]=="basket@example.com")
         self.assertEqual(saved["group_name"],"Basket amigos"); self.assertEqual(saved["status"],"confirmed")
@@ -166,7 +166,7 @@ class WeddingApiTest(unittest.TestCase):
         s,d,_=self.req("PUT","/api/admin/settings",{"bank":{"mp_url":"javascript:alert(1)"}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_url")
 
     def test_special_entry_creates_admin_session_without_login_form(self):
-        origin={"Origin":"https://boda-julian-carla.bpm.red"}
+        origin={"Origin":"https://bodajulianycarla.bpm.red"}
         s,d,h=self.req("POST","/api/admin/entry",{"code":"#TEST-ENTRY-ONLY"},origin)
         self.assertEqual(s,200); self.assertTrue(d["entry_token"])
         s,d,h=self.req("GET",f"/?entry={d['entry_token']}")

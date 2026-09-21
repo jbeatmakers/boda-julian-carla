@@ -30,7 +30,7 @@ Fecha de revisión: 2026-09-08. Repo `jbeatmakers/boda-julian-carla` @ `main`.
 - `admin.html` panel
 - `pista.json` lista pública
 - `js/public-pista.js`
-- `CNAME` → boda-julian-carla.bpm.red
+- `CNAME` → bodajulianycarla.bpm.red
 - `robots.txt` noindex
 - `README.md` `.gitignore`
 - `docs/HANDOVER.md` `docs/DEPLOY.md` `docs/CONFIG.md` `docs/CHECKLIST.md`

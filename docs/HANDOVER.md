@@ -1,8 +1,8 @@
 # Handover — Boda Julián & Carla
 
-Sitio: https://boda-julian-carla.bpm.red  
+Sitio: https://bodajulianycarla.bpm.red  
 Repo: https://github.com/jbeatmakers/boda-julian-carla  
-Pages: rama `main` + CNAME `boda-julian-carla.bpm.red`
+Pages: rama `main` + CNAME `bodajulianycarla.bpm.red`
 
 ## Qué es
 

@@ -7,7 +7,7 @@ SQLite vive en el VPS en `/var/lib/boda-julian-carla/wedding.sqlite3`, con WAL y
 ## Frontend
 
 La invitación es estática:
-- principal: GitHub Pages + `boda-julian-carla.bpm.red`;
+- principal: GitHub Pages + `bodajulianycarla.bpm.red`;
 - fallback: repo Pages separado, sin CNAME, en `jbeatmakers.github.io/boda-julian-carla-pages/`.
 
 Ambas llevan `robots.txt: Disallow /` y meta `noindex`. El fallback acepta RSVP y el acceso administrativo especial igual que la principal.

@@ -2,7 +2,7 @@
 
 ## Producción
 
-- Invitación principal: `https://boda-julian-carla.bpm.red/` (GitHub Pages).
+- Invitación principal: `https://bodajulianycarla.bpm.red/` (GitHub Pages).
 - Respaldo independiente: `https://jbeatmakers.github.io/boda-julian-carla-pages/`.
 - Admin/API: `https://boda-api.13-140-183-198.sslip.io/`.
 - Runtime: contenedor Docker `boda-wedding` en la red privada `web`.

@@ -20,7 +20,7 @@ PORT = int(os.environ.get("WEDDING_PORT", "8787"))
 ADMIN_ROOT = Path(os.environ.get("WEDDING_ADMIN_ROOT", "/opt/boda-admin"))
 ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.environ.get(
     "WEDDING_ALLOWED_ORIGINS",
-    "https://boda-julian-carla.bpm.red"
+    "https://bodajulianycarla.bpm.red"
 ).split(",") if x.strip()}
 INSTAGRAM_USER_ID = os.environ.get("WEDDING_INSTAGRAM_USER_ID", "").strip()
 INSTAGRAM_ACCESS_TOKEN = os.environ.get("WEDDING_INSTAGRAM_ACCESS_TOKEN", "").strip()
