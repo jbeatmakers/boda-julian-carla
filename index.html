@@ -24,10 +24,10 @@
     <p class="gate-intro" data-site-copy="gate_intro">Tenemos algo para compartir con vos.</p>
     <p class="muted gate-help" data-site-copy="gate_help">Ingresá el código de tu invitación.</p>
     <form id="gateForm">
-      <label class="gate-label" for="gateCode">Código de acceso</label>
+      <label class="gate-label" for="gateCode" data-site-copy="gate_label">Código de acceso</label>
       <input id="gateCode" class="field gate-code" inputmode="text" autocomplete="off" maxlength="12" aria-label="Código de acceso">
       <p id="gateError" class="gate-error" aria-live="polite"></p>
-      <button class="btn primary gate-submit" type="submit">Abrir invitación</button>
+      <button class="btn primary gate-submit" type="submit" data-site-copy="gate_submit">Abrir invitación</button>
     </form>
   </div>
 </div>
@@ -39,10 +39,10 @@
     <h1 class="display">Julián <span class="amp">&</span> Carla</h1>
     <p class="muted" data-site-copy="hero_intro">Queremos compartir este día con vos.</p>
     <div class="countdown" id="countdown" aria-label="Cuenta regresiva">
-      <div><strong id="cdDays">00</strong><span class="eyebrow">Días</span></div>
-      <div><strong id="cdHours">00</strong><span class="eyebrow">Hs</span></div>
-      <div><strong id="cdMinutes">00</strong><span class="eyebrow">Min</span></div>
-      <div><strong id="cdSeconds">00</strong><span class="eyebrow">Seg</span></div>
+      <div><strong id="cdDays">00</strong><span class="eyebrow" data-site-copy="countdown_days">Días</span></div>
+      <div><strong id="cdHours">00</strong><span class="eyebrow" data-site-copy="countdown_hours">Hs</span></div>
+      <div><strong id="cdMinutes">00</strong><span class="eyebrow" data-site-copy="countdown_minutes">Min</span></div>
+      <div><strong id="cdSeconds">00</strong><span class="eyebrow" data-site-copy="countdown_seconds">Seg</span></div>
     </div>
     <div class="hero-actions">
       <a class="btn primary" href="#rsvp" data-site-copy="hero_confirm_btn">Confirmar asistencia</a>
@@ -60,7 +60,7 @@
         </div>
         <div class="event-grid">
           <article class="event card">
-            <div class="eyebrow">I · Ceremonia</div>
+            <div class="eyebrow" data-site-copy="ceremony_eyebrow">I · Ceremonia</div>
             <div class="event-time" id="ceremonyTime">17:00</div>
             <h3 id="ceremonyTitle">Santa Misa de Casamiento</h3>
             <p id="ceremonyPlace">Iglesia San Pedro y San Pablo</p>
@@ -69,12 +69,12 @@
               <iframe id="ceremonyMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la ceremonia"></iframe>
             </div>
             <div class="map-actions">
-              <a id="ceremonyDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14581,-65.39445">Cómo llegar ↗</a>
+              <a id="ceremonyDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14581,-65.39445" data-site-copy="maps_directions">Cómo llegar ↗</a>
             </div>
           </article>
 
           <article class="event card">
-            <div class="eyebrow">II · Celebración</div>
+            <div class="eyebrow" data-site-copy="celebration_eyebrow">II · Celebración</div>
             <div class="event-time" id="celebrationTime">18:30</div>
             <h3 id="celebrationTitle">Recepción, cena & fiesta</h3>
             <p id="celebrationPlace">Quincho · San Pablo de Reyes</p>
@@ -83,14 +83,14 @@
               <iframe id="celebrationMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la celebración"></iframe>
             </div>
             <div class="map-actions">
-              <a id="celebrationDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14816,-65.39326">Cómo llegar ↗</a>
+              <a id="celebrationDirections" class="btn soft celebrate-link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=-24.14816,-65.39326" data-site-copy="maps_directions">Cómo llegar ↗</a>
             </div>
           </article>
         </div>
       </div>
     </section>
 
-    <section>
+    <section id="dress">
       <div class="narrow">
         <div class="section-title">
           <div class="eyebrow" data-site-copy="dress_eyebrow">Dress code</div>
@@ -108,46 +108,46 @@
         <div class="section-title">
           <div class="eyebrow" data-site-copy="rsvp_eyebrow">R.S.V.P.</div>
           <h2 class="display" data-site-copy="rsvp_title">¿Nos acompañás?</h2>
-          <p class="muted">Nos ayuda mucho que respondas antes del <span id="rsvpDeadline">1 de diciembre</span>.</p>
+          <p class="muted"><span data-site-copy="rsvp_deadline_intro">Nos ayuda mucho que respondas antes del</span> <span id="rsvpDeadline">1 de diciembre</span>.</p>
         </div>
         <form id="rsvpForm" class="rsvp-card card" novalidate>
           <div class="choice-grid">
             <label class="choice">
               <input type="radio" name="attendance" value="yes" checked>
-              <strong>Sí</strong><span class="eyebrow">Voy</span>
+              <strong data-site-copy="attendance_yes">Sí</strong><span class="eyebrow" data-site-copy="attendance_yes_label">Voy</span>
             </label>
             <label class="choice">
               <input type="radio" name="attendance" value="no">
-              <strong>No</strong><span class="eyebrow">No podré ir</span>
+              <strong data-site-copy="attendance_no">No</strong><span class="eyebrow" data-site-copy="attendance_no_label">No podré ir</span>
             </label>
           </div>
 
           <div class="form-row">
-            <label class="label" for="fullName">Nombre y apellido *</label>
+            <label class="label" for="fullName" data-site-copy="name_label">Nombre y apellido *</label>
             <input class="field" id="fullName" autocomplete="name" required>
           </div>
           <div class="form-grid form-row">
-            <div><label class="label" for="phone">WhatsApp / teléfono</label><input class="field" id="phone" autocomplete="tel"></div>
-            <div><label class="label" for="email">Email</label><input class="field" id="email" type="email" autocomplete="email"></div>
+            <div><label class="label" for="phone" data-site-copy="phone_label">WhatsApp / teléfono</label><input class="field" id="phone" autocomplete="tel"></div>
+            <div><label class="label" for="email" data-site-copy="email_label">Email</label><input class="field" id="email" type="email" autocomplete="email"></div>
           </div>
 
           <div id="attendingFields">
             <div class="form-grid form-row">
               <div>
-                <label class="label" for="seats">Lugares a reservar</label>
+                <label class="label" for="seats" data-site-copy="seats_label">Lugares a reservar</label>
                 <select class="field" id="seats">
                   <option value="1">1 persona</option>
                 </select>
-                <div class="small muted" id="seatsHint">La cantidad disponible se ajusta a tu invitación.</div>
+                <div class="small muted" id="seatsHint" data-site-copy="seats_hint">La cantidad disponible se ajusta a tu invitación.</div>
               </div>
               <div>
-                <label class="label" for="diet">Restricción alimentaria</label>
-                <input class="field" id="diet" placeholder="Solo si hace falta">
+                <label class="label" for="diet" data-site-copy="diet_label">Restricción alimentaria</label>
+                <input class="field" id="diet" data-site-copy-placeholder="diet_placeholder" placeholder="Solo si hace falta">
               </div>
             </div>
             <div class="form-row">
-              <label class="label" for="song">Una canción que no puede faltar</label>
-              <input class="field" id="song" placeholder="Tema — artista (opcional)">
+              <label class="label" for="song" data-site-copy="song_label">Una canción que no puede faltar</label>
+              <input class="field" id="song" data-site-copy-placeholder="song_placeholder" placeholder="Tema — artista (opcional)">
             </div>
           </div>
 
@@ -157,10 +157,10 @@
           </div>
 
           <div class="form-row">
-            <label class="label" for="message">Dedicatoria / nota</label>
-            <textarea class="field" id="message" rows="2" placeholder="Unas palabras, si querés"></textarea>
+            <label class="label" for="message" data-site-copy="message_label">Dedicatoria / nota</label>
+            <textarea class="field" id="message" rows="2" data-site-copy-placeholder="message_placeholder" placeholder="Unas palabras, si querés"></textarea>
           </div>
-          <button id="rsvpSubmit" class="btn primary" type="submit" style="width:100%;margin-top:22px">Enviar confirmación</button>
+          <button id="rsvpSubmit" class="btn primary" type="submit" style="width:100%;margin-top:22px" data-site-copy="submit_rsvp">Enviar confirmación</button>
           <div id="rsvpStatus" class="form-status hidden" role="status" aria-live="polite"></div>
         </form>
       </div>
@@ -191,24 +191,24 @@
         <article id="paymentCard" class="gift-card card hidden" style="margin-top:18px">
           <div class="eyebrow" data-site-copy="transfer_eyebrow">Datos para transferencia</div>
           <div class="bank-grid">
-            <span>Titular</span><strong id="bankHolder"></strong><span></span>
-            <span>Alias</span><strong id="bankAlias"></strong><button class="copy" type="button" data-copy="bankAlias">Copiar</button>
-            <span>CBU/CVU</span><strong id="bankCbu"></strong><button class="copy" type="button" data-copy="bankCbu">Copiar</button>
+            <span data-site-copy="transfer_holder">Titular</span><strong id="bankHolder"></strong><span></span>
+            <span data-site-copy="transfer_alias">Alias</span><strong id="bankAlias"></strong><button class="copy" type="button" data-copy="bankAlias" data-site-copy="copy_button">Copiar</button>
+            <span data-site-copy="transfer_cbu">CBU/CVU</span><strong id="bankCbu"></strong><button class="copy" type="button" data-copy="bankCbu" data-site-copy="copy_button">Copiar</button>
           </div>
-          <a id="mpLink" class="btn primary hidden" target="_blank" rel="noopener" style="margin-top:18px">Mercado Pago ↗</a>
+          <a id="mpLink" class="btn primary hidden" target="_blank" rel="noopener" style="margin-top:18px" data-site-copy="mercadopago_button">Mercado Pago ↗</a>
         </article>
       </div>
     </section>
     <section id="instagramSection" class="hidden instagram-section">
       <div class="wrap">
         <div class="section-title">
-          <div class="eyebrow">Instagram</div>
-          <h2 class="display" id="instagramHeading">Momentos de la boda</h2>
-          <p class="muted" id="instagramIntro">Fotos y videos compartidos desde nuestro Instagram.</p>
+          <div class="eyebrow" data-site-copy="instagram_eyebrow">Instagram</div>
+          <h2 class="display" id="instagramHeading" data-site-copy="instagram_title">Momentos de la boda</h2>
+          <p class="muted" id="instagramIntro" data-site-copy="instagram_intro">Fotos y videos compartidos desde nuestro Instagram.</p>
         </div>
         <div id="instagramGrid" class="instagram-grid" aria-live="polite"></div>
         <div class="instagram-actions">
-          <a id="instagramProfile" class="btn soft hidden" target="_blank" rel="noopener noreferrer">Ver Instagram ↗</a>
+          <a id="instagramProfile" class="btn soft hidden" target="_blank" rel="noopener noreferrer" data-site-copy="instagram_button">Ver Instagram ↗</a>
         </div>
       </div>
     </section>
@@ -216,7 +216,7 @@
 
   <footer class="wrap">
     <div class="display">Julián & Carla</div>
-    <div class="eyebrow">18 de diciembre de 2026 · Jujuy</div>
+    <div class="eyebrow" data-site-copy="footer_date">18 de diciembre de 2026 · Jujuy</div>
   </footer>
 </div>
 

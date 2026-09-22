@@ -13,11 +13,18 @@
     dress:{title:"Estética Edén",concept:"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.",details:"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
     ticket:{enabled:true,price:35000,currency:"ARS",text:"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
     bank:{holder:"",alias:"",cbu:"",mp_url:""},
-    fallback_whatsapp:""
+    fallback_whatsapp:"",
+    layout:{sections:[
+      {id:"lugares",label:"Horarios y mapas",visible:true},
+      {id:"dress",label:"Dress code",visible:true},
+      {id:"rsvp",label:"Confirmación de asistencia",visible:true},
+      {id:"regalos",label:"Tarjeta y regalos",visible:true},
+      {id:"instagramSection",label:"Instagram",visible:true}
+    ]}
   };
   let config = structuredClone(DEFAULTS);
   const $ = id => document.getElementById(id);
-  const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null && v!=="") el.textContent=v; };
+  const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null) el.textContent=v; };
   const money = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -125,8 +132,13 @@
     const editable=c.copy||{};
     document.querySelectorAll("[data-site-copy]").forEach(el=>{
       const key=el.dataset.siteCopy,value=editable[key];
-      if(value!==undefined && value!==null && value!=="") el.textContent=value;
+      if(value!==undefined && value!==null) el.textContent=value;
     });
+    document.querySelectorAll("[data-site-copy-placeholder]").forEach(el=>{
+      const value=editable[el.dataset.siteCopyPlaceholder];
+      if(value!==undefined && value!==null) el.placeholder=value;
+    });
+    applyLayout(c.layout);
     safeText("heroLocation",c.location_display);
     safeText("rsvpDeadline",c.rsvp_deadline_display);
     if(c.ceremony){
@@ -155,6 +167,22 @@
     safeText("bankHolder",bank.holder); safeText("bankAlias",bank.alias); safeText("bankCbu",bank.cbu);
     const mp=$("mpLink");
     if(bank.mp_url){ mp.href=bank.mp_url; mp.classList.remove("hidden"); } else mp.classList.add("hidden");
+  }
+
+  function applyLayout(layout){
+    const main=document.querySelector("#site main"),defaults=DEFAULTS.layout.sections;
+    if(!main)return;
+    const configured=Array.isArray(layout?.sections)?layout.sections:[];
+    const byId=new Map(configured.map(x=>[x.id,x]));
+    const sections=defaults.map(x=>byId.get(x.id)||x);
+    configured.forEach(x=>{if(!sections.some(s=>s.id===x.id))sections.push(x);});
+    sections.forEach(item=>{
+      const section=document.getElementById(item.id); if(!section)return;
+      main.appendChild(section);
+      const hidden=item.visible===false;
+      section.dataset.layoutHidden=hidden?"true":"false";
+      section.classList.toggle("hidden",hidden || (section.id==="instagramSection" && !section.dataset.hasInstagram));
+    });
   }
 
   function setMap(prefix,lat,lng){
@@ -303,6 +331,8 @@
       const username=String(feed.username||"juli.y.carli").replace(/^@/,"");
       const profileUrl=feed.profile_url||`https://www.instagram.com/${username}/`;
       if(!profileUrl && !items.length) return;
+      section.dataset.hasInstagram="true";
+      if(section.dataset.layoutHidden!=="true") section.classList.remove("hidden");
       safeText("instagramHeading",feed.heading||"Nuestro Instagram");
       safeText("instagramIntro",feed.intro||"Seguinos para acompa\u00f1arnos en la previa y revivir la fiesta.");
       const grid=$("instagramGrid"); grid.textContent="";

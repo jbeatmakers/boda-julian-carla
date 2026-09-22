@@ -54,7 +54,8 @@ DEFAULT_SETTINGS = {
     "ticket":{"enabled":True,"price":35000,"currency":"ARS","text":"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
     "bank":{"holder":"","alias":"","cbu":"","mp_url":""},
     "fallback_whatsapp":"",
-    "copy":{"gate_intro":"Tenemos algo para compartir con vos.","gate_help":"Ingresá el código de tu invitación.","hero_intro":"Queremos compartir este día con vos.","hero_confirm_btn":"Confirmar asistencia","hero_maps_btn":"Horarios y mapas","places_eyebrow":"Ceremonia & celebración","places_title":"El casamiento","places_intro":"Los dos lugares quedan muy cerca entre sí.","dress_eyebrow":"Dress code","rsvp_eyebrow":"R.S.V.P.","rsvp_title":"¿Nos acompañás?","decline_body":"Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.","decline_gift_note":"Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.","gift_eyebrow":"Tarjeta & regalos","gift_title":"Celebrar con ustedes ya es mucho","gift_intro":"Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.","ticket_eyebrow":"Si venís","ticket_title":"Tarjeta de la celebración","present_eyebrow":"Si querés tener un gesto","present_title":"Regalos","present_body":"Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.","present_transfer":"Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.","transfer_eyebrow":"Datos para transferencia"},
+    "copy":{"gate_intro":"Tenemos algo para compartir con vos.","gate_help":"Ingresá el código de tu invitación.","gate_label":"Código de acceso","gate_submit":"Abrir invitación","hero_intro":"Queremos compartir este día con vos.","hero_confirm_btn":"Confirmar asistencia","hero_maps_btn":"Horarios y mapas","countdown_days":"Días","countdown_hours":"Hs","countdown_minutes":"Min","countdown_seconds":"Seg","places_eyebrow":"Ceremonia & celebración","places_title":"El casamiento","places_intro":"Los dos lugares quedan muy cerca entre sí.","ceremony_eyebrow":"I · Ceremonia","celebration_eyebrow":"II · Celebración","maps_directions":"Cómo llegar ↗","dress_eyebrow":"Dress code","rsvp_eyebrow":"R.S.V.P.","rsvp_title":"¿Nos acompañás?","rsvp_deadline_intro":"Nos ayuda mucho que respondas antes del","attendance_yes":"Sí","attendance_yes_label":"Voy","attendance_no":"No","attendance_no_label":"No podré ir","name_label":"Nombre y apellido *","phone_label":"WhatsApp / teléfono","email_label":"Email","seats_label":"Lugares a reservar","seats_hint":"La cantidad disponible se ajusta a tu invitación.","diet_label":"Restricción alimentaria","diet_placeholder":"Solo si hace falta","song_label":"Una canción que no puede faltar","song_placeholder":"Tema — artista (opcional)","decline_body":"Gracias por avisarnos. Nos alegra que hayas pasado por acá y esperamos compartir muchas otras cosas con vos.","decline_gift_note":"Al marcar que no venís, no se genera ningún importe de tarjeta. La parte de regalos queda simplemente como una opción, por si en algún momento querés tener un gesto con nosotros.","message_label":"Dedicatoria / nota","message_placeholder":"Unas palabras, si querés","submit_rsvp":"Enviar confirmación","gift_eyebrow":"Tarjeta & regalos","gift_title":"Celebrar con ustedes ya es mucho","gift_intro":"Acá dejamos todo claro y simple para que cada uno elija con tranquilidad.","ticket_eyebrow":"Si venís","ticket_title":"Tarjeta de la celebración","present_eyebrow":"Si querés tener un gesto","present_title":"Regalos","present_body":"Nos va a alegrar cualquier regalo que nazca de vos: algo elegido, algo hecho por vos o simplemente unas palabras.","present_transfer":"Y si preferís ayudarnos con dinero para esta nueva etapa, también podés hacerlo por transferencia, con el monto que te resulte bien.","transfer_eyebrow":"Datos para transferencia","transfer_holder":"Titular","transfer_alias":"Alias","transfer_cbu":"CBU/CVU","copy_button":"Copiar","mercadopago_button":"Mercado Pago ↗","instagram_eyebrow":"Instagram","instagram_title":"Momentos de la boda","instagram_intro":"Fotos y videos compartidos desde nuestro Instagram.","instagram_button":"Ver Instagram ↗","footer_date":"18 de diciembre de 2026 · Jujuy"},
+    "layout":{"sections":[{"id":"lugares","label":"Horarios y mapas","visible":True},{"id":"dress","label":"Dress code","visible":True},{"id":"rsvp","label":"Confirmación de asistencia","visible":True},{"id":"regalos","label":"Tarjeta y regalos","visible":True},{"id":"instagramSection","label":"Instagram","visible":True}]},
     "planning":{"guest_buffer_pct":5,"planned_guests_override":0,"table_capacity":10,"drinkers_pct":70,"water_l_pp":1.0,"soft_l_pp":0.8,"beer_l_drinker":1.0,"wine_l_drinker":0.45,"sparkling_l_pp":0.125,"spirits_l_drinker":0.12,"ice_kg_pp":1.0,"appetizer_pieces_pp":6,"main_portions_pp":1.05,"dessert_portions_pp":1.05,"cake_g_pp":100}
 }
 TABLE_FIELDS = {
@@ -163,6 +164,25 @@ def init_db() -> None:
         for k,v in DEFAULT_SETTINGS.items():
             c.execute("INSERT OR IGNORE INTO settings(key,value,updated_at) VALUES(?,?,?)",
                       (k,json.dumps(v,ensure_ascii=False),now_iso()))
+        for k in ("copy","layout"):
+            row=c.execute("SELECT value FROM settings WHERE key=?",(k,)).fetchone()
+            if not row: continue
+            try: current=json.loads(row["value"])
+            except (TypeError, json.JSONDecodeError): current={}
+            default=DEFAULT_SETTINGS[k]
+            if k=="copy" and isinstance(current,dict):
+                merged={**default,**current}
+            elif k=="layout" and isinstance(current,dict):
+                wanted=default.get("sections",[]); configured=current.get("sections",[])
+                by_id={x.get("id"):x for x in configured if isinstance(x,dict) and x.get("id")}
+                merged={"sections":[by_id.get(x["id"],x) for x in wanted]}
+                wanted_ids={y["id"] for y in wanted}
+                merged["sections"] += [x for x in configured if isinstance(x,dict) and x.get("id") not in wanted_ids]
+            else:
+                continue
+            if merged!=current:
+                c.execute("UPDATE settings SET value=?,updated_at=? WHERE key=?",
+                          (json.dumps(merged,ensure_ascii=False),now_iso(),k))
 
 def read_settings(c: sqlite3.Connection) -> dict:
     out=json.loads(json.dumps(DEFAULT_SETTINGS,ensure_ascii=False))

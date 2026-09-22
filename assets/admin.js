@@ -4,7 +4,8 @@
   let csrf="";
   let state={settings:{},dashboard:{},planner:{},guests:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[],menu:[],contributions:[]};
   let scanStream=null,scanTimer=null;
-  const COPY_FIELDS=[['gate_intro','Entrada · frase principal'],['gate_help','Entrada · ayuda'],['hero_intro','Portada · introducción'],['hero_confirm_btn','Botón confirmar'],['hero_maps_btn','Botón mapas'],['places_eyebrow','Lugares · etiqueta'],['places_title','Lugares · título'],['places_intro','Lugares · bajada'],['dress_eyebrow','Dress code · etiqueta'],['rsvp_eyebrow','RSVP · etiqueta'],['rsvp_title','RSVP · título'],['decline_body','Mensaje si no asiste'],['decline_gift_note','Aclaración regalo si no asiste'],['gift_eyebrow','Regalos · etiqueta'],['gift_title','Regalos · título'],['gift_intro','Regalos · introducción'],['ticket_eyebrow','Tarjeta · etiqueta'],['ticket_title','Tarjeta · título'],['present_eyebrow','Regalo · etiqueta'],['present_title','Regalo · título'],['present_body','Regalo · texto'],['present_transfer','Transferencia · texto'],['transfer_eyebrow','Transferencia · etiqueta']];
+  const COPY_FIELDS=[['gate_intro','Entrada · frase principal'],['gate_help','Entrada · ayuda'],['gate_label','Entrada · etiqueta del código'],['gate_submit','Entrada · botón'],['hero_intro','Portada · introducción'],['hero_confirm_btn','Portada · botón confirmar'],['hero_maps_btn','Portada · botón lugares'],['countdown_days','Cuenta regresiva · días'],['countdown_hours','Cuenta regresiva · horas'],['countdown_minutes','Cuenta regresiva · minutos'],['countdown_seconds','Cuenta regresiva · segundos'],['places_eyebrow','Lugares · etiqueta'],['places_title','Lugares · título'],['places_intro','Lugares · bajada'],['ceremony_eyebrow','Ceremonia · etiqueta'],['celebration_eyebrow','Celebración · etiqueta'],['maps_directions','Mapas · botón cómo llegar'],['dress_eyebrow','Dress code · etiqueta'],['rsvp_eyebrow','RSVP · etiqueta'],['rsvp_title','RSVP · título'],['rsvp_deadline_intro','RSVP · frase del vencimiento'],['attendance_yes','RSVP · opción sí'],['attendance_yes_label','RSVP · subtítulo sí'],['attendance_no','RSVP · opción no'],['attendance_no_label','RSVP · subtítulo no'],['name_label','RSVP · nombre'],['phone_label','RSVP · teléfono'],['email_label','RSVP · email'],['seats_label','RSVP · lugares'],['seats_hint','RSVP · ayuda lugares'],['diet_label','RSVP · alimentación'],['diet_placeholder','RSVP · placeholder alimentación'],['song_label','RSVP · canción'],['song_placeholder','RSVP · placeholder canción'],['decline_body','RSVP · mensaje si no asiste'],['decline_gift_note','RSVP · aclaración regalos'],['message_label','RSVP · dedicatoria'],['message_placeholder','RSVP · placeholder dedicatoria'],['submit_rsvp','RSVP · botón enviar'],['gift_eyebrow','Regalos · etiqueta'],['gift_title','Regalos · título'],['gift_intro','Regalos · introducción'],['ticket_eyebrow','Tarjeta · etiqueta'],['ticket_title','Tarjeta · título'],['present_eyebrow','Regalo · etiqueta'],['present_title','Regalo · título'],['present_body','Regalo · texto'],['present_transfer','Regalo · transferencia'],['transfer_eyebrow','Transferencia · etiqueta'],['transfer_holder','Transferencia · titular'],['transfer_alias','Transferencia · alias'],['transfer_cbu','Transferencia · CBU/CVU'],['copy_button','Transferencia · botón copiar'],['mercadopago_button','Transferencia · Mercado Pago'],['instagram_eyebrow','Instagram · etiqueta'],['instagram_title','Instagram · título'],['instagram_intro','Instagram · introducción'],['instagram_button','Instagram · botón'],['footer_date','Pie · fecha y lugar']];
+  const LAYOUT_DEFAULTS=[['lugares','Horarios y mapas'],['dress','Dress code'],['rsvp','Confirmación de asistencia'],['regalos','Tarjeta y regalos'],['instagramSection','Instagram']];
   const PLAN_FIELDS=[['planned_guests_override','Personas para planificar (0 = automático)',1],['guest_buffer_pct','Margen extra %',1],['table_capacity','Personas por mesa',1],['drinkers_pct','Adultos que toman alcohol %',1],['water_l_pp','Agua L/persona',.1],['soft_l_pp','Gaseosa/mixer L/persona',.1],['beer_l_drinker','Cerveza L/bebedor',.1],['wine_l_drinker','Vino L/bebedor',.05],['sparkling_l_pp','Espumante L/persona',.025],['spirits_l_drinker','Destilado L/bebedor',.02],['ice_kg_pp','Hielo kg/persona',.1],['appetizer_pieces_pp','Bocados/persona',1],['main_portions_pp','Principal/persona',.05],['dessert_portions_pp','Postre/persona',.05],['cake_g_pp','Torta g/persona',10]];
 
   document.addEventListener("DOMContentLoaded",init);
@@ -173,6 +174,35 @@
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const attr=esc;
 
+  function whatsappPhone(phone){
+    let digits=String(phone||"").replace(/\D/g,"");
+    if(!digits)return "";
+    if(digits.startsWith("00"))digits=digits.slice(2);
+    if(digits.startsWith("549"))return digits;
+    if(digits.startsWith("54"))return `549${digits.slice(2)}`;
+    if(digits.length===10)return `549${digits}`;
+    return digits;
+  }
+
+  function openWhatsApp(phone){
+    const normalized=whatsappPhone(phone); if(!normalized)return;
+    const fallback=`https://wa.me/${normalized}`;
+    const ua=navigator.userAgent||"";
+    if(!/Android|iPhone|iPad|iPod/i.test(ua)){window.open(fallback,"_blank","noopener");return;}
+    const isAndroid=/Android/i.test(ua);
+    const businessUrl=isAndroid
+      ? `intent://send?phone=${normalized}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`
+      : `whatsapp-business://send?phone=${normalized}`;
+    let leftPage=false;
+    const onVisibility=()=>{if(document.visibilityState==="hidden")leftPage=true;};
+    document.addEventListener("visibilitychange",onVisibility);
+    window.location.href=businessUrl;
+    setTimeout(()=>{
+      document.removeEventListener("visibilitychange",onVisibility);
+      if(!leftPage&&document.visibilityState!=="hidden")window.location.href=fallback;
+    },1200);
+  }
+
   function renderDashboard(){
     const d=state.dashboard||{};
     const cards=[
@@ -238,7 +268,7 @@
         <td><span class="group-pill">${esc(group)}</span></td>
         <td><span class="pill ${attr(g.status)}">${esc(statusLabel(g.status))}</span></td>
         <td>${g.status==="declined"?"—":`${esc(g.seats||0)} / ${esc(g.seats_allowed||1)}`}</td>
-        <td>${g.phone?esc(g.phone):""}${g.email?`<small>${esc(g.email)}</small>`:""}</td>
+        <td class="guest-contact">${g.phone?`<span>${esc(g.phone)}</span><a class="link whatsapp-link" data-action="whatsapp" data-phone="${attr(g.phone)}" href="https://wa.me/${attr(whatsappPhone(g.phone))}" aria-label="Escribir por WhatsApp a ${attr(g.name)}">WhatsApp</a>`:""}${g.email?`<small>${esc(g.email)}</small>`:""}</td>
         <td>${g.ticket_exempt?"Sin cargo":money(due)}${g.ticket_override!==null&&g.ticket_override!==undefined&&!g.ticket_exempt?`<small>especial ${money(g.ticket_override)} c/u</small>`:""}${g.ticket_credit?`<small class="good">aporte reconocido ${money(g.ticket_credit)}</small>`:""}</td>
         <td>${money(paid)}${due>paid?`<small class="warn">faltan ${money(due-paid)}</small>`:"<small class='good'>cubierto</small>"}</td>
         <td>${g.gift_amount?money(g.gift_amount):"—"}</td><td>${esc(g.table_no||"—")}</td>
@@ -314,7 +344,14 @@
   }
 
   async function delegatedClick(e){
+    const layoutButton=e.target.closest("[data-layout-action]");
+    if(layoutButton){
+      const row=layoutButton.closest(".layout-row"),direction=layoutButton.dataset.layoutAction,target=direction==="up"?row?.previousElementSibling:row?.nextElementSibling;
+      if(row&&target){row.parentElement.insertBefore(target,direction==="up"?row:target);refreshLayoutOrder();}
+      return;
+    }
     const b=e.target.closest("[data-action]"); if(!b)return;
+    if(b.dataset.action==="whatsapp"){e.preventDefault();openWhatsApp(b.dataset.phone);return;}
     if(b.dataset.action==="edit-guest"){const g=(state.guests||[]).find(x=>x.id===b.dataset.id);if(g)openGuest(g);return;}
     if(b.dataset.action==="lookup-row"){const x=(state.shopping||[]).find(v=>v.id===b.dataset.id);if(x?.barcode)await lookupPrice(x);else status("Ese producto no tiene código de barras.","err");return;}
     if(b.dataset.action==="delete"){
@@ -337,6 +374,7 @@
   function fillSettings(){
     const s=state.settings||{},t=s.ticket||{},b=s.bank||{},c=s.ceremony||{},f=s.celebration||{},d=s.dress||{},copy=s.copy||{};
     $("copyFields").innerHTML=COPY_FIELDS.map(([key,label])=>`<div class="copy-field"><label>${esc(label)}</label><textarea class="field" data-copy-key="${attr(key)}" rows="2">${esc(copy[key]||"")}</textarea></div>`).join("");
+    renderLayout(s.layout);
     $("ticketEnabled").checked=t.enabled!==false; $("ticketPriceInput").value=t.price??0; $("ticketTextInput").value=t.text||"";
     $("bankHolderInput").value=b.holder||""; $("bankAliasInput").value=b.alias||""; $("bankCbuInput").value=b.cbu||""; $("bankMpInput").value=b.mp_url||"";
     $("ceremonyTimeInput").value=c.time||""; $("ceremonyTitleInput").value=c.title||""; $("ceremonyPlaceInput").value=c.place||""; $("ceremonyAddressInput").value=c.address||""; $("ceremonyLatInput").value=c.lat??""; $("ceremonyLngInput").value=c.lng??"";
@@ -345,11 +383,42 @@
     $("deadlineInput").value=s.rsvp_deadline_display||""; $("fallbackWaInput").value=s.fallback_whatsapp||"";
   }
 
+  function normalizedLayout(layout){
+    const configured=Array.isArray(layout?.sections)?layout.sections:[],seen=new Set(),out=[];
+    configured.forEach(x=>{
+      if(!LAYOUT_DEFAULTS.some(([id])=>id===x.id)||seen.has(x.id))return;
+      seen.add(x.id);out.push({id:x.id,label:x.label||LAYOUT_DEFAULTS.find(([id])=>id===x.id)[1],visible:x.visible!==false});
+    });
+    LAYOUT_DEFAULTS.forEach(([id,label])=>{if(!seen.has(id))out.push({id,label,visible:true});});
+    return out;
+  }
+
+  function renderLayout(layout){
+    const el=$("layoutFields"); if(!el)return;
+    const rows=normalizedLayout(layout);
+    el.innerHTML=rows.map((x,i)=>`<div class="layout-row" draggable="true" data-layout-id="${attr(x.id)}"><label class="layout-visible"><input type="checkbox" data-layout-visible ${x.visible?"checked":""}> <span>${esc(x.label)}</span></label><span class="layout-order">${i+1}</span><button class="link" type="button" data-layout-action="up" ${i===0?"disabled":""}>Subir</button><button class="link" type="button" data-layout-action="down" ${i===rows.length-1?"disabled":""}>Bajar</button></div>`).join("");
+    let dragged=null;
+    el.querySelectorAll(".layout-row").forEach(row=>{
+      row.addEventListener("dragstart",()=>{dragged=row;row.classList.add("dragging");});
+      row.addEventListener("dragend",()=>{row.classList.remove("dragging");dragged=null;refreshLayoutOrder();});
+      row.addEventListener("dragover",event=>{event.preventDefault();if(dragged&&dragged!==row){const box=row.getBoundingClientRect(),after=event.clientY>box.top+box.height/2;el.insertBefore(dragged,after?row.nextSibling:row);refreshLayoutOrder();}});
+    });
+  }
+
+  function readLayout(){
+    return {sections:[...document.querySelectorAll("#layoutFields .layout-row")].map(row=>({id:row.dataset.layoutId,label:row.querySelector(".layout-visible span")?.textContent||row.dataset.layoutId,visible:row.querySelector("[data-layout-visible]")?.checked!==false}))};
+  }
+
+  function refreshLayoutOrder(){
+    const rows=[...document.querySelectorAll("#layoutFields .layout-row")];
+    rows.forEach((row,i)=>{row.querySelector(".layout-order").textContent=i+1;row.querySelector('[data-layout-action="up"]').disabled=i===0;row.querySelector('[data-layout-action="down"]').disabled=i===rows.length-1;});
+  }
+
   async function saveSettings(){
     const old=state.settings||{},copy={};
     const numOr=(id,fallback)=>{const raw=$(id).value.trim();if(raw==="")return Number(fallback);const n=Number(raw);return Number.isFinite(n)?n:Number(fallback);};
     document.querySelectorAll("[data-copy-key]").forEach(x=>copy[x.dataset.copyKey]=x.value.trim());
-    const settings={...old,copy,
+    const settings={...old,copy,layout:readLayout(),
       rsvp_deadline_display:$("deadlineInput").value.trim(),fallback_whatsapp:$("fallbackWaInput").value.replace(/\D/g,""),
       ticket:{...(old.ticket||{}),enabled:$("ticketEnabled").checked,price:Number($("ticketPriceInput").value)||0,currency:"ARS",text:$("ticketTextInput").value.trim()},
       bank:{holder:$("bankHolderInput").value.trim(),alias:$("bankAliasInput").value.trim(),cbu:$("bankCbuInput").value.replace(/\s/g,""),mp_url:$("bankMpInput").value.trim()},
