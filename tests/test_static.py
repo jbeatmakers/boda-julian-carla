@@ -59,9 +59,12 @@ class StaticTest(unittest.TestCase):
         self.assertIn('ensureAccessibleNames',js)
         self.assertIn('numOr("ceremonyLatInput"',js)
         p=Parser(); p.feed(html)
-        for needed in ('viewAdminBtn','viewCardBtn','cardView','fullCardPreview','guestGroupFilter','gGroup','guestGroups'):
+        for needed in ('viewAdminBtn','viewCardBtn','cardView','fullCardPreview','guestGroupFilter','gGroup','guestGroups','rsvpReviewCard','rsvpReviewRows','rsvpReviewCount'):
             self.assertIn(needed,p.ids)
         self.assertIn('group_name',js)
+        self.assertIn('/api/admin/rsvp-submissions/',js)
+        self.assertIn('rsvp-match-selected',js)
+        self.assertIn('rsvp-new',js)
 
     def test_admin_preview_bridge_is_restricted_to_api_origin(self):
         js=(ROOT/'assets/app.js').read_text(encoding='utf-8')

@@ -27,7 +27,7 @@ class WeddingApiTest(unittest.TestCase):
     def setUp(self):
         app._rate.clear(); app._sessions.clear(); app._entry_tokens.clear()
         with app.db() as c:
-            for table in ("guests","expenses","shopping","tasks","vendors","songs","settings"):
+            for table in ("rsvp_submissions","guests","expenses","shopping","tasks","vendors","songs","menu","contributions","settings"):
                 c.execute(f"DELETE FROM {table}")
         app.init_db()
 
@@ -59,18 +59,27 @@ class WeddingApiTest(unittest.TestCase):
         self.assertEqual(ig["profile_url"],"https://www.instagram.com/juli.y.carli/")
         self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://bodajulianycarla.bpm.red")
 
-    def test_rsvp_is_persistent_and_idempotent(self):
+    def test_rsvp_is_persistent_idempotent_and_requires_reconciliation(self):
         cookie,csrf=self.login(); admin_headers={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,invited,_=self.req("POST","/api/admin/guests",{"name":"Invitado Prueba","email":"guest@example.com","status":"invited","seats_allowed":2},admin_headers); self.assertEqual(s,201)
         headers={"Origin":"https://bodajulianycarla.bpm.red"}
         s,limit,_=self.req("POST","/api/public/invite",{"name":"Invitado Prueba","email":"guest@example.com"},headers); self.assertEqual(s,200); self.assertEqual(limit["max_seats"],2)
-        payload={"request_id":"test-rsvp-1","name":"Invitado Prueba","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
-        s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,201); gid=d["id"]
+        payload={"request_id":"test-rsvp-1","name":"Invitado Prueva","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
+        s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,201); submission_id=d["id"]; self.assertTrue(d["review_pending"])
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,200); self.assertTrue(d["duplicate"])
-        cookie,csrf=self.login()
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
-        g=next(x for x in d["guests"] if x["id"]==gid)
-        self.assertEqual(g["status"],"confirmed"); self.assertEqual(g["seats"],2)
+        canonical=next(x for x in d["guests"] if x["id"]==invited["id"])
+        self.assertEqual(canonical["name"],"Invitado Prueba"); self.assertEqual(canonical["status"],"invited")
+        pending=next(x for x in d["rsvp_submissions"] if x["id"]==submission_id)
+        self.assertEqual(pending["reported_name"],"Invitado Prueva"); self.assertEqual(pending["status"],"pending")
+        self.assertEqual(pending["candidates"][0]["guest_id"],invited["id"]); self.assertGreaterEqual(pending["candidates"][0]["score"],90)
+        self.assertEqual(d["dashboard"]["rsvp_review_pending"],1)
+        s,out,_=self.req("POST",f"/api/admin/rsvp-submissions/{submission_id}/resolve",{"action":"match","guest_id":invited["id"]},admin_headers); self.assertEqual(s,200)
+        self.assertEqual(out["guest"]["name"],"Invitado Prueba")
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
+        g=next(x for x in d["guests"] if x["id"]==invited["id"])
+        self.assertEqual(g["name"],"Invitado Prueba"); self.assertEqual(g["status"],"confirmed"); self.assertEqual(g["seats"],2)
+        resolved=next(x for x in d["rsvp_submissions"] if x["id"]==submission_id); self.assertEqual(resolved["status"],"matched")
         self.assertTrue(any(x["title"]=="Tema — Artista" for x in d["songs"]))
 
     def test_admin_guest_special_price_and_free_guest(self):
@@ -100,10 +109,28 @@ class WeddingApiTest(unittest.TestCase):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,g,_=self.req("POST","/api/admin/guests",{"name":"Amigo Basket","group_name":"Basket amigos","status":"invited","email":"basket@example.com","seats_allowed":2},h); self.assertEqual(s,201)
         self.assertEqual(g["group_name"],"Basket amigos")
-        s,_,_=self.req("POST","/api/public/rsvp",{"request_id":"group-rsvp","name":"Amigo Basket","email":"basket@example.com","attendance":"yes","seats":2},{"Origin":"https://bodajulianycarla.bpm.red"}); self.assertEqual(s,201)
+        s,submission,_=self.req("POST","/api/public/rsvp",{"request_id":"group-rsvp","name":"Amigo Basket","email":"basket@example.com","attendance":"yes","seats":2},{"Origin":"https://bodajulianycarla.bpm.red"}); self.assertEqual(s,201)
+        s,_,_=self.req("POST",f"/api/admin/rsvp-submissions/{submission['id']}/resolve",{"action":"match","guest_id":g["id"]},h); self.assertEqual(s,200)
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
-        saved=next(x for x in d["guests"] if x["email"]=="basket@example.com")
+        saved=next(x for x in d["guests"] if x["id"]==g["id"])
         self.assertEqual(saved["group_name"],"Basket amigos"); self.assertEqual(saved["status"],"confirmed")
+
+    def test_name_similarity_ignores_accents_and_word_order(self):
+        self.assertGreaterEqual(app.person_name_similarity("José Luis Pérez","Perez Jose Luis"),.90)
+        self.assertLess(app.person_name_similarity("José Luis Pérez","Carolina Gómez"),.45)
+
+    def test_rsvp_can_choose_another_guest_or_create_new(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}; origin={"Origin":"https://bodajulianycarla.bpm.red"}
+        s,first,_=self.req("POST","/api/admin/guests",{"name":"María López","group_name":"Familia","status":"invited","seats_allowed":1},h); self.assertEqual(s,201)
+        s,second,_=self.req("POST","/api/admin/guests",{"name":"María Luisa López","group_name":"Amigos","status":"invited","seats_allowed":2},h); self.assertEqual(s,201)
+        s,submission,_=self.req("POST","/api/public/rsvp",{"request_id":"choose-other","name":"Maria Lopez","attendance":"yes","seats":2},origin); self.assertEqual(s,201)
+        s,_,_=self.req("POST",f"/api/admin/rsvp-submissions/{submission['id']}/resolve",{"action":"match","guest_id":second["id"]},h); self.assertEqual(s,200)
+        s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
+        one=next(x for x in d["guests"] if x["id"]==first["id"]); two=next(x for x in d["guests"] if x["id"]==second["id"])
+        self.assertEqual(one["status"],"invited"); self.assertEqual(two["name"],"María Luisa López"); self.assertEqual(two["status"],"confirmed"); self.assertEqual(two["seats"],2)
+        s,new_submission,_=self.req("POST","/api/public/rsvp",{"request_id":"brand-new","name":"Persona Nueva","attendance":"no","seats":1},origin); self.assertEqual(s,201)
+        s,out,_=self.req("POST",f"/api/admin/rsvp-submissions/{new_submission['id']}/resolve",{"action":"new"},h); self.assertEqual(s,200)
+        self.assertEqual(out["guest"]["name"],"Persona Nueva"); self.assertEqual(out["guest"]["status"],"declined"); self.assertEqual(out["submission"]["status"],"new")
 
     def test_bad_admin_payload_is_400_not_connection_drop(self):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}

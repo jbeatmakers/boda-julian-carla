@@ -78,6 +78,13 @@
         <h2>Invitados</h2>
         <div class="toolbar"><input id="guestSearch" class="field" style="width:220px" placeholder="Buscar…"><select id="guestFilter" class="field" style="width:160px"><option value="">Todos los estados</option><option value="confirmed">Confirmados</option><option value="pending">Pendientes</option><option value="invited">Invitados</option><option value="possible">Posibles</option><option value="declined">No asisten</option></select><select id="guestGroupFilter" class="field" style="width:180px"><option value="">Todos los grupos</option></select><button class="btn primary" id="addGuestBtn">+ Invitado</button></div>
       </div>
+      <article class="card rsvp-review-card hidden" id="rsvpReviewCard">
+        <div class="rsvp-review-head">
+          <div><div class="eyebrow">Respuestas recibidas</div><h3>Confirmaciones por revisar</h3><p class="muted">El nombre que escribió la persona se compara con tu lista. Vos decidís la identidad antes de modificar al invitado.</p></div>
+          <span class="rsvp-review-count" id="rsvpReviewCount">0</span>
+        </div>
+        <div id="rsvpReviewRows" class="rsvp-review-rows"></div>
+      </article>
       <div class="table-wrap"><table class="table"><thead><tr><th>Nombre</th><th>Grupo</th><th>Estado</th><th>Lugares</th><th>Contacto</th><th>Tarjeta</th><th>Pagó</th><th>Regalo</th><th>Mesa</th><th>Notas</th><th></th></tr></thead><tbody id="guestRows"></tbody></table></div>
     </section>
 

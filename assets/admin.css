@@ -68,3 +68,14 @@ body:before{left:-36px;transform:rotate(-5deg)}body:after{right:-38px;transform:
 .guest-group-row strong{font-family:Italiana,serif;font-size:18px;font-weight:400}.guest-group-row span{margin-left:8px;font-size:10px;color:#74796f}
 .group-pill{display:inline-block;padding:3px 7px;border-radius:99px;background:#edf1e9;color:#53604d;font-size:10px;white-space:nowrap}
 @media(max-width:900px){.view-switch{order:-1;width:100%}.view-switch .btn{flex:1}.admin-card-view{height:calc(100vh - 165px);padding:8px 10px 12px}}
+
+/* RSVP reconciliation */
+.rsvp-review-card{margin:0 0 16px;background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(239,233,219,.7));border-color:#b7ad99}
+.rsvp-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.rsvp-review-head h3{font-family:Italiana,serif;font-size:27px;font-weight:400;margin:3px 0}.rsvp-review-head p{margin:0;max-width:760px}
+.rsvp-review-count{display:grid;place-items:center;min-width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--paper);font-weight:700;font-size:16px}
+.rsvp-review-rows{display:grid;gap:12px;margin-top:14px}.rsvp-review-item{border:1px solid var(--line);border-radius:14px;background:#fffdf8;padding:14px}
+.rsvp-reported{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.rsvp-reported h4{font-family:Italiana,serif;font-size:24px;font-weight:400;margin:2px 0}.rsvp-reported p{margin:0;color:#687066;font-size:12px}
+.rsvp-suggestion{margin-top:12px;padding:12px;border:1px solid #b6c4b0;border-radius:12px;background:#f1f7ef;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rsvp-suggestion strong{display:block;font-size:16px;margin:2px 0}.rsvp-suggestion small{display:block;color:#677162;font-size:10px}.rsvp-no-match{margin-top:12px;padding:10px 12px;border-radius:10px;background:#f7efe2;color:#7a5a28}
+.rsvp-other{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:8px;margin-top:10px;align-items:center}
+@media(max-width:760px){.rsvp-review-head,.rsvp-reported,.rsvp-suggestion{flex-direction:column}.rsvp-other{grid-template-columns:1fr}.rsvp-review-count{min-width:36px;height:36px}}

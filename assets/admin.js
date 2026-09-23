@@ -2,7 +2,7 @@
   "use strict";
   const $=id=>document.getElementById(id);
   let csrf="";
-  let state={settings:{},dashboard:{},planner:{},guests:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[],menu:[],contributions:[]};
+  let state={settings:{},dashboard:{},planner:{},guests:[],rsvp_submissions:[],expenses:[],shopping:[],tasks:[],vendors:[],songs:[],menu:[],contributions:[]};
   let scanStream=null,scanTimer=null;
   const COPY_FIELDS=[['gate_intro','Entrada · frase principal'],['gate_help','Entrada · ayuda'],['gate_label','Entrada · etiqueta del código'],['gate_submit','Entrada · botón'],['hero_intro','Portada · introducción'],['hero_confirm_btn','Portada · botón confirmar'],['hero_maps_btn','Portada · botón lugares'],['countdown_days','Cuenta regresiva · días'],['countdown_hours','Cuenta regresiva · horas'],['countdown_minutes','Cuenta regresiva · minutos'],['countdown_seconds','Cuenta regresiva · segundos'],['places_eyebrow','Lugares · etiqueta'],['places_title','Lugares · título'],['places_intro','Lugares · bajada'],['ceremony_eyebrow','Ceremonia · etiqueta'],['celebration_eyebrow','Celebración · etiqueta'],['maps_directions','Mapas · botón cómo llegar'],['dress_eyebrow','Dress code · etiqueta'],['rsvp_eyebrow','RSVP · etiqueta'],['rsvp_title','RSVP · título'],['rsvp_deadline_intro','RSVP · frase del vencimiento'],['attendance_yes','RSVP · opción sí'],['attendance_yes_label','RSVP · subtítulo sí'],['attendance_no','RSVP · opción no'],['attendance_no_label','RSVP · subtítulo no'],['name_label','RSVP · nombre'],['phone_label','RSVP · teléfono'],['email_label','RSVP · email'],['seats_label','RSVP · lugares'],['seats_hint','RSVP · ayuda lugares'],['diet_label','RSVP · alimentación'],['diet_placeholder','RSVP · placeholder alimentación'],['song_label','RSVP · canción'],['song_placeholder','RSVP · placeholder canción'],['decline_body','RSVP · mensaje si no asiste'],['decline_gift_note','RSVP · aclaración regalos'],['message_label','RSVP · dedicatoria'],['message_placeholder','RSVP · placeholder dedicatoria'],['submit_rsvp','RSVP · botón enviar'],['gift_eyebrow','Regalos · etiqueta'],['gift_title','Regalos · título'],['gift_intro','Regalos · introducción'],['ticket_eyebrow','Tarjeta · etiqueta'],['ticket_title','Tarjeta · título'],['present_eyebrow','Regalo · etiqueta'],['present_title','Regalo · título'],['present_body','Regalo · texto'],['present_transfer','Regalo · transferencia'],['transfer_eyebrow','Transferencia · etiqueta'],['transfer_holder','Transferencia · titular'],['transfer_alias','Transferencia · alias'],['transfer_cbu','Transferencia · CBU/CVU'],['copy_button','Transferencia · botón copiar'],['mercadopago_button','Transferencia · Mercado Pago'],['instagram_eyebrow','Instagram · etiqueta'],['instagram_title','Instagram · título'],['instagram_intro','Instagram · introducción'],['instagram_button','Instagram · botón'],['footer_date','Pie · fecha y lugar']];
   const LAYOUT_DEFAULTS=[['lugares','Horarios y mapas'],['dress','Dress code'],['rsvp','Confirmación de asistencia'],['regalos','Tarjeta y regalos'],['instagramSection','Instagram']];
@@ -168,7 +168,7 @@
     document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.dataset.panel===name));
   }
 
-  function renderAll(){renderDashboard();renderGuestGroupOptions();renderGuests();renderPlanner();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
+  function renderAll(){renderDashboard();renderGuestGroupOptions();renderRsvpReviews();renderGuests();renderPlanner();renderExpenses();renderShopping();renderTasks();renderVendors();fillSettings();}
   const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
   const num=n=>new Intl.NumberFormat("es-AR",{maximumFractionDigits:2}).format(Number(n)||0);
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -209,6 +209,7 @@
       ["Invitados",d.guests_total||0,"personas en la lista"],
       ["Confirmados",d.confirmed||0,`${d.seats||0} cubiertos`],
       ["Pendientes",d.pending||0,"por responder"],
+      ["RSVP por revisar",d.rsvp_review_pending||0,"requieren identificar a la persona"],
       ["No asisten",d.declined||0,"avisaron que no"],
       ["Tarjetas cobradas",money(d.ticket_paid),`de ${money(d.ticket_expected)}`],
       ["Gastos reales",money(d.expenses_actual),`${money(d.expenses_paid)} pagados`]
@@ -245,6 +246,30 @@
     if([...filter.options].some(o=>o.value===current)) filter.value=current;
     $("guestGroups").innerHTML=groups.map(g=>`<option value="${attr(g)}"></option>`).join("");
   }
+  function renderRsvpReviews(){
+    const card=$("rsvpReviewCard"),rowsEl=$("rsvpReviewRows"),countEl=$("rsvpReviewCount");
+    if(!card||!rowsEl||!countEl)return;
+    const pending=(state.rsvp_submissions||[]).filter(x=>x.status==="pending");
+    countEl.textContent=String(pending.length);
+    card.classList.toggle("hidden",pending.length===0);
+    if(!pending.length){rowsEl.innerHTML="";return;}
+    const guests=[...(state.guests||[])].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"es",{sensitivity:"base"}));
+    rowsEl.innerHTML=pending.map(r=>{
+      const top=(r.candidates||[])[0]||null;
+      const action=r.attendance==="yes"?"confirmó que viene":"avisó que no viene";
+      const places=r.attendance==="yes"?` · ${Number(r.seats)||1} lugar${Number(r.seats)===1?"":"es"}`:"";
+      const contact=[r.reported_phone,r.reported_email].filter(Boolean).map(esc).join(" · ");
+      const when=r.submitted_at?new Date(r.submitted_at).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):"";
+      const topHtml=top?`<div class="rsvp-suggestion"><div><span class="eyebrow">¿Es este?</span><strong>${esc(top.name)}</strong><small>${esc(top.group_name||"Sin grupo")} · ${esc(top.reason)} · ${esc(top.score)}%</small></div><button class="btn primary" type="button" data-action="rsvp-match" data-submission="${attr(r.id)}" data-guest="${attr(top.guest_id)}">Sí, es este</button></div>`:`<div class="rsvp-no-match">No encontré una coincidencia suficientemente útil en la lista.</div>`;
+      const options=guests.map(g=>`<option value="${attr(g.id)}">${esc(g.name)}${g.group_name?` · ${esc(g.group_name)}`:""}</option>`).join("");
+      return `<article class="rsvp-review-item">
+        <div class="rsvp-reported"><div><span class="eyebrow">Nombre escrito por la persona</span><h4>${esc(r.reported_name)}</h4><p><b>${esc(action)}</b>${esc(places)}${contact?` · ${contact}`:""}${when?` · ${esc(when)}`:""}</p></div><span class="pill ${r.attendance==="yes"?"confirmed":"declined"}">${r.attendance==="yes"?"Confirmó":"No asiste"}</span></div>
+        ${topHtml}
+        <div class="rsvp-other"><select class="field" id="rsvp-select-${attr(r.id)}"><option value="">Elegir otro invitado…</option>${options}</select><button class="btn soft" type="button" data-action="rsvp-match-selected" data-submission="${attr(r.id)}">Vincular elegido</button><button class="btn soft" type="button" data-action="rsvp-new" data-submission="${attr(r.id)}">Establecer como invitado nuevo</button></div>
+      </article>`;
+    }).join("");
+  }
+
   function renderGuests(){
     const q=$("guestSearch").value.trim().toLowerCase(),f=$("guestFilter").value,gf=$("guestGroupFilter").value;
     const rows=(state.guests||[]).filter(g=>{
@@ -343,6 +368,15 @@
     }catch(err){status(err.message,"err",5000);}
   }
 
+  async function resolveRsvp(submissionId,action,guestId=""){
+    const body={action};if(guestId)body.guest_id=guestId;
+    try{
+      await api(`/api/admin/rsvp-submissions/${encodeURIComponent(submissionId)}/resolve`,{method:"POST",body});
+      await loadState();openTab("guests");
+      status(action==="new"?"Se creó el invitado nuevo y se aplicó su respuesta.":"Respuesta vinculada al invitado de la lista.");
+    }catch(err){status(err.message,"err",6000);}
+  }
+
   async function delegatedClick(e){
     const layoutButton=e.target.closest("[data-layout-action]");
     if(layoutButton){
@@ -351,6 +385,17 @@
       return;
     }
     const b=e.target.closest("[data-action]"); if(!b)return;
+    if(b.dataset.action==="rsvp-match"){await resolveRsvp(b.dataset.submission,"match",b.dataset.guest);return;}
+    if(b.dataset.action==="rsvp-match-selected"){
+      const select=$(`rsvp-select-${b.dataset.submission}`),guestId=select?.value||"";
+      if(!guestId){status("Elegí un invitado de la lista.","err",4000);return;}
+      await resolveRsvp(b.dataset.submission,"match",guestId);return;
+    }
+    if(b.dataset.action==="rsvp-new"){
+      const item=(state.rsvp_submissions||[]).find(x=>x.id===b.dataset.submission);
+      if(item&&!confirm(`¿Crear a "${item.reported_name}" como invitado nuevo y aplicar esta respuesta?`))return;
+      await resolveRsvp(b.dataset.submission,"new");return;
+    }
     if(b.dataset.action==="whatsapp"){e.preventDefault();openWhatsApp(b.dataset.phone);return;}
     if(b.dataset.action==="edit-guest"){const g=(state.guests||[]).find(x=>x.id===b.dataset.id);if(g)openGuest(g);return;}
     if(b.dataset.action==="lookup-row"){const x=(state.shopping||[]).find(v=>v.id===b.dataset.id);if(x?.barcode)await lookupPrice(x);else status("Ese producto no tiene código de barras.","err");return;}

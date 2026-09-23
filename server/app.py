@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Small persistent wedding backend: stdlib + SQLite, no runtime dependency on GitHub."""
 from __future__ import annotations
-import argparse, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, uuid
+import argparse, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, unicodedata, uuid
 from contextlib import contextmanager
+from difflib import SequenceMatcher
 from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -111,6 +112,15 @@ def init_db() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_guests_phone ON guests(phone);
         CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
+        CREATE TABLE IF NOT EXISTS rsvp_submissions(
+          id TEXT PRIMARY KEY, request_id TEXT NOT NULL UNIQUE,
+          reported_name TEXT NOT NULL, reported_phone TEXT NOT NULL DEFAULT '', reported_email TEXT NOT NULL DEFAULT '',
+          attendance TEXT NOT NULL, seats INTEGER NOT NULL DEFAULT 0,
+          diet TEXT NOT NULL DEFAULT '', song TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '',
+          status TEXT NOT NULL DEFAULT 'pending', matched_guest_id TEXT NOT NULL DEFAULT '',
+          submitted_at TEXT NOT NULL, resolved_at TEXT, updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_rsvp_submissions_status ON rsvp_submissions(status,submitted_at);
         CREATE TABLE IF NOT EXISTS expenses(
           id TEXT PRIMARY KEY, category TEXT DEFAULT '', description TEXT NOT NULL,
           vendor TEXT DEFAULT '', budget REAL NOT NULL DEFAULT 0, actual REAL NOT NULL DEFAULT 0,
@@ -229,6 +239,81 @@ def rate_ok(ip: str, limit=18, window=60) -> bool:
             return False
         arr.append(now); _rate[ip]=arr
     return True
+
+def normalize_person_name(value: str) -> str:
+    text=unicodedata.normalize("NFKD",clean_text(value,160).lower())
+    text="".join(ch for ch in text if not unicodedata.combining(ch))
+    text=re.sub(r"[^a-z0-9]+"," ",text)
+    return " ".join(text.split())
+
+def person_name_similarity(left: str, right: str) -> float:
+    a,b=normalize_person_name(left),normalize_person_name(right)
+    if not a or not b: return 0.0
+    if a==b: return 1.0
+    direct=SequenceMatcher(None,a,b).ratio()
+    sorted_a,sorted_b=" ".join(sorted(a.split()))," ".join(sorted(b.split()))
+    sorted_score=SequenceMatcher(None,sorted_a,sorted_b).ratio()
+    ta,tb=set(a.split()),set(b.split())
+    overlap=len(ta&tb)/max(1,min(len(ta),len(tb)))
+    return max(direct,sorted_score,overlap*.92)
+
+def rsvp_match_candidates(c: sqlite3.Connection, submission, limit=4) -> list[dict]:
+    name=submission["reported_name"]; phone=re.sub(r"\D","",submission["reported_phone"] or "")
+    email=(submission["reported_email"] or "").strip().lower()
+    ranked=[]
+    for row in c.execute("SELECT * FROM guests ORDER BY name COLLATE NOCASE"):
+        g=dict(row); gphone=re.sub(r"\D","",g.get("phone") or ""); gemail=(g.get("email") or "").strip().lower()
+        score=person_name_similarity(name,g.get("name") or "")
+        reason="Nombre parecido"
+        if email and gemail and email==gemail:
+            score=max(score,.995); reason="Mismo email"
+        if phone and gphone and phone==gphone:
+            score=max(score,.99); reason="Mismo teléfono" if reason=="Nombre parecido" else "Mismo email y teléfono"
+        ranked.append((score,g,reason))
+    ranked.sort(key=lambda x:(-x[0],normalize_person_name(x[1].get("name") or "")))
+    return [{
+        "guest_id":g["id"],"name":g["name"],"group_name":g.get("group_name") or "",
+        "status":g.get("status") or "pending","score":round(score*100),"reason":reason
+    } for score,g,reason in ranked[:max(1,int(limit))] if score>=.30]
+
+def rsvp_submission_for_admin(c: sqlite3.Connection, row) -> dict:
+    out=dict(row)
+    out["candidates"]=rsvp_match_candidates(c,row) if row["status"]=="pending" else []
+    if row["matched_guest_id"]:
+        guest=c.execute("SELECT name,group_name FROM guests WHERE id=?",(row["matched_guest_id"],)).fetchone()
+        if guest:
+            out["matched_guest_name"]=guest["name"]; out["matched_guest_group"]=guest["group_name"]
+    return out
+
+def resolve_rsvp_submission(c: sqlite3.Connection, submission_id: str, action: str, guest_id: str="") -> dict:
+    row=c.execute("SELECT * FROM rsvp_submissions WHERE id=?",(submission_id,)).fetchone()
+    if not row: raise KeyError("rsvp_not_found")
+    if row["status"]!="pending": raise ValueError("rsvp_already_resolved")
+    now=now_iso(); attendance=row["attendance"]; status="confirmed" if attendance=="yes" else "declined"
+    if action=="match":
+        guest=c.execute("SELECT * FROM guests WHERE id=?",(guest_id,)).fetchone()
+        if not guest: raise KeyError("guest_not_found")
+        allowed=max(1,min(12,int(guest["seats_allowed"] or 1)))
+        seats=min(max(1,int(row["seats"] or 1)),allowed) if attendance=="yes" else 0
+        phone=guest["phone"] or row["reported_phone"]; email=guest["email"] or row["reported_email"]
+        c.execute("""UPDATE guests SET request_id=?,phone=?,email=?,status=?,attendance=?,seats=?,diet=?,song=?,notes=?,responded_at=?,updated_at=? WHERE id=?""",
+                  (row["request_id"],phone,email,status,attendance,seats,row["diet"],row["song"],row["notes"],now,now,guest_id))
+        resolved_status="matched"; resolved_guest_id=guest_id
+    elif action=="new":
+        resolved_guest_id=str(uuid.uuid4())
+        seats=max(1,int(row["seats"] or 1)) if attendance=="yes" else 0
+        allowed=max(1,seats)
+        c.execute("""INSERT INTO guests(id,request_id,name,phone,email,status,attendance,seats,seats_allowed,diet,song,notes,invited_at,responded_at,updated_at)
+                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                  (resolved_guest_id,row["request_id"],row["reported_name"],row["reported_phone"],row["reported_email"],
+                   status,attendance,seats,allowed,row["diet"],row["song"],row["notes"],row["submitted_at"],now,now))
+        resolved_status="new"
+    else:
+        raise ValueError("invalid_rsvp_resolution")
+    c.execute("UPDATE rsvp_submissions SET status=?,matched_guest_id=?,resolved_at=?,updated_at=? WHERE id=?",
+              (resolved_status,resolved_guest_id,now,now,submission_id))
+    guest=c.execute("SELECT * FROM guests WHERE id=?",(resolved_guest_id,)).fetchone()
+    return {"submission":rsvp_submission_for_admin(c,c.execute("SELECT * FROM rsvp_submissions WHERE id=?",(submission_id,)).fetchone()),"guest":dict(guest)}
 
 def find_invited_guest(c: sqlite3.Connection, name: str, phone: str, email: str):
     if email:
@@ -513,6 +598,7 @@ class Handler(BaseHTTPRequestHandler):
                 payload={"settings":read_settings(c)}
                 for t in ("guests","expenses","shopping","tasks","vendors","songs","menu","contributions"):
                     payload[t]=[dict(r) for r in c.execute(f"SELECT * FROM {t} ORDER BY updated_at DESC")]
+                payload["rsvp_submissions"]=[rsvp_submission_for_admin(c,r) for r in c.execute("SELECT * FROM rsvp_submissions ORDER BY submitted_at DESC")]
                 payload["dashboard"]=dashboard(c,payload["settings"])
                 payload["planner"]=planner(c,payload["settings"])
             return self._json(200,payload)
@@ -585,6 +671,21 @@ class Handler(BaseHTTPRequestHandler):
                     if k=="wedding_session":
                         with _lock: _sessions.pop(v,None)
             return self._json(200,{"ok":True},extra={"Set-Cookie":"wedding_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"})
+        m=re.fullmatch(r"/api/admin/rsvp-submissions/([A-Za-z0-9_-]+)/resolve",p)
+        if m:
+            if not self._admin_or_401(csrf=True): return
+            try: data=self._body()
+            except ValueError as e: return self._json(400,{"error":str(e)})
+            action=clean_text(data.get("action"),20)
+            guest_id=clean_text(data.get("guest_id"),100)
+            try:
+                with db() as c:
+                    out=resolve_rsvp_submission(c,m.group(1),action,guest_id)
+            except KeyError as e:
+                return self._json(404,{"error":str(e.args[0] if e.args else "not_found")})
+            except (ValueError,sqlite3.IntegrityError) as e:
+                return self._json(400,{"error":str(e)})
+            return self._json(200,out)
         if p=="/api/admin/guests":
             if not self._admin_or_401(csrf=True): return
             try: data=self._body()
@@ -670,28 +771,28 @@ class Handler(BaseHTTPRequestHandler):
         if not valid_email(email): return self._json(400,{"error":"invalid_email"},cors=True)
         request_id=clean_text(data.get("request_id"),80) or str(uuid.uuid4())
         diet=clean_text(data.get("diet"),240); song=clean_text(data.get("song"),240); notes=clean_text(data.get("message"),1200)
-        now=now_iso(); status="confirmed" if attendance=="yes" else "declined"
+        now=now_iso()
         with db() as c:
-            existing=c.execute("SELECT id FROM guests WHERE request_id=?",(request_id,)).fetchone()
-            if existing: return self._json(200,{"ok":True,"id":existing["id"],"duplicate":True},cors=True)
+            existing=c.execute("SELECT id,status,matched_guest_id FROM rsvp_submissions WHERE request_id=?",(request_id,)).fetchone()
+            if existing:
+                return self._json(200,{"ok":True,"id":existing["id"],"duplicate":True,"review_pending":existing["status"]=="pending"},cors=True)
+            legacy=c.execute("SELECT id FROM guests WHERE request_id=?",(request_id,)).fetchone()
+            if legacy:
+                return self._json(200,{"ok":True,"id":legacy["id"],"duplicate":True,"review_pending":False},cors=True)
             match=find_invited_guest(c,name,phone,email)
-            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else 1
+            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else max(1,requested_seats or 1)
             seats=min(requested_seats,allowed) if attendance=="yes" else 0
-            if match:
-                gid=match["id"]
-                c.execute("""UPDATE guests SET request_id=?,name=?,phone=?,email=?,status=?,attendance=?,seats=?,diet=?,song=?,notes=?,responded_at=?,updated_at=? WHERE id=?""",
-                          (request_id,name,phone,email,status,attendance,seats,diet,song,notes,now,now,gid))
-            else:
-                gid=str(uuid.uuid4())
-                c.execute("""INSERT INTO guests(id,request_id,name,phone,email,status,attendance,seats,seats_allowed,diet,song,notes,invited_at,responded_at,updated_at)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (gid,request_id,name,phone,email,status,attendance,seats,1,diet,song,notes,now,now,now))
+            submission_id=str(uuid.uuid4())
+            c.execute("""INSERT INTO rsvp_submissions(
+                id,request_id,reported_name,reported_phone,reported_email,attendance,seats,diet,song,notes,status,matched_guest_id,submitted_at,updated_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,'',?,?)""",
+            (submission_id,request_id,name,phone,email,attendance,seats,diet,song,notes,"pending",now,now))
             if song:
                 found=c.execute("SELECT id FROM songs WHERE lower(title)=lower(?)",(song,)).fetchone()
                 if not found:
                     c.execute("INSERT INTO songs(id,title,source,active,created_at,updated_at) VALUES(?,?,?,?,?,?)",
                               (str(uuid.uuid4()),song,"rsvp",1,now,now))
-        return self._json(201,{"ok":True,"id":gid},cors=True)
+        return self._json(201,{"ok":True,"id":submission_id,"review_pending":True},cors=True)
 
 def clean_for_table(table: str, data: dict) -> dict:
     allowed=GUEST_FIELDS if table=="guests" else TABLE_FIELDS[table]
@@ -799,10 +900,12 @@ def dashboard(c: sqlite3.Connection, settings: dict) -> dict:
         expected += max(0,gross-int(g.get("ticket_credit",0) or 0))
         paid += int(g["ticket_paid"] or 0); gifts += int(g["gift_amount"] or 0)
     ex=c.execute("SELECT COALESCE(SUM(actual),0) actual,COALESCE(SUM(paid),0) paid FROM expenses").fetchone()
+    review_pending=int(c.execute("SELECT COUNT(*) FROM rsvp_submissions WHERE status='pending'").fetchone()[0])
     return {
         "guests_total":len(guests),"confirmed":len(confirmed),
         "declined":sum(g["status"]=="declined" for g in guests),
         "pending":sum(g["status"] in ("pending","invited","possible") for g in guests),
+        "rsvp_review_pending":review_pending,
         "seats":seats,"ticket_expected":expected,"ticket_paid":paid,"ticket_pending":max(0,expected-paid),
         "gifts":gifts,"expenses_actual":float(ex["actual"] or 0),"expenses_paid":float(ex["paid"] or 0)
     }
