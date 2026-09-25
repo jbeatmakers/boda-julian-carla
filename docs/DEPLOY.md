@@ -49,3 +49,7 @@ systemctl is-active boda-wedding-backup.timer
 ```
 
 La workflow de GitHub **sólo valida** sintaxis/tests. No despliega ni depende de un runner del VPS.
+
+## Versiones del frontend
+Cada cambio público debe actualizar wedding-release y las versiones de assets en index.html. updates.js comprueba esa versión cada minuto y al volver a la pestaña; conserva temporalmente el formulario durante la recarga. Los textos del administrador se consultan también cada minuto sin recargar. Una pestaña que ejecuta código anterior a este mecanismo necesita cargar la página una vez para incorporarlo.
+

@@ -41,6 +41,16 @@
       if(e.origin===API_BASE && e.data?.type==="wedding-admin-preview") unlock(false);
     });
     window.addEventListener("online", flushOutbox);
+    let refreshing = false;
+    async function refreshCurrentConfig(){
+      if(refreshing || opening || document.hidden || $("site").classList.contains("hidden")) return;
+      refreshing = true;
+      try{ await loadPublicConfig(); }catch(_){}finally{ refreshing = false; }
+    }
+    setInterval(refreshCurrentConfig,60000);
+    window.addEventListener("online",refreshCurrentConfig);
+    window.addEventListener("pageshow",refreshCurrentConfig);
+    document.addEventListener("visibilitychange",refreshCurrentConfig);
   });
 
   async function onGate(e){
