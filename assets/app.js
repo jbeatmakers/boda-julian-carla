@@ -11,7 +11,7 @@
     ceremony:{time:"17:00",title:"Santa Misa de Casamiento",place:"Iglesia San Pedro y San Pablo",address:"Carlos Figueroa · San Pablo de Reyes · Jujuy",lat:-24.14581,lng:-65.39445},
     celebration:{time:"18:30",title:"Recepción, cena & fiesta",place:"Quincho · San Pablo de Reyes",address:"A unos 300 metros de la ceremonia.",lat:-24.14816,lng:-65.39326},
     dress:{title:"Estética Edén",concept:"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.",details:"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
-    ticket:{enabled:true,price:35000,currency:"ARS",text:"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
+    ticket:{enabled:true,price:80000,currency:"ARS",text:"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
     bank:{holder:"",alias:"",cbu:"",mp_url:""},
     fallback_whatsapp:"",
     layout:{sections:[
