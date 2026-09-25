@@ -15,7 +15,18 @@
         const field = Array.from(fields).find(el=>el.id===saved.id && el.name===saved.name && (el.type!=="radio" || el.value===saved.value));
         if(!field) continue;
         if(field.type==="radio" || field.type==="checkbox") field.checked=saved.checked;
-        else field.value=saved.value;
+        else {
+          // The initial HTML only contains one seat; restore the chosen value
+          // before syncSeatLimit revalidates it against the server's allowance.
+          if(field.id==="seats" && /^[1-9]$|^1[0-2]$/.test(saved.value) &&
+             !Array.from(field.options).some(option=>option.value===saved.value)){
+            const option=document.createElement("option");
+            option.value=saved.value;
+            option.textContent=`${saved.value} personas`;
+            field.appendChild(option);
+          }
+          field.value=saved.value;
+        }
       }
       document.querySelector('#rsvpForm input[name="attendance"]:checked')?.dispatchEvent(new Event("change",{bubbles:true}));
     }catch(_){}

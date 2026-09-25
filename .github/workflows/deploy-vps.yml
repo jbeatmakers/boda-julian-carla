@@ -27,4 +27,5 @@ jobs:
           node --check assets/app.js
           node --check assets/admin.js
           node tests/test_config_loading.cjs
+          node tests/test_updates.cjs
           python -m unittest discover -s tests -v
