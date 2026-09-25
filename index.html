@@ -29,6 +29,7 @@
       <p id="gateError" class="gate-error" aria-live="polite"></p>
       <button class="btn primary gate-submit" type="submit" data-site-copy="gate_submit">Abrir invitación</button>
     </form>
+    <button id="configRetry" class="btn hidden" type="button">Reintentar</button>
   </div>
 </div>
 
@@ -177,8 +178,8 @@
           <article id="ticketCard" class="gift-card card gift-card-ticket">
             <div class="eyebrow" data-site-copy="ticket_eyebrow">Si venís</div>
             <h3 class="display" style="font-size:2rem;margin:.4rem 0" data-site-copy="ticket_title">Tarjeta de la celebración</h3>
-            <div class="price" id="ticketPrice">$80.000</div>
-            <p class="muted small" id="ticketText">Ese es el valor por persona para la cena y la fiesta. CBU. 0000076500000029693120.</p>
+            <div class="price" id="ticketPrice"></div>
+            <p class="muted small" id="ticketText"></p>
           </article>
           <article class="gift-card card gift-card-present">
             <div class="eyebrow" data-site-copy="present_eyebrow">Si querés tener un gesto</div>
@@ -220,6 +221,6 @@
   </footer>
 </div>
 
-<script src="assets/app.js" defer></script>
+<script src="assets/app.js?v=20260925-current-config" defer></script>
 </body>
 </html>

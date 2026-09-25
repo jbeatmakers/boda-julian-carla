@@ -11,7 +11,7 @@
     ceremony:{time:"17:00",title:"Santa Misa de Casamiento",place:"Iglesia San Pedro y San Pablo",address:"Carlos Figueroa · San Pablo de Reyes · Jujuy",lat:-24.14581,lng:-65.39445},
     celebration:{time:"18:30",title:"Recepción, cena & fiesta",place:"Quincho · San Pablo de Reyes",address:"A unos 300 metros de la ceremonia.",lat:-24.14816,lng:-65.39326},
     dress:{title:"Estética Edén",concept:"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.",details:"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
-    ticket:{enabled:true,price:80000,currency:"ARS",text:"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
+    ticket:{enabled:false,price:null,currency:"ARS",text:""},
     bank:{holder:"",alias:"",cbu:"",mp_url:""},
     fallback_whatsapp:"",
     layout:{sections:[
@@ -23,12 +23,14 @@
     ]}
   };
   let config = structuredClone(DEFAULTS);
+  let opening = false;
   const $ = id => document.getElementById(id);
   const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null) el.textContent=v; };
   const money = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
 
   document.addEventListener("DOMContentLoaded", () => {
     $("gateForm").addEventListener("submit", onGate);
+    $("configRetry").addEventListener("click",()=>unlock(false));
     document.querySelectorAll('input[name="attendance"]').forEach(x=>x.addEventListener("change", syncAttendance));
     $("rsvpForm").addEventListener("submit", onRsvp);
     ["fullName","phone","email"].forEach(id=>$(id).addEventListener("blur",syncSeatLimit));
@@ -68,13 +70,24 @@
     unlock(true);
   }
 
-  function unlock(withCelebration){
+  async function unlock(withCelebration){
+    if(opening || !$("site").classList.contains("hidden")) return;
+    opening = true;
+    $("configRetry").classList.add("hidden");
+    $("gateError").textContent="Cargando la invitación actual…";
+    try{
+      await loadPublicConfig();
+    }catch(_){
+      $("gateError").textContent="No pudimos cargar la invitación. Revisá tu conexión y volvé a intentar.";
+      $("configRetry").classList.remove("hidden");
+      return;
+    }finally{ opening = false; }
+    $("gateError").textContent="";
     $("gate").classList.add("hidden");
     $("site").classList.remove("hidden");
     document.body.classList.remove("locked");
     if(withCelebration) requestAnimationFrame(()=>celebrate(42));
     startCountdown();
-    loadPublicConfig();
     loadInstagram();
     flushOutbox();
   }
@@ -111,11 +124,15 @@
   }
 
   async function loadPublicConfig(){
-    if(!API_BASE){ applyConfig(config); return; }
-    try{
-      const remote=await fetchJson(`${API_BASE}/api/public/config`,{cache:"no-store"},3500);
-      config=merge(DEFAULTS,remote);
-    }catch(_){ config=structuredClone(DEFAULTS); }
+    if(!API_BASE) throw new Error("missing_config_source");
+    const remote=await fetchJson(`${API_BASE}/api/public/config`,{cache:"no-store"},15000);
+    if(!remote || typeof remote!=="object" || !remote.ticket ||
+       typeof remote.ticket.enabled!=="boolean" ||
+       (remote.ticket.enabled && (typeof remote.ticket.price!=="number" || !Number.isFinite(remote.ticket.price))) ||
+       !remote.copy || !remote.ceremony || !remote.celebration){
+      throw new Error("invalid_public_config");
+    }
+    config=merge(DEFAULTS,remote);
     applyConfig(config);
   }
 

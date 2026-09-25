@@ -39,7 +39,7 @@ class StaticTest(unittest.TestCase):
         p=Parser(); p.feed(html)
         for needed in ('gate','gateCode','rsvpForm','ticketCard','ceremonyMap','celebrationMap'):
             self.assertIn(needed,p.ids)
-        self.assertIn('assets/app.js',p.scripts)
+        self.assertIn('assets/app.js',[src.split('?')[0] for src in p.scripts])
 
     def test_admin_has_no_embedded_password(self):
         html=(ROOT/'admin.html').read_text(encoding='utf-8')

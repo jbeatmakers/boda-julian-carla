@@ -26,4 +26,5 @@ jobs:
           python -m py_compile server/app.py server/backup.py
           node --check assets/app.js
           node --check assets/admin.js
+          node tests/test_config_loading.cjs
           python -m unittest discover -s tests -v
