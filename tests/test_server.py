@@ -52,7 +52,7 @@ class WeddingApiTest(unittest.TestCase):
     def test_health_and_public_config(self):
         s,d,_=self.req("GET","/healthz"); self.assertEqual((s,d["ok"]),(200,True))
         s,d,h=self.req("GET","/api/public/config",headers={"Origin":"https://bodajulianycarla.bpm.red"})
-        self.assertEqual(s,200); self.assertEqual(d["ticket"]["price"],35000)
+        self.assertEqual(s,200); self.assertEqual(d["ticket"]["price"],80000)
         self.assertEqual(h.get("Access-Control-Allow-Origin"),"https://bodajulianycarla.bpm.red")
         s,ig,h=self.req("GET","/api/public/instagram",headers={"Origin":"https://bodajulianycarla.bpm.red"})
         self.assertEqual(s,200); self.assertEqual(ig["username"],"juli.y.carli")
@@ -163,7 +163,7 @@ class WeddingApiTest(unittest.TestCase):
         s,g,_=self.req("POST","/api/admin/guests",{"name":"Aporte Tarjeta","status":"confirmed","attendance":"yes","seats_allowed":2,"seats":2,"ticket_credit":20000},h); self.assertEqual(s,201)
         s,_,_=self.req("POST","/api/admin/menu",{"item":"Empanadas","course":"appetizer","unit":"unidades","per_person":2,"stock":30},h); self.assertEqual(s,201)
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
-        self.assertEqual(d["dashboard"]["ticket_expected"],50000)
+        self.assertEqual(d["dashboard"]["ticket_expected"],140000)
         m=next(x for x in d["planner"]["menu"] if x["item"]=="Empanadas"); self.assertEqual(m["target"],6); self.assertEqual(m["missing"],0)
 
     def test_price_lookup_rejects_bad_barcode_without_network(self):
