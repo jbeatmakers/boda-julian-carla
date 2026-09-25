@@ -293,11 +293,11 @@ def resolve_rsvp_submission(c: sqlite3.Connection, submission_id: str, action: s
     if action=="match":
         guest=c.execute("SELECT * FROM guests WHERE id=?",(guest_id,)).fetchone()
         if not guest: raise KeyError("guest_not_found")
-        allowed=max(1,min(12,int(guest["seats_allowed"] or 1)))
-        seats=min(max(1,int(row["seats"] or 1)),allowed) if attendance=="yes" else 0
+        seats=max(1,int(row["seats"] or 1)) if attendance=="yes" else 0
+        allowed=max(1,int(guest["seats_allowed"] or 1),seats)
         phone=guest["phone"] or row["reported_phone"]; email=guest["email"] or row["reported_email"]
-        c.execute("""UPDATE guests SET request_id=?,phone=?,email=?,status=?,attendance=?,seats=?,diet=?,song=?,notes=?,responded_at=?,updated_at=? WHERE id=?""",
-                  (row["request_id"],phone,email,status,attendance,seats,row["diet"],row["song"],row["notes"],now,now,guest_id))
+        c.execute("""UPDATE guests SET request_id=?,phone=?,email=?,status=?,attendance=?,seats=?,seats_allowed=?,diet=?,song=?,notes=?,responded_at=?,updated_at=? WHERE id=?""",
+                  (row["request_id"],phone,email,status,attendance,seats,allowed,row["diet"],row["song"],row["notes"],now,now,guest_id))
         resolved_status="matched"; resolved_guest_id=guest_id
     elif action=="new":
         resolved_guest_id=str(uuid.uuid4())
@@ -625,8 +625,8 @@ class Handler(BaseHTTPRequestHandler):
             phone=re.sub(r"[^\d+]","",clean_text(data.get("phone"),40))
             email=clean_text(data.get("email"),160).lower()
             with db() as c: match=find_invited_guest(c,name,phone,email)
-            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else 1
-            return self._json(200,{"found":bool(match),"max_seats":allowed},cors=True)
+            allowed=None
+            return self._json(200,{"found":bool(match),"max_seats":allowed,"unlimited":True},cors=True)
         if p=="/api/public/rsvp":
             if self._origin() and self._origin() not in ALLOWED_ORIGINS:
                 return self._json(403,{"error":"origin_not_allowed"},cors=True)
@@ -766,7 +766,14 @@ class Handler(BaseHTTPRequestHandler):
         phone=re.sub(r"[^\d+]","",clean_text(data.get("phone"),40))
         email=clean_text(data.get("email"),160).lower()
         attendance="yes" if data.get("attendance")=="yes" else "no"
-        requested_seats=max(1,min(12,int(data.get("seats") or 1))) if attendance=="yes" else 0
+        requested_seats=0
+        if attendance=="yes":
+            value=data.get("seats",1)
+            if isinstance(value,bool) or not re.fullmatch(r"[0-9]+",str(value)):
+                return self._json(400,{"error":"invalid_seats"},cors=True)
+            requested_seats=int(value)
+            if not 1<=requested_seats<=9007199254740991:
+                return self._json(400,{"error":"invalid_seats"},cors=True)
         if len(name)<2: return self._json(400,{"error":"name_required"},cors=True)
         if not valid_email(email): return self._json(400,{"error":"invalid_email"},cors=True)
         request_id=clean_text(data.get("request_id"),80) or str(uuid.uuid4())
@@ -780,8 +787,7 @@ class Handler(BaseHTTPRequestHandler):
             if legacy:
                 return self._json(200,{"ok":True,"id":legacy["id"],"duplicate":True,"review_pending":False},cors=True)
             match=find_invited_guest(c,name,phone,email)
-            allowed=max(1,min(12,int(match["seats_allowed"] or 1))) if match else max(1,requested_seats or 1)
-            seats=min(requested_seats,allowed) if attendance=="yes" else 0
+            seats=requested_seats
             submission_id=str(uuid.uuid4())
             c.execute("""INSERT INTO rsvp_submissions(
                 id,request_id,reported_name,reported_phone,reported_email,attendance,seats,diet,song,notes,status,matched_guest_id,submitted_at,updated_at
@@ -827,7 +833,7 @@ def normalize_guest_values(base: dict) -> dict:
     if email and not valid_email(email): raise ValueError("invalid_email")
     allowed=int(base.get("seats_allowed") or 1)
     seats=int(base.get("seats") or 0)
-    if not 1<=allowed<=12: raise ValueError("invalid_seats_allowed")
+    if not 1<=allowed<=9007199254740991: raise ValueError("invalid_seats_allowed")
     if attendance=="no" or status=="declined":
         status,attendance,seats="declined","no",0
     elif attendance=="yes" or status=="confirmed":

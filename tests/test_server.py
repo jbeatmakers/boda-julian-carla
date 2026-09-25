@@ -63,8 +63,8 @@ class WeddingApiTest(unittest.TestCase):
         cookie,csrf=self.login(); admin_headers={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,invited,_=self.req("POST","/api/admin/guests",{"name":"Invitado Prueba","email":"guest@example.com","status":"invited","seats_allowed":2},admin_headers); self.assertEqual(s,201)
         headers={"Origin":"https://bodajulianycarla.bpm.red"}
-        s,limit,_=self.req("POST","/api/public/invite",{"name":"Invitado Prueba","email":"guest@example.com"},headers); self.assertEqual(s,200); self.assertEqual(limit["max_seats"],2)
-        payload={"request_id":"test-rsvp-1","name":"Invitado Prueva","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":2,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
+        s,limit,_=self.req("POST","/api/public/invite",{"name":"Invitado Prueba","email":"guest@example.com"},headers); self.assertEqual(s,200); self.assertIsNone(limit["max_seats"]); self.assertTrue(limit["unlimited"])
+        payload={"request_id":"test-rsvp-1","name":"Invitado Prueva","phone":"388 555 0101","email":"guest@example.com","attendance":"yes","seats":25,"diet":"sin TACC","song":"Tema — Artista","message":"Nos vemos"}
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,201); submission_id=d["id"]; self.assertTrue(d["review_pending"])
         s,d,_=self.req("POST","/api/public/rsvp",payload,headers); self.assertEqual(s,200); self.assertTrue(d["duplicate"])
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
@@ -78,7 +78,7 @@ class WeddingApiTest(unittest.TestCase):
         self.assertEqual(out["guest"]["name"],"Invitado Prueba")
         s,d,_=self.req("GET","/api/admin/state",headers={"Cookie":cookie}); self.assertEqual(s,200)
         g=next(x for x in d["guests"] if x["id"]==invited["id"])
-        self.assertEqual(g["name"],"Invitado Prueba"); self.assertEqual(g["status"],"confirmed"); self.assertEqual(g["seats"],2)
+        self.assertEqual(g["name"],"Invitado Prueba"); self.assertEqual(g["status"],"confirmed"); self.assertEqual(g["seats"],25)
         resolved=next(x for x in d["rsvp_submissions"] if x["id"]==submission_id); self.assertEqual(resolved["status"],"matched")
         self.assertTrue(any(x["title"]=="Tema — Artista" for x in d["songs"]))
 
@@ -173,7 +173,7 @@ class WeddingApiTest(unittest.TestCase):
     def test_rejects_negative_money_and_impossible_guest_limits(self):
         cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
         s,d,_=self.req("POST","/api/admin/shopping",{"item":"Vino","bought":-1},h); self.assertEqual(s,400); self.assertEqual(d["error"],"negative_value")
-        s,d,_=self.req("POST","/api/admin/guests",{"name":"Cupo Malo","seats_allowed":99},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_seats_allowed")
+        s,d,_=self.req("POST","/api/admin/guests",{"name":"Cupo Malo","seats_allowed":9007199254740992},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_seats_allowed")
         s,g,_=self.req("POST","/api/admin/guests",{"name":"Cupo Bien","status":"confirmed","attendance":"yes","seats_allowed":3,"seats":3},h); self.assertEqual(s,201)
         s,d,_=self.req("PATCH",f"/api/admin/guests/{g['id']}",{"seats_allowed":2},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_seats")
 

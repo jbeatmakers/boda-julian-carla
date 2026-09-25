@@ -166,6 +166,8 @@
       if(value!==undefined && value!==null) el.placeholder=value;
     });
     applyLayout(c.layout);
+    syncSeatLimit();
+    safeText("seatsLabel","Cantidad total de personas (incluyéndote)");
     safeText("heroLocation",c.location_display);
     safeText("rsvpDeadline",c.rsvp_deadline_display);
     if(c.ceremony){
@@ -238,20 +240,8 @@
     tick(); setInterval(tick,1000);
   }
 
-  async function syncSeatLimit(){
-    const select=$("seats"), hint=$("seatsHint");
-    const identity={name:$("fullName").value.trim(),phone:$("phone").value.trim(),email:$("email").value.trim()};
-    let maxSeats=1, found=false;
-    if(API_BASE && (identity.name.length>1 || identity.phone || identity.email)){
-      try{
-        const r=await fetchJson(`${API_BASE}/api/public/invite`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(identity)},3000);
-        maxSeats=Math.max(1,Math.min(12,Number(r.max_seats)||1)); found=!!r.found;
-      }catch(_){}
-    }
-    const current=Math.min(maxSeats,Math.max(1,Number(select.value)||1));
-    select.innerHTML=Array.from({length:maxSeats},(_,i)=>`<option value="${i+1}">${i+1} ${i===0?"persona":"personas"}</option>`).join("");
-    select.value=String(current);
-    hint.textContent=found ? `Tu invitación tiene hasta ${maxSeats} ${maxSeats===1?"lugar":"lugares"}.` : "La cantidad disponible se ajusta a tu invitación.";
+  function syncSeatLimit(){
+    safeText("seatsHint","Indicá el total de personas que asistirán, incluyéndote. Sin límite de acompañantes.");
   }
 
   function syncAttendance(){
@@ -287,6 +277,7 @@
     const p=payloadFromForm(), status=$("rsvpStatus"), btn=$("rsvpSubmit");
     if(!p.name){ showStatus("Decinos tu nombre y apellido para guardar la respuesta.",false); $("fullName").focus(); return; }
     if(p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)){ showStatus("Revisá el email: parece incompleto.",false); $("email").focus(); return; }
+    if(p.attendance==="yes" && (!$("seats").checkValidity() || !Number.isSafeInteger(p.seats))){ showStatus("Ingresá una cantidad entera de personas, desde 1.",false); return; }
     btn.disabled=true; btn.textContent="Enviando…";
     try{
       if(!API_BASE) throw new Error("API no configurada");

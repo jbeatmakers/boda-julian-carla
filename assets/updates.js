@@ -18,7 +18,7 @@
         else {
           // The initial HTML only contains one seat; restore the chosen value
           // before syncSeatLimit revalidates it against the server's allowance.
-          if(field.id==="seats" && /^[1-9]$|^1[0-2]$/.test(saved.value) &&
+          if(field.id==="seats" && field.options && /^[1-9]$|^1[0-2]$/.test(saved.value) &&
              !Array.from(field.options).some(option=>option.value===saved.value)){
             const option=document.createElement("option");
             option.value=saved.value;
