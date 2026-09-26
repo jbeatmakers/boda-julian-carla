@@ -3,14 +3,13 @@
 ## Producción
 
 - Invitación principal: `https://bodajulianycarla.bpm.red/` (GitHub Pages).
-- Respaldo independiente: `https://jbeatmakers.github.io/boda-julian-carla-pages/`.
 - Admin/API: `https://boda-api.13-140-183-198.sslip.io/`.
 - Runtime: contenedor Docker `boda-wedding` en la red privada `web`.
 - Proxy/TLS: Caddy existente del VPS.
 - Datos: `/var/lib/boda-julian-carla/wedding.sqlite3`.
 - Entorno privado: `/etc/boda-julian-carla.env`.
 
-GitHub no participa en RSVP, admin ni SQLite. Una caída de GitHub no afecta el backend; la URL Pages alternativa cubre el frontend.
+El único enlace que se comparte con invitados es `https://bodajulianycarla.bpm.red/`. La dirección técnica anterior se conserva como redirección para enlaces ya guardados.
 
 ## Actualizar código
 
@@ -20,7 +19,7 @@ En el VPS, el helper actual copia sólo backend/admin, hace backup, reinicia ún
 sudo /usr/local/sbin/deploy-boda-julian-carla /ruta/al/checkout
 ```
 
-El frontend público se publica con GitHub Pages al hacer push a `main`. El repo espejo sincroniza sólo los archivos públicos y nunca copia CNAME, backend ni secretos.
+El frontend público se publica con GitHub Pages al hacer push a `main`. El repositorio técnico anterior mantiene una redirección hacia el dominio canónico.
 
 ## Cambiar variables privadas
 

@@ -8,9 +8,9 @@ SQLite vive en el VPS en `/var/lib/boda-julian-carla/wedding.sqlite3`, con WAL y
 
 La invitación es estática:
 - principal: GitHub Pages + `bodajulianycarla.bpm.red`;
-- fallback: repo Pages separado, sin CNAME, en `jbeatmakers.github.io/boda-julian-carla-pages/`.
+- dirección de compatibilidad `github.io`: redirige al dominio canónico para recuperar enlaces guardados.
 
-Ambas llevan `robots.txt: Disallow /` y meta `noindex`. El fallback acepta RSVP y el acceso administrativo especial igual que la principal.
+La invitación se sirve desde el dominio canónico; la dirección anterior sólo redirige y no acepta RSVP.
 
 ## Backend/admin
 
