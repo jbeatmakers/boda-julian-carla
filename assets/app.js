@@ -123,14 +123,21 @@
   }
 
   async function fetchJson(url, options={}, timeout=4500){
-    const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),timeout);
-    try{
-      const res=await fetch(url,{...options,signal:ctrl.signal});
-      const body=await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error(body.error||`HTTP ${res.status}`);
-      return body;
-    } finally { clearTimeout(timer); }
+    let lastError;
+    for(let attempt=0; attempt<3; attempt++){
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),timeout);
+      try{
+        const res=await fetch(url,{...options,signal:ctrl.signal});
+        const body=await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(body.error||`HTTP ${res.status}`);
+        return body;
+      }catch(err){
+        lastError=err;
+        if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
+      }finally{ clearTimeout(timer); }
+    }
+    throw lastError || new Error("request_failed");
   }
 
   async function loadPublicConfig(){
