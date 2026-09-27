@@ -56,3 +56,7 @@ Cada cambio público debe actualizar wedding-release y las versiones de assets e
 
 `https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Las rutas antiguas y los scripts retirados la utilizan automáticamente para recuperar HTML anterior al actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Si falla la configuración de la API después de aceptar BODA, se reintenta automáticamente cada 15 segundos, al recuperar conexión y al volver a la pestaña. Se evita mostrar precios desactualizados; la red del invitado debe poder llegar a la API.
 
+
+## Alias de dominio tolerante
+
+El dominio oficial sigue siendo `bodajulianycarla.bpm.red`. Para tolerar el error frecuente `bodajuliancarla.bpm.red`, Namecheap mantiene un registro A de ese host a `13.140.183.198` y Caddy responde 308 hacia el dominio oficial. No convertir ese alias en otro sitio ni duplicar la app.
