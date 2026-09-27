@@ -28,5 +28,6 @@ jobs:
           node --check assets/admin.js
           node tests/test_config_loading.cjs
           node tests/test_gate_access.cjs
+          node tests/test_legacy_recovery.cjs
           node tests/test_updates.cjs
           python -m unittest discover -s tests -v
