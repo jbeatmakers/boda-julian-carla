@@ -14,10 +14,3 @@ boda-api.13-140-183-198.sslip.io, boda-api.bpm.red {
     }
     encode zstd gzip
 }
-
-# Redirección heredada; no es el dominio compartido ni la causa del incidente.
-# DNS Namecheap: A bodajuliancarla -> 13.140.183.198
-bodajuliancarla.bpm.red {
-    header X-Robots-Tag "noindex, nofollow"
-    redir https://bodajulianycarla.bpm.red{uri} 308
-}
