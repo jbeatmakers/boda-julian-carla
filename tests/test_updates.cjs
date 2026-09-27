@@ -1,13 +1,13 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
 const source=fs.readFileSync('assets/updates.js','utf8');
-async function run({next='old',disabled=false,offline=false,draft=null,fail=false}={}){
+async function run({next='old',disabled=false,offline=false,draft=null,fail=false,storageBlocked=false,filled=true}={}){
   let pageshow,reloaded,saved,removed=false,changed=false;
-  const name={id:'fullName',name:'',type:'text',value:'Invitado'};
+  const name={id:'fullName',name:'',type:'text',value:filled?'Invitado':'',defaultValue:''};
   const seats={id:'seats',name:'',type:'select-one',options:[{value:'1'}],selected:'1',
     get value(){return this.selected},set value(v){this.selected=this.options.some(o=>o.value===v)?v:''},
     appendChild(o){this.options.push(o)}};
   const context={URL,AbortController,setTimeout,clearTimeout,setInterval(){},Date,JSON,Event,
-    navigator:{onLine:!offline},sessionStorage:{getItem(){return JSON.stringify(draft)},removeItem(){removed=true},setItem(k,v){saved=JSON.parse(v)}},
+    navigator:{onLine:!offline},sessionStorage:{getItem(){if(storageBlocked)throw Error('denied');return JSON.stringify(draft)},removeItem(){removed=true},setItem(k,v){if(storageBlocked)throw Error('denied');saved=JSON.parse(v)}},
     document:{hidden:false,createElement(){return {}},
       querySelector(s){return s.includes('meta')?{content:'old'}:s.includes('attendance')?{dispatchEvent(){changed=true}}:{disabled}},
       querySelectorAll(){return [name,seats]},addEventListener(){}},
@@ -22,6 +22,8 @@ async function run({next='old',disabled=false,offline=false,draft=null,fail=fals
   const updated=await run({next:'new'});
   assert.equal(updated.reloaded,'https://example.test/?_v=new#rsvp');
   assert.equal(updated.saved.fields[0].value,'Invitado');
+  assert.equal((await run({next:'new',storageBlocked:true,filled:false})).reloaded,'https://example.test/?_v=new#rsvp','Empty gate can recover without storage');
+  assert.equal((await run({next:'new',storageBlocked:true,filled:true})).reloaded,undefined,'Never discard an unsaved filled form');
   for(const args of [{next:'new',disabled:true},{next:'new',offline:true},{next:'new',fail:true},{next:null}])
     assert.equal((await run(args)).reloaded,undefined);
   const restored=await run({draft:{savedAt:Date.now(),fields:[{id:'seats',name:'',value:'4'},{id:'fullName',name:'',value:'Borrador'}]}});

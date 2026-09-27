@@ -22,7 +22,8 @@
       {id:"instagramSection",label:"Instagram",visible:true}
     ]}
   };
-  let config = structuredClone(DEFAULTS);
+  const cloneConfig = value => JSON.parse(JSON.stringify(value));
+  let config = cloneConfig(DEFAULTS);
   let opening = false;
   const $ = id => document.getElementById(id);
   const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null) el.textContent=v; };
@@ -30,13 +31,13 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     $("gateForm").addEventListener("submit", onGate);
-    $("configRetry").addEventListener("click",()=>unlock(false));
+    $("configRetry")?.addEventListener("click",()=>unlock(false));
     document.querySelectorAll('input[name="attendance"]').forEach(x=>x.addEventListener("change", syncAttendance));
     $("rsvpForm").addEventListener("submit", onRsvp);
     ["fullName","phone","email"].forEach(id=>$(id).addEventListener("blur",syncSeatLimit));
     document.querySelectorAll(".celebrate-link").forEach(a=>a.addEventListener("click",()=>celebrate(20)));
     document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>copyField(b.dataset.copy,b)));
-    if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false);
+    try{ if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false); }catch(_){}
     window.addEventListener("message",e=>{
       if(e.origin===API_BASE && e.data?.type==="wedding-admin-preview") unlock(false);
     });
@@ -70,26 +71,26 @@
       }
       return;
     }
-    const code=raw.toUpperCase();
+    const code=raw.replace(/[\s\u200B-\u200D\u2060\uFEFF]/g,"").toUpperCase();
     if(code!==ACCESS_CODE){
       $("gateError").textContent="Ese código no coincide. Probá de nuevo.";
       $("gateCode").select();
       return;
     }
-    sessionStorage.setItem(ACCESS_KEY,"ok");
+    try{ sessionStorage.setItem(ACCESS_KEY,"ok"); }catch(_){}
     unlock(true);
   }
 
   async function unlock(withCelebration){
     if(opening || !$("site").classList.contains("hidden")) return;
     opening = true;
-    $("configRetry").classList.add("hidden");
+    $("configRetry")?.classList.add("hidden");
     $("gateError").textContent="Cargando la invitación actual…";
     try{
       await loadPublicConfig();
     }catch(_){
       $("gateError").textContent="No pudimos cargar la invitación. Revisá tu conexión y volvé a intentar.";
-      $("configRetry").classList.remove("hidden");
+      $("configRetry")?.classList.remove("hidden");
       return;
     }finally{ opening = false; }
     $("gateError").textContent="";
@@ -154,7 +155,7 @@
   }
 
   function merge(base, extra){
-    const out=structuredClone(base);
+    const out=cloneConfig(base);
     for(const [k,v] of Object.entries(extra||{})){
       if(v && typeof v==="object" && !Array.isArray(v) && out[k] && typeof out[k]==="object") out[k]={...out[k],...v};
       else if(v!==undefined) out[k]=v;

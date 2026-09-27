@@ -50,8 +50,16 @@
       if(document.querySelector('#rsvpForm button[type="submit"]')?.disabled) return;
       const fields = Array.from(document.querySelectorAll('#rsvpForm input, #rsvpForm select, #rsvpForm textarea'))
         .map(el=>({id:el.id,name:el.name,value:el.value,checked:el.checked}));
-      // If storage is unavailable, leave an unfinished form intact.
-      sessionStorage.setItem(draftKey,JSON.stringify({savedAt:Date.now(),fields}));
+      // Storage must not trap users on the gate or a pristine invitation.
+      // Preserve a filled form if its draft cannot be saved.
+      try{ sessionStorage.setItem(draftKey,JSON.stringify({savedAt:Date.now(),fields})); }
+      catch(_){
+        const edited=Array.from(document.querySelectorAll('#rsvpForm input, #rsvpForm select, #rsvpForm textarea'))
+          .some(el=>el.type==='radio' || el.type==='checkbox'
+            ? el.checked!==el.defaultChecked
+            : String(el.value||'')!==String(el.defaultValue ?? (el.id==='seats'?'1':'')));
+        if(edited) return;
+      }
       const target = new URL(window.location.href);
       target.searchParams.set("_v",next);
       target.searchParams.delete("_release_check");

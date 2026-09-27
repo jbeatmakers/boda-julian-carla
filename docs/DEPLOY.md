@@ -52,3 +52,7 @@ La workflow de GitHub **sólo valida** sintaxis/tests. No despliega ni depende d
 ## Versiones del frontend
 Cada cambio público debe actualizar wedding-release y las versiones de assets en index.html. updates.js comprueba esa versión cada minuto y al volver a la pestaña; conserva temporalmente el formulario durante la recarga. Los textos del administrador se consultan también cada minuto sin recargar. Una pestaña que ejecuta código anterior a este mecanismo necesita cargar la página una vez para incorporarlo.
 
+## Recuperación de acceso
+
+`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Está disponible desde la portada y permite recuperar un HTML antiguo que todavía no incluya el actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Si falla la configuración de la API, la portada conserva Reintentar para evitar mostrar precios desactualizados; esto sigue requiriendo que la red del invitado pueda llegar a la API.
+
