@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Small persistent wedding backend: stdlib + SQLite, no runtime dependency on GitHub."""
 from __future__ import annotations
-import argparse, ast, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, unicodedata, uuid
-from contextlib import contextmanager
+import argparse, ast, base64, getpass, hashlib, hmac, ipaddress, json, math, os, re, secrets, sqlite3, threading, time, unicodedata, uuid
+from contextlib import contextmanager, closing
 from difflib import SequenceMatcher
 from datetime import datetime, timezone
 from http import HTTPStatus
@@ -23,6 +23,10 @@ ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.environ.get(
     "WEDDING_ALLOWED_ORIGINS",
     "https://bodajulianycarla.bpm.red"
 ).split(",") if x.strip()}
+TRUSTED_PROXIES = tuple(ipaddress.ip_network(x.strip()) for x in
+    os.environ.get("WEDDING_TRUSTED_PROXIES", "").split(",") if x.strip())
+CODE_SHA256 = hashlib.sha256(Path(__file__).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
 INSTAGRAM_USER_ID = os.environ.get("WEDDING_INSTAGRAM_USER_ID", "").strip()
 INSTAGRAM_ACCESS_TOKEN = os.environ.get("WEDDING_INSTAGRAM_ACCESS_TOKEN", "").strip()
 INSTAGRAM_GRAPH_VERSION = os.environ.get("WEDDING_META_GRAPH_VERSION", "").strip()
@@ -236,6 +240,18 @@ def clean_text(v, n=500) -> str:
 
 def valid_email(v: str) -> bool:
     return not v or bool(re.fullmatch(r"[^@\s]{1,80}@[^@\s]{1,120}\.[^@\s]{2,30}",v))
+
+def proxy_client_ip(peer: str, forwarded: str, trusted=None) -> str:
+    """Only trust the overwritten client-IP header from the configured Caddy peer."""
+    networks = TRUSTED_PROXIES if trusted is None else trusted
+    try:
+        address = ipaddress.ip_address(peer)
+        if not any(address in network for network in networks):
+            return str(address)
+        return str(ipaddress.ip_address(forwarded.strip()))
+    except (ValueError, AttributeError):
+        return peer
+
 
 def rate_ok(ip: str, limit=18, window=60) -> bool:
     now=time.time()
@@ -499,6 +515,9 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(f'{self.address_string()} - {fmt % args}')
 
+    def _client_ip(self):
+        return proxy_client_ip(self.client_address[0],self.headers.get("X-Wedding-Client-IP", ""))
+
     def _origin(self):
         return (self.headers.get("Origin") or "").rstrip("/")
 
@@ -533,8 +552,10 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError: n=0
         if n<0 or n>MAX_BODY: raise ValueError("body_too_large")
         raw=self.rfile.read(n) if n else b"{}"
-        try: return json.loads(raw.decode("utf-8"))
+        try: value=json.loads(raw.decode("utf-8"))
         except Exception: raise ValueError("invalid_json")
+        if not isinstance(value,dict): raise ValueError("json_object_required")
+        return value
 
     def _session(self, require_csrf=False):
         purge_sessions()
@@ -599,7 +620,12 @@ class Handler(BaseHTTPRequestHandler):
         if p=="/assets/admin.js":
             return self._static("assets/admin.js","text/javascript; charset=utf-8")
         if p=="/healthz":
-            return self._json(200,{"ok":True})
+            try:
+                with closing(sqlite3.connect("file:"+str(DB_PATH)+"?mode=ro",uri=True,timeout=2)) as c:
+                    c.execute("SELECT key FROM settings LIMIT 1").fetchone()
+            except sqlite3.Error:
+                return self._json(503,{"ok":False,"database":"unavailable","code_sha256":CODE_SHA256})
+            return self._json(200,{"ok":True,"database":"ready","code_sha256":CODE_SHA256})
         if p=="/api/public/config":
             with db() as c: settings=read_settings(c)
             return self._json(200,settings,cors=True)
@@ -641,8 +667,8 @@ class Handler(BaseHTTPRequestHandler):
         if p=="/api/public/invite":
             if self._origin() and self._origin() not in ALLOWED_ORIGINS:
                 return self._json(403,{"error":"origin_not_allowed"},cors=True)
-            if not rate_ok("invite:"+self.client_address[0],30,60):
-                return self._json(429,{"error":"too_many_requests"},cors=True)
+            if not rate_ok("invite:"+self._client_ip(),30,60):
+                return self._json(429,{"error":"too_many_requests"},cors=True,extra={"Retry-After":"60"})
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
             name=clean_text(data.get("name"),120)
@@ -654,8 +680,8 @@ class Handler(BaseHTTPRequestHandler):
         if p=="/api/public/rsvp":
             if self._origin() and self._origin() not in ALLOWED_ORIGINS:
                 return self._json(403,{"error":"origin_not_allowed"},cors=True)
-            if not rate_ok(self.client_address[0],18,60):
-                return self._json(429,{"error":"too_many_requests"},cors=True)
+            if not rate_ok("rsvp:"+self._client_ip(),18,60):
+                return self._json(429,{"error":"too_many_requests"},cors=True,extra={"Retry-After":"60"})
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
             return self._public_rsvp(data)
@@ -663,7 +689,7 @@ class Handler(BaseHTTPRequestHandler):
             origin=self._origin()
             if origin not in ALLOWED_ORIGINS:
                 return self._json(403,{"error":"origin_not_allowed"},cors=True)
-            if not rate_ok("entry:"+self.client_address[0],8,300):
+            if not rate_ok("entry:"+self._client_ip(),8,300):
                 return self._json(429,{"error":"too_many_attempts"},cors=True)
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)},cors=True)
@@ -675,7 +701,7 @@ class Handler(BaseHTTPRequestHandler):
             with _lock: _entry_tokens[token]=time.time()+60
             return self._json(200,{"ok":True,"entry_token":token},cors=True)
         if p=="/api/admin/login":
-            if not rate_ok("login:"+self.client_address[0],8,300):
+            if not rate_ok("login:"+self._client_ip(),8,300):
                 return self._json(429,{"error":"too_many_attempts"})
             try: data=self._body()
             except ValueError as e: return self._json(400,{"error":str(e)})
@@ -786,6 +812,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._json(200,{"ok":cur.rowcount>0})
 
     def _public_rsvp(self, data):
+        if data.get("attendance") not in ("yes","no"):
+            return self._json(400,{"error":"invalid_attendance"},cors=True)
         name=clean_text(data.get("name"),120)
         phone=re.sub(r"[^\d+]","",clean_text(data.get("phone"),40))
         email=clean_text(data.get("email"),160).lower()
@@ -804,6 +832,8 @@ class Handler(BaseHTTPRequestHandler):
         diet=clean_text(data.get("diet"),240); song=clean_text(data.get("song"),240); notes=clean_text(data.get("message"),1200)
         now=now_iso()
         with db() as c:
+            # Serialize duplicate submission checks with the write, including lost-ACK retries.
+            c.execute("BEGIN IMMEDIATE")
             existing=c.execute("SELECT id,status,matched_guest_id FROM rsvp_submissions WHERE request_id=?",(request_id,)).fetchone()
             if existing:
                 return self._json(200,{"ok":True,"id":existing["id"],"duplicate":True,"review_pending":existing["status"]=="pending"},cors=True)

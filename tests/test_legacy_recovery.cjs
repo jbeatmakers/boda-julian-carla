@@ -15,6 +15,8 @@ assert.match(target,/^https:\/\/bodajulianycarla\.bpm\.red\/actualizar\.html\?/)
 assert.match(target,/legacy=1/);
 assert.match(target,/#rsvp$/);
 const updater=fs.readFileSync('actualizar.html','utf8');
-assert.match(updater,/20260927-access-3/);
-assert.doesNotMatch(updater,/20260927-access-2/);
+const html=fs.readFileSync('index.html','utf8');
+const release=html.match(/name="wedding-release" content="([^"]+)"/)[1];
+assert(updater.includes('_v='+release),'Recovery must point to current release');
+assert.doesNotMatch(updater,/20260927-access-1/);
 console.log('PASS: legacy cached invitation is recovered to current BODA release');

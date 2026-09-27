@@ -1,22 +1,9 @@
-# Estado de la release
+# Estado verificable de la release
 
-## Terminado en código
+El identificador público está en `index.html` y el commit desplegado en `/release.json`. El backend informa su SHA-256 normalizado y el estado de lectura de SQLite en `/healthz`. Comparar ambos con la revisión que se está auditando; no asumir vigencia por el nombre de una carpeta.
 
-- Invitación pública v2.
-- Acceso `BODA`.
-- Mapas exactos y navegación.
-- Confetti liviano al entrar y al abrir direcciones.
-- RSVP persistente + reintento offline.
-- Copy de asistencia/no asistencia y regalos.
-- Precio de tarjeta editable.
-- Admin seguro y compartido.
-- Invitados con precio general/especial/sin cargo, pagos, regalos y mesas.
-- Gastos, compras, tareas, proveedores y checklist base.
-- Importación del backup legado.
-- Backups automáticos del VPS.
-- Workflow self-hosted opcional y helper de privilegio acotado.
-- Tests backend/security/static.
+El pipeline `Validate and publish wedding release` comprueba unidades/integración, Chromium/Firefox/WebKit, igualdad del backend, construcción pública, publicación y verificación posterior. `Wedding production diagnostic` permite repetir comprobaciones públicas sin credenciales SSH y sin escribir invitados.
 
-## Cambio de infraestructura necesario para quedar en producción
+Los datos y secretos siguen en el VPS; nunca forman parte del artefacto. Los despliegues de backend realizan backup y sólo reinician `boda-wedding`.
 
-Hace falta aplicar estos archivos al repo/VPS y configurar DNS/TLS del nuevo backend. Eso no se codifica como secreto dentro de la release: la contraseña admin, DNS y certificados pertenecen al entorno del VPS.
+El comportamiento y las limitaciones de caché están en `docs/DEPLOY.md` y el mapa operativo está en `docs/HANDOVER.md`. No usar la documentación histórica de la demo localStorage-only.

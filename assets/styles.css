@@ -184,3 +184,6 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
   #gate{overflow:auto;align-items:start}
   .gate-box{height:auto;min-height:620px;margin:auto;padding-top:140px;padding-bottom:120px}
 }
+
+.config-notice{position:relative;z-index:5;margin:1rem auto;padding:.75rem 1rem;max-width:50rem;background:#f4efe5;border:1px solid #c9c2b0;border-radius:.6rem;font-size:.9rem;text-align:center}
+.config-notice .btn{margin-left:.5rem}

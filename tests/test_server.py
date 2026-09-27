@@ -233,4 +233,53 @@ class WeddingApiTest(unittest.TestCase):
         s,d,_=self.req("POST","/api/admin/tasks",{"title":"Sin csrf"},{"Cookie":cookie}); self.assertEqual(s,401)
         s,d,_=self.req("POST","/api/admin/tasks",{"title":"Con csrf"},{"Cookie":cookie,"X-CSRF-Token":csrf}); self.assertEqual(s,201)
 
+    def test_health_reports_missing_database_without_creating_one(self):
+        old=app.DB_PATH
+        app.DB_PATH=Path(self.tmp.name)/"missing-health-check.sqlite3"
+        try:
+            status,data,_=self.req("GET","/healthz")
+            self.assertEqual(status,503)
+            self.assertFalse(data["ok"])
+            self.assertFalse(app.DB_PATH.exists())
+        finally: app.DB_PATH=old
+
+    def test_public_body_must_be_object_and_attendance_explicit(self):
+        h={"Origin":"https://bodajulianycarla.bpm.red"}
+        for body in ([],None,"bad",123):
+            status,_,_=self.req("POST","/api/public/rsvp",body,h)
+            self.assertEqual(status,400)
+        status,_,_=self.req("POST","/api/public/rsvp",{"name":"Test","attendance":"maybe"},h)
+        self.assertEqual(status,400)
+
+    def test_trusted_proxy_does_not_share_rsvp_limit_between_guests(self):
+        old=app.TRUSTED_PROXIES
+        app.TRUSTED_PROXIES=(app.ipaddress.ip_network("127.0.0.1/32"),)
+        h={"Origin":"https://bodajulianycarla.bpm.red","X-Wedding-Client-IP":"198.51.100.1"}
+        try:
+            for _ in range(18):
+                status,_,_=self.req("POST","/api/public/rsvp",{"attendance":"yes"},h)
+                self.assertEqual(status,400)
+            status,_,headers=self.req("POST","/api/public/rsvp",{"attendance":"yes"},h)
+            self.assertEqual(status,429)
+            self.assertEqual(headers["Retry-After"],"60")
+            h["X-Wedding-Client-IP"]="198.51.100.2"
+            self.assertEqual(self.req("POST","/api/public/rsvp",{"attendance":"yes"},h)[0],400)
+        finally: app.TRUSTED_PROXIES=old
+        networks=(app.ipaddress.ip_network("172.18.0.2/32"),)
+        self.assertEqual(app.proxy_client_ip("172.18.0.2","198.51.100.4",networks),"198.51.100.4")
+        self.assertEqual(app.proxy_client_ip("198.51.100.1","198.51.100.4",networks),"198.51.100.1")
+        self.assertEqual(app.proxy_client_ip("172.18.0.2","spoof, 198.51.100.4",networks),"172.18.0.2")
+
+    def test_concurrent_duplicate_rsvp_is_saved_exactly_once(self):
+        from concurrent.futures import ThreadPoolExecutor
+        body={"request_id":"parallel-test-id","name":"Concurrent Test","attendance":"yes","seats":2}
+        h={"Origin":"https://bodajulianycarla.bpm.red"}
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            results=list(pool.map(lambda _:self.req("POST","/api/public/rsvp",body,h),range(6)))
+        self.assertEqual(sum(status==201 for status,_,_ in results),1)
+        self.assertTrue(all(status in (200,201) for status,_,_ in results))
+        self.assertEqual(len({data["id"] for _,data,_ in results}),1)
+        with app.db() as c:
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM rsvp_submissions WHERE request_id=?",("parallel-test-id",)).fetchone()[0],1)
+
 if __name__=="__main__": unittest.main(verbosity=2)

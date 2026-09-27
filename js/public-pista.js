@@ -1,11 +1,7 @@
-// Recovery shim for invitation HTML cached before the BODA release.
-(() => {
+// Send retired cached HTML to the current invitation, never accept retired codes.
+(function () {
   "use strict";
-  const current = document.querySelector('meta[name="wedding-release"]')?.content;
-  if (current) return;
-  const target = new URL("https://bodajulianycarla.bpm.red/actualizar.html");
-  target.searchParams.set("legacy", "1");
-  target.searchParams.set("_refresh", String(Date.now()));
-  target.hash = window.location.hash;
-  window.location.replace(target.href);
-})();
+  var marker = document.querySelector('meta[name="wedding-release"]');
+  if (marker && marker.content) return;
+  window.location.replace("https://bodajulianycarla.bpm.red/actualizar.html?legacy=1&_refresh=" + new Date().getTime() + window.location.hash);
+}());

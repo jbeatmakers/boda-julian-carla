@@ -1,80 +1,28 @@
-name: VPS diagnostic
-
+name: Wedding production diagnostic
 on:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Public production smoke test
-        shell: bash
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify published source, live database health and canonical CORS
+        run: python tools/check_production.py --wait 30
+      - name: Install pinned browser verifier
         run: |
-          set -euo pipefail
-          curl -fsS -o /tmp/site.html https://bodajulianycarla.bpm.red/
-          grep -q 'name="wedding-release"' /tmp/site.html
-          curl -fsS -o /tmp/health.json https://boda-api.13-140-183-198.sslip.io/healthz
-          grep -q '"ok":true' /tmp/health.json
-          curl -fsS -D /tmp/config.headers -o /tmp/config.json \
-            -H 'Origin: https://bodajulianycarla.bpm.red' \
-            https://boda-api.13-140-183-198.sslip.io/api/public/config
-          grep -qi '^Access-Control-Allow-Origin: https://bodajulianycarla.bpm.red' /tmp/config.headers
-          python - <<'PY'
-          import json
-          with open('/tmp/config.json', encoding='utf-8') as f:
-              data=json.load(f)
-          assert isinstance(data.get('ticket'),dict)
-          assert isinstance(data.get('layout'),dict)
-          assert isinstance(data['layout'].get('sections'),list)
-          PY
-          curl -fsSI -D /tmp/alias.headers -o /dev/null https://bodajuliancarla.bpm.red/
-          location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}' /tmp/alias.headers)"
-          test "$location" = 'https://bodajulianycarla.bpm.red/'
-
-      - name: Detect optional SSH diagnostics
-        id: ssh
-        shell: bash
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-        run: |
-          if [ -n "$VPS_HOST" ] && [ -n "$VPS_USER" ] && [ -n "$VPS_SSH_KEY" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "SSH secrets are not configured; public production checks remain authoritative."
-          fi
-
-      - name: Configure SSH
-        if: steps.ssh.outputs.enabled == 'true'
-        shell: bash
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
-
-      - name: Deep VPS diagnostic
-        if: steps.ssh.outputs.enabled == 'true'
-        shell: bash
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-        run: |
-          ssh "$VPS_USER@$VPS_HOST" '
-            set -e
-            hostname
-            docker ps --filter name=boda-wedding
-            docker exec caddy wget -qO- http://boda-wedding:8787/healthz
-            sudo test -f /var/lib/boda-julian-carla/wedding.sqlite3
-            sudo systemctl is-active boda-wedding-backup.timer
-            docker logs --tail=100 boda-wedding 2>&1 || true
-          '
+          python -m pip install playwright==1.54.0
+          python -m playwright install --with-deps chromium
+      - name: Verify canonical BODA and connection recovery without changing guest data
+        run: python tests/browser_access.py --base https://bodajulianycarla.bpm.red --output browser-results-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagnostic-browser-evidence
+          path: browser-results-diagnostic.json
+          retention-days: 7

@@ -1,55 +1,30 @@
-# Handover — Boda Julián & Carla
+# Handover operativo — Boda Julián & Carla
 
-Sitio: https://bodajulianycarla.bpm.red  
-Repo: https://github.com/jbeatmakers/boda-julian-carla  
-Pages: rama `main` + CNAME `bodajulianycarla.bpm.red`
+Este documento sustituye la descripción de la demo sin servidor. No usar las copias históricas como fuente de producción.
 
-## Qué es
+## Mapa vigente
 
-Landing estática (GitHub Pages, zero-build) + panel `admin.html`.  
-RSVP abre WhatsApp y guarda el registro en `localStorage`. No hay servidor propio.
+- Repositorio: `jbeatmakers/boda-julian-carla`.
+- Dominio único de la tarjeta: `https://bodajulianycarla.bpm.red/`, con la y.
+- API pública: `https://boda-api.bpm.red`.
+- Administración: `https://boda-api.13-140-183-198.sslip.io`. Se conserva su origen para no cambiar sesiones ni OAuth.
+- VPS: `13.140.183.198`, contenedor `boda-wedding`; proxy `caddy`.
+- SQLite persistente: `/var/lib/boda-julian-carla/wedding.sqlite3`.
+- Código: `/opt/boda-julian-carla`; entorno privado fuera de Git.
+- Pages: artefacto de Actions, no publicación independiente de la raíz del repositorio.
 
-## Evento
+## Qué comprobar antes de trabajar
 
-| Campo | Valor |
-|---|---|
-| Público | Julián & Carla (sin apellidos en el hero) |
-| Titulares bancarios | Julián Morales & Carla Quiroga |
-| Fecha | 18 de diciembre de 2026 |
-| Ceremonia | 17:00 Iglesia San Pedro y San Pablo, Carlos Figueroa, San Pablo de Reyes |
-| Fiesta | 18:30 El Quincho del Predio de Reyes (no decir “Colegio de Abogados” en la tarjeta) |
-| Dress code | Estética Edén (no usar la palabra “botánico” en el copy) |
-| Gate invitados | `BODA` (client-side) |
-| Admin | `AUTH_USER` / `AUTH_PASS` en `admin.html` |
+Leer `docs/DEPLOY.md`, comparar `git status`, la rama, `origin/main`, `/release.json` del sitio y el `code_sha256` de `/healthz`. Conservar cambios de otros hilos. Una release nueva en Git no implica que el backend ya esté desplegado.
 
-## Decisiones de producto (no revertir)
+BODA abre la tarjeta aunque falle la solicitud de configuración. La interfaz no inventa precio ni datos bancarios mientras espera. El código administrativo sólo se valida en servidor; jamás está embebido como AUTH_PASS en HTML.
 
-- Sin “Edición Nº 01”.
-- Sin montos de regalo. Colaboración voluntaria.
-- Menú especial oculto detrás de un toggle.
-- Al declinar: tono positivo.
-- Pista pública: títulos anónimos, nunca el nombre del invitado.
-- Reproductor: YouTube (gratis, sin Premium). No Spotify.
+Las respuestas se guardan en `rsvp_submissions` y se concilian desde el administrador con la lista de invitados. Las filas pendientes de conciliación no deben confundirse con respuestas perdidas. La cola local es sólo una contingencia, nunca la fuente de verdad.
 
-## Persistencia
+`js/public-pista.js`, `actualizar.html` y el repositorio retirado `boda-julian-carla-pages` recuperan las entradas antiguas hacia la misma tarjeta. No volver a publicar la demo ni crear un segundo administrador. El dominio sin y no fue demostrado como origen de los fallos reportados.
 
-- `boda_julian_carla_guests`
-- `boda_julian_carla_config`
-- `boda_julian_carla_shopping`
-- `boda_julian_carla_offers`
-- `boda_julian_carla_vendors`
-- `boda_julian_carla_tables`
-- `boda_julian_carla_pista`
-- `boda_julian_carla_rates`
+## Evidencia reproducible
 
-La pista visible para **todos** los invitados se publica en `pista.json` (exportar desde el panel y commitear). `localStorage` solo se ve en esa computadora.
+Las suites JavaScript, `python -m unittest discover -s tests -v`, `tests/browser_access.py`, `tools/build_public.py` y `tools/check_production.py` son los controles actuales. Las pruebas de navegador locales usan SQLite temporal; el modo `--base` sólo lee producción. Actions guarda resultados de los tres motores y del navegador contra la URL oficial.
 
-## Placeholders
-
-WhatsApp receptor, alias, CBU, link MP, playlist de YouTube: Admin → Ajustes / tab Pista.
-
-## Local
-
-```bash
-python3 -m http.server 8080
-```
+No afirmar que todos los dispositivos del mundo están comprobados: una pestaña congelada que no hace solicitudes no puede recibir código nuevo hasta que se recargue o vuelva a navegar.
