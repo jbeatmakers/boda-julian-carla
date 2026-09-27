@@ -3,29 +3,75 @@ name: VPS diagnostic
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check required secrets
+      - name: Public production smoke test
+        shell: bash
         run: |
-          test -n "${{ secrets.VPS_HOST }}" || (echo "Missing VPS_HOST" && exit 1)
-          test -n "${{ secrets.VPS_USER }}" || (echo "Missing VPS_USER" && exit 1)
-          test -n "${{ secrets.VPS_SSH_KEY }}" || (echo "Missing VPS_SSH_KEY" && exit 1)
+          set -euo pipefail
+          curl -fsS https://bodajulianycarla.bpm.red/ | grep -q 'name="wedding-release"'
+          curl -fsS https://boda-api.13-140-183-198.sslip.io/healthz | grep -q '"ok":true'
+          curl -fsS -D /tmp/config.headers -o /tmp/config.json \
+            -H 'Origin: https://bodajulianycarla.bpm.red' \
+            https://boda-api.13-140-183-198.sslip.io/api/public/config
+          grep -qi '^Access-Control-Allow-Origin: https://bodajulianycarla.bpm.red' /tmp/config.headers
+          python - <<'PY'
+          import json
+          with open('/tmp/config.json', encoding='utf-8') as f:
+              data=json.load(f)
+          assert isinstance(data.get('ticket'),dict)
+          assert isinstance(data.get('layout'),dict)
+          assert isinstance(data['layout'].get('sections'),list)
+          PY
+          location="$(curl -fsSI https://bodajuliancarla.bpm.red/ | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^location:/{print $2; exit}')"
+          test "$location" = 'https://bodajulianycarla.bpm.red/'
+
+      - name: Detect optional SSH diagnostics
+        id: ssh
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$VPS_USER" ] && [ -n "$VPS_SSH_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "SSH secrets are not configured; public production checks remain authoritative."
+          fi
 
       - name: Configure SSH
+        if: steps.ssh.outputs.enabled == 'true'
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
-      - name: Production diagnostic
+      - name: Deep VPS diagnostic
+        if: steps.ssh.outputs.enabled == 'true'
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" '
-            hostname;
-            docker ps;
-            docker logs --tail=100 boda-wedding || true;
-            test -f /var/lib/boda-julian-carla/wedding.sqlite3 && echo "database exists" || true
+          ssh "$VPS_USER@$VPS_HOST" '
+            set -e
+            hostname
+            docker ps --filter name=boda-wedding
+            docker exec caddy wget -qO- http://boda-wedding:8787/healthz
+            sudo test -f /var/lib/boda-julian-carla/wedding.sqlite3
+            sudo systemctl is-active boda-wedding-backup.timer
+            docker logs --tail=100 boda-wedding 2>&1 || true
           '

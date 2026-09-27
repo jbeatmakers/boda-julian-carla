@@ -91,8 +91,8 @@ function page({code, storageThrows = false, missingRetry = false, failures = 0} 
   const interrupted = page({code:'boda', failures:3, storageThrows:true});
   await interrupted.submit();
   await new Promise(resolve=>setTimeout(resolve,1800));
-  assert.equal(interrupted.unlocked,false);
-  assert.match(interrupted.error,/Código aceptado/);
+  assert.equal(interrupted.unlocked,true,'Accepted BODA must open even while config is unavailable');
+  assert.equal(interrupted.error,'');
   await interrupted.reconnect();
   assert.equal(interrupted.unlocked,true,'Connection recovery opens automatically without entering BODA again');
 

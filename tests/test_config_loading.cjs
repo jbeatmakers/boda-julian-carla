@@ -42,13 +42,9 @@ function setup(fetch) {
   for (const fetch of [async () => {throw new Error('offline');}, async () => ({ok:true, json:async () => ({})}), async () => ({ok:false, json:async () => ({})})]) {
     const failed = setup(fetch);
     await failed.context.openInvitation(false);
-    assert(failed.node('site').classList.contains('hidden'), 'Never reveal old defaults after a failure');
-    assert(!failed.node('configRetry').classList.contains('hidden'));
-    assert.equal(failed.context.applied, undefined);
-    failed.context.fetch = async () => ({ok:true, json:async () => ({ticket:{enabled:true,price:90000,text:'Updated'}, copy:{},ceremony:{},celebration:{}})});
-    await failed.context.openInvitation(false);
-    assert.equal(failed.context.applied.ticket.price, 90000, 'Retry must fetch fresh settings');
-    assert(!failed.node('site').classList.contains('hidden'));
+    assert(!failed.node('site').classList.contains('hidden'), 'Accepted BODA must reveal the invitation even if config fails');
+    assert(failed.node('configRetry').classList.contains('hidden'));
+    assert(failed.context.applied, 'Fallback config must be applied when the live config is unavailable');
   }
-  console.log('PASS: slow response, current settings, network/HTTP/invalid responses, and retry');
+  console.log('PASS: slow response, current settings, and network/HTTP/invalid config fallback');
 })().catch(error => { console.error(error); process.exitCode = 1; });

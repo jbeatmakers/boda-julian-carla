@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Small persistent wedding backend: stdlib + SQLite, no runtime dependency on GitHub."""
 from __future__ import annotations
-import argparse, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, unicodedata, uuid
+import argparse, ast, base64, getpass, hashlib, hmac, json, math, os, re, secrets, sqlite3, threading, time, unicodedata, uuid
 from contextlib import contextmanager
 from difflib import SequenceMatcher
 from datetime import datetime, timezone
@@ -50,7 +50,7 @@ DEFAULT_SETTINGS = {
     "location_display":"San Pablo de Reyes · Jujuy",
     "rsvp_deadline_display":"1 de diciembre",
     "ceremony":{"time":"17:00","title":"Santa Misa de Casamiento","place":"Iglesia San Pedro y San Pablo","address":"Carlos Figueroa · San Pablo de Reyes · Jujuy","lat":-24.14581,"lng":-65.39445},
-    "celebration":{"time":"18:30","title":"Recepción, cena & fiesta","place":"Quincho · San Pablo de Reyes","address":"A unos 300 metros de la ceremonia.","lat":-24.14816,"lng":-65.39326},
+    "celebration":{"time":"19:00","title":"Recepción, cena & fiesta","place":"Quincho · San Pablo de Reyes","address":"A unos 300 metros de la ceremonia.","lat":-24.14816,"lng":-65.39326},
     "dress":{"title":"Estética Edén","concept":"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.","details":"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
     "ticket":{"enabled":True,"price":80000,"currency":"ARS","text":"Ese es el valor por persona para la cena y la fiesta. Si en tu invitación acordamos otra cosa, naturalmente vale eso."},
     "bank":{"holder":"","alias":"","cbu":"","mp_url":""},
@@ -177,8 +177,15 @@ def init_db() -> None:
         for k in ("copy","layout"):
             row=c.execute("SELECT value FROM settings WHERE key=?",(k,)).fetchone()
             if not row: continue
+            legacy_layout=False
             try: current=json.loads(row["value"])
             except (TypeError, json.JSONDecodeError): current={}
+            if k=="layout" and isinstance(current,str):
+                try: legacy=ast.literal_eval(current)
+                except (ValueError,SyntaxError): legacy={}
+                if isinstance(legacy,dict):
+                    current=legacy
+                    legacy_layout=True
             default=DEFAULT_SETTINGS[k]
             if k=="copy" and isinstance(current,dict):
                 merged={**default,**current}
@@ -190,7 +197,7 @@ def init_db() -> None:
                 merged["sections"] += [x for x in configured if isinstance(x,dict) and x.get("id") not in wanted_ids]
             else:
                 continue
-            if merged!=current:
+            if merged!=current or legacy_layout:
                 c.execute("UPDATE settings SET value=?,updated_at=? WHERE key=?",
                           (json.dumps(merged,ensure_ascii=False),now_iso(),k))
 
@@ -462,6 +469,23 @@ def sanitize_settings_payload(data: dict) -> dict:
         elif key=="copy":
             if not isinstance(value,dict): raise ValueError("invalid_copy")
             out[key]={k:clean_text(v,1200) for k,v in value.items() if k in DEFAULT_SETTINGS["copy"]}
+        elif key=="layout":
+            if not isinstance(value,dict) or not isinstance(value.get("sections"),list):
+                raise ValueError("invalid_layout")
+            defaults=DEFAULT_SETTINGS["layout"]["sections"]
+            allowed={item["id"]:item for item in defaults}
+            clean=[]; seen=set()
+            for item in value["sections"]:
+                if not isinstance(item,dict): raise ValueError("invalid_layout")
+                section_id=clean_text(item.get("id"),80)
+                if section_id not in allowed or section_id in seen: continue
+                visible=item.get("visible",True)
+                if not isinstance(visible,bool): raise ValueError("invalid_layout")
+                label=clean_text(item.get("label"),120) or allowed[section_id]["label"]
+                clean.append({"id":section_id,"label":label,"visible":visible})
+                seen.add(section_id)
+            clean.extend(dict(item) for item in defaults if item["id"] not in seen)
+            out[key]={"sections":clean}
         elif key=="dress":
             if not isinstance(value,dict): raise ValueError("invalid_dress")
             out[key]={k:clean_text(value.get(k),1200) for k in ("title","concept","details")}

@@ -2,6 +2,7 @@
   "use strict";
   const ACCESS_CODE = "BODA";
   const ACCESS_KEY = "boda_access_v2";
+  const GATE_CONFIG_GRACE_MS = 800;
   const OUTBOX_KEY = "boda_rsvp_outbox_v2";
   const API_BASE = (document.querySelector('meta[name="wedding-api"]')?.content || "").replace(/\/+$/,"");
   const DEFAULTS = {
@@ -9,7 +10,7 @@
     location_display:"San Pablo de Reyes · Jujuy",
     rsvp_deadline_display:"1 de diciembre",
     ceremony:{time:"17:00",title:"Santa Misa de Casamiento",place:"Iglesia San Pedro y San Pablo",address:"Carlos Figueroa · San Pablo de Reyes · Jujuy",lat:-24.14581,lng:-65.39445},
-    celebration:{time:"18:30",title:"Recepción, cena & fiesta",place:"Quincho · San Pablo de Reyes",address:"A unos 300 metros de la ceremonia.",lat:-24.14816,lng:-65.39326},
+    celebration:{time:"19:00",title:"Recepción, cena & fiesta",place:"Quincho · San Pablo de Reyes",address:"A unos 300 metros de la ceremonia.",lat:-24.14816,lng:-65.39326},
     dress:{title:"Estética Edén",concept:"Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.",details:"Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche."},
     ticket:{enabled:false,price:null,currency:"ARS",text:""},
     bank:{holder:"",alias:"",cbu:"",mp_url:""},
@@ -93,21 +94,27 @@
     opening = true;
     $("configRetry")?.classList.add("hidden");
     $("gateError").textContent="Cargando la invitación actual…";
-    try{
-      await loadPublicConfig();
-    }catch(_){
-      $("gateError").textContent="Código aceptado. Estamos intentando reconectar automáticamente…";
-      $("configRetry")?.classList.remove("hidden");
-      return;
-    }finally{ opening = false; }
+
+    let configLoaded = false;
+    const configLoad = loadPublicConfig()
+      .then(()=>{ configLoaded = true; return true; })
+      .catch(()=>false);
+    await Promise.race([
+      configLoad,
+      new Promise(resolve=>setTimeout(resolve,GATE_CONFIG_GRACE_MS))
+    ]);
+    if(!configLoaded) applyConfig(config);
+
     $("gateError").textContent="";
     $("gate").classList.add("hidden");
     $("site").classList.remove("hidden");
     document.body.classList.remove("locked");
+    opening = false;
     if(withCelebration) requestAnimationFrame(()=>celebrate(42));
     startCountdown();
     loadInstagram();
     flushOutbox();
+
   }
 
   function celebrate(count=32){

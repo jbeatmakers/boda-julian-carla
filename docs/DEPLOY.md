@@ -47,14 +47,14 @@ docker exec caddy wget -qO- http://boda-wedding:8787/healthz
 systemctl is-active boda-wedding-backup.timer
 ```
 
-La workflow de GitHub **sólo valida** sintaxis/tests. No despliega ni depende de un runner del VPS.
+`Validate wedding release` valida sintaxis/tests y no despliega. `VPS diagnostic` ejecuta smoke tests públicos siempre; si existen los secretos SSH del repositorio añade diagnóstico interno del VPS, pero su ausencia ya no convierte en fallo una producción pública sana.
 
 ## Versiones del frontend
 Cada cambio público debe actualizar wedding-release y las versiones de assets en index.html. updates.js comprueba esa versión cada minuto y al volver a la pestaña; conserva temporalmente el formulario durante la recarga. Los textos del administrador se consultan también cada minuto sin recargar. Una pestaña que ejecuta código anterior a este mecanismo necesita cargar la página una vez para incorporarlo.
 
 ## Recuperación de acceso
 
-`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Las rutas antiguas y los scripts retirados la utilizan automáticamente para recuperar HTML anterior al actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Si falla la configuración de la API después de aceptar BODA, se reintenta automáticamente cada 15 segundos, al recuperar conexión y al volver a la pestaña. Se evita mostrar precios desactualizados; la red del invitado debe poder llegar a la API.
+`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Las rutas antiguas y los scripts retirados la utilizan automáticamente para recuperar HTML anterior al actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Un BODA válido abre la invitación después de una espera breve aunque la API esté temporalmente inaccesible; en ese caso usa el fallback público sin precio ni datos bancarios y sincroniza la configuración vigente al recuperar conexión, al volver a la pestaña o en el refresco periódico.
 
 
 ## Alias de dominio tolerante

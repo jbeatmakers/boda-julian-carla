@@ -192,6 +192,27 @@ class WeddingApiTest(unittest.TestCase):
         s,d,_=self.req("PUT","/api/admin/settings",{"planning":{"table_capacity":0}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_table_capacity")
         s,d,_=self.req("PUT","/api/admin/settings",{"bank":{"mp_url":"javascript:alert(1)"}},h); self.assertEqual(s,400); self.assertEqual(d["error"],"invalid_url")
 
+    def test_layout_settings_roundtrip_and_legacy_repair(self):
+        cookie,csrf=self.login(); h={"Cookie":cookie,"X-CSRF-Token":csrf}
+        layout={"sections":[
+            {"id":"rsvp","label":"Confirmación","visible":False},
+            {"id":"lugares","label":"Ubicaciones","visible":True},
+        ]}
+        s,d,_=self.req("PUT","/api/admin/settings",{"layout":layout},h); self.assertEqual(s,200)
+        s,d,_=self.req("GET","/api/public/config",headers={"Origin":"https://bodajulianycarla.bpm.red"})
+        self.assertEqual(s,200); self.assertIsInstance(d["layout"],dict); self.assertIsInstance(d["layout"]["sections"],list)
+        by_id={x["id"]:x for x in d["layout"]["sections"]}
+        self.assertFalse(by_id["rsvp"]["visible"]); self.assertEqual(by_id["lugares"]["label"],"Ubicaciones")
+        with app.db() as c:
+            legacy="{'sections': [{'id': 'rsvp', 'label': 'RSVP legado', 'visible': False}]}"
+            c.execute("UPDATE settings SET value=? WHERE key='layout'",(json.dumps(legacy),))
+        app.init_db()
+        with app.db() as c:
+            raw=c.execute("SELECT value FROM settings WHERE key='layout'").fetchone()["value"]
+            repaired=json.loads(raw)
+        self.assertIsInstance(repaired,dict); self.assertIsInstance(repaired["sections"],list)
+        self.assertEqual(next(x for x in repaired["sections"] if x["id"]=="rsvp")["label"],"RSVP legado")
+
     def test_special_entry_creates_admin_session_without_login_form(self):
         origin={"Origin":"https://bodajulianycarla.bpm.red"}
         s,d,h=self.req("POST","/api/admin/entry",{"code":"#TEST-ENTRY-ONLY"},origin)
