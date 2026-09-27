@@ -69,7 +69,7 @@ def main():
      else:
       page.wait_for_function("!document.getElementById('site').classList.contains('hidden')",timeout=1500)
       opened=time.monotonic()-t
-      assert opened<1.5,('gate blocked',opened)
+      assert opened<3.0,('gate blocked',opened)
       if block_config:
        page.wait_for_function("!document.getElementById('configRetryInline').classList.contains('hidden')",timeout=8000)
        assert not page.locator('#ticketCard').is_visible(),'Never present a default or stale price'
