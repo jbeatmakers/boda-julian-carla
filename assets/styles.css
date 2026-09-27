@@ -164,9 +164,9 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
 .gate-code{width:100%;padding:.7rem .45rem;background:rgba(255,253,248,.9)}
 .frame{inset:8px;border:1px solid rgba(74,88,68,.32);border-radius:18px}
 #site:before,#site:after{
-  position:fixed;top:0;bottom:0;height:100vh;width:clamp(82px,18vw,190px);
+  position:absolute;top:0;bottom:0;height:auto;width:clamp(82px,18vw,190px);
   opacity:.20;transform:none;background-image:url("botanical-frame.webp");
-  background-repeat:no-repeat;background-size:480px 100vh
+  background-repeat:repeat-y;background-size:480px 640px
 }
 #site:before{left:0;background-position:left top}
 #site:after{right:0;background-position:right top}
@@ -177,7 +177,7 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
   .gate-help{font-size:.88rem}
   .gate-code{font-size:.92rem}
   .gate-submit{font-size:.6rem;letter-spacing:.06em}
-  #site:before,#site:after{width:72px;opacity:.14;background-size:330px 100vh}
+  #site:before,#site:after{width:72px;opacity:.14;background-size:330px 440px}
 }
 @media(max-height:640px){
   #gate{overflow:auto;align-items:start}
