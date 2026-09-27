@@ -25,6 +25,7 @@
   const cloneConfig = value => JSON.parse(JSON.stringify(value));
   let config = cloneConfig(DEFAULTS);
   let opening = false;
+  let accessGranted = false;
   const $ = id => document.getElementById(id);
   const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null) el.textContent=v; };
   const money = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
@@ -44,11 +45,16 @@
     window.addEventListener("online", flushOutbox);
     let refreshing = false;
     async function refreshCurrentConfig(){
-      if(refreshing || opening || document.hidden || $("site").classList.contains("hidden")) return;
+      if(refreshing || opening || document.hidden) return;
+      if($("site").classList.contains("hidden")){
+        if(accessGranted && navigator.onLine) await unlock(false);
+        return;
+      }
       refreshing = true;
       try{ await loadPublicConfig(); }catch(_){}finally{ refreshing = false; }
     }
     setInterval(refreshCurrentConfig,60000);
+    setInterval(()=>{if($("site").classList.contains("hidden")) refreshCurrentConfig();},15000);
     window.addEventListener("online",refreshCurrentConfig);
     window.addEventListener("pageshow",refreshCurrentConfig);
     document.addEventListener("visibilitychange",refreshCurrentConfig);
@@ -83,13 +89,14 @@
 
   async function unlock(withCelebration){
     if(opening || !$("site").classList.contains("hidden")) return;
+    accessGranted = true;
     opening = true;
     $("configRetry")?.classList.add("hidden");
     $("gateError").textContent="Cargando la invitación actual…";
     try{
       await loadPublicConfig();
     }catch(_){
-      $("gateError").textContent="No pudimos cargar la invitación. Revisá tu conexión y volvé a intentar.";
+      $("gateError").textContent="Código aceptado. Estamos intentando reconectar automáticamente…";
       $("configRetry")?.classList.remove("hidden");
       return;
     }finally{ opening = false; }

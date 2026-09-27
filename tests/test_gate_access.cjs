@@ -4,7 +4,7 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync('assets/app.js', 'utf8');
 
-function page({code, storageThrows = false, missingRetry = false} = {}) {
+function page({code, storageThrows = false, missingRetry = false, failures = 0} = {}) {
   const elements = new Map();
   const listeners = new Map();
   let configRequests = 0;
@@ -55,6 +55,7 @@ function page({code, storageThrows = false, missingRetry = false} = {}) {
     fetch: async url => {
       if (!url.endsWith('/api/public/config')) throw Error(`unexpected fetch: ${url}`);
       configRequests++;
+      if(failures-- > 0) throw Error('network unavailable');
       return {ok: true, json: async () => ({ticket: {enabled: false}, copy: {}, ceremony: {}, celebration: {}})};
     }
   };
@@ -71,6 +72,7 @@ function page({code, storageThrows = false, missingRetry = false} = {}) {
     get configRequests() { return configRequests; },
     get storedAccess() { return storedAccess; },
     get onlineListenerRegistered() { return listeners.has('window:online'); }
+    ,async reconnect() { await listeners.get('window:online')(); }
   };
 }
 
@@ -85,6 +87,14 @@ function page({code, storageThrows = false, missingRetry = false} = {}) {
   await normal.submit();
   assert.equal(normal.unlocked, true);
   assert.equal(normal.storedAccess, 'ok');
+
+  const interrupted = page({code:'boda', failures:3, storageThrows:true});
+  await interrupted.submit();
+  await new Promise(resolve=>setTimeout(resolve,1800));
+  assert.equal(interrupted.unlocked,false);
+  assert.match(interrupted.error,/Código aceptado/);
+  await interrupted.reconnect();
+  assert.equal(interrupted.unlocked,true,'Connection recovery opens automatically without entering BODA again');
 
   for (const code of ['18dic', 'dic23', 'otro']) {
     const wrong = page({code});

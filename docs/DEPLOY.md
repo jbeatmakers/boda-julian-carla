@@ -54,5 +54,5 @@ Cada cambio público debe actualizar wedding-release y las versiones de assets e
 
 ## Recuperación de acceso
 
-`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Está disponible desde la portada y permite recuperar un HTML antiguo que todavía no incluya el actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Si falla la configuración de la API, la portada conserva Reintentar para evitar mostrar precios desactualizados; esto sigue requiriendo que la red del invitado pueda llegar a la API.
+`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Las rutas antiguas y los scripts retirados la utilizan automáticamente para recuperar HTML anterior al actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Si falla la configuración de la API después de aceptar BODA, se reintenta automáticamente cada 15 segundos, al recuperar conexión y al volver a la pestaña. Se evita mostrar precios desactualizados; la red del invitado debe poder llegar a la API.
 

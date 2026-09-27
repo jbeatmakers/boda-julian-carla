@@ -161,7 +161,6 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
 .gate-intro{font-size:clamp(1.25rem,4vw,1.7rem)}
 .gate-help{margin-bottom:16px}
 .gate-submit{min-width:0;width:min(100%,270px);margin-inline:auto}
-.gate-refresh{display:block;margin:12px auto 0;font-size:.85rem;text-underline-offset:.2em;color:var(--olive)}
 .gate-code{width:100%;padding:.7rem .45rem;background:rgba(255,253,248,.9)}
 .frame{inset:8px;border:1px solid rgba(74,88,68,.32);border-radius:18px}
 #site:before,#site:after{
