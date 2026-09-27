@@ -14,7 +14,7 @@ La invitación se sirve desde el dominio canónico; la dirección anterior sólo
 
 ## Backend/admin
 
-Caddy (contenedor `caddy`) termina TLS y proxyfica `boda-api.13-140-183-198.sslip.io` hacia `boda-wedding:8787` dentro de la red Docker `web`.
+Caddy (contenedor `caddy`) termina TLS y proxyfica `boda-api.bpm.red` (público) y `boda-api.13-140-183-198.sslip.io` (administración) hacia `boda-wedding:8787` dentro de la red Docker `web`.
 
 `boda-wedding`:
 - imagen `python:3.12-alpine`;
@@ -36,7 +36,7 @@ Caddy (contenedor `caddy`) termina TLS y proxyfica `boda-api.13-140-183-198.ssli
 
 ## RSVP
 
-Cada envío usa `request_id` para idempotencia. Email/teléfono/nombre único pueden enlazar una respuesta con una invitación existente. El servidor vuelve a limitar los lugares según `seats_allowed`; no confía sólo en el selector del navegador.
+Cada envío usa `request_id` para idempotencia y se almacena en `rsvp_submissions`. La conciliación con una invitación existente es explícita desde el administrador; nunca se reemplaza silenciosamente un nombre de la lista original. El servidor valida una cantidad entera positiva, conforme al contrato vigente sin límite de acompañantes. Los duplicados simultáneos comparten un único recibo mediante una transacción SQLite.
 
 ## Planificador
 
@@ -51,3 +51,7 @@ El perfil objetivo es `@juli.y.carli`. La tarjeta siempre puede enlazar el perfi
 ## Backups
 
 El timer systemd de backup permanece fuera del runtime Docker y ejecuta `sqlite3.backup` diariamente. El deploy hace además un backup previo.
+
+## Publicación verificada
+
+Ver `docs/DEPLOY.md`: la validación y los tres navegadores preceden al artefacto público. El backend debe coincidir por hash antes de publicar; después se verifica el contenido servido. La apertura BODA no depende de la API y los datos variables se presentan sólo después de validarlos.

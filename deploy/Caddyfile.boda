@@ -1,5 +1,5 @@
 # Bloque de producción actual. Se integra en el Caddyfile general del VPS.
-boda-api.13-140-183-198.sslip.io {
+boda-api.13-140-183-198.sslip.io, boda-api.bpm.red {
     header {
         X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
         Strict-Transport-Security "max-age=31536000"
@@ -9,11 +9,13 @@ boda-api.13-140-183-198.sslip.io {
         Permissions-Policy "camera=(self), microphone=(), geolocation=()"
         -Server
     }
-    reverse_proxy boda-wedding:8787
+    reverse_proxy boda-wedding:8787 {
+        header_up X-Wedding-Client-IP {remote_host}
+    }
     encode zstd gzip
 }
 
-# Alias tolerante para invitados que escriben el dominio sin la "y".
+# Redirección heredada; no es el dominio compartido ni la causa del incidente.
 # DNS Namecheap: A bodajuliancarla -> 13.140.183.198
 bodajuliancarla.bpm.red {
     header X-Robots-Tag "noindex, nofollow"

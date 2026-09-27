@@ -1,62 +1,52 @@
-# Deploy actual de la boda
+# Operación y publicación de la boda
 
-## Producción
+## Producción y fuente de verdad
 
-- Invitación principal: `https://bodajulianycarla.bpm.red/` (GitHub Pages).
-- Admin/API: `https://boda-api.13-140-183-198.sslip.io/`.
-- Runtime: contenedor Docker `boda-wedding` en la red privada `web`.
-- Proxy/TLS: Caddy existente del VPS.
-- Datos: `/var/lib/boda-julian-carla/wedding.sqlite3`.
-- Entorno privado: `/etc/boda-julian-carla.env`.
+El único enlace compartido con invitados es **https://bodajulianycarla.bpm.red/**, con la **y**. GitHub Pages sirve la tarjeta. La API pública usa `https://boda-api.bpm.red`; la dirección `https://boda-api.13-140-183-198.sslip.io` se conserva para administración y sesiones existentes. Ambas llegan al mismo contenedor `boda-wedding`, sin duplicar datos.
 
-El único enlace que se comparte con invitados es `https://bodajulianycarla.bpm.red/`. La dirección técnica anterior se conserva como redirección para enlaces ya guardados.
+La base de datos está en `/var/lib/boda-julian-carla/wedding.sqlite3`. Código y administrador viven en `/opt/boda-julian-carla`. El entorno privado es `/etc/boda-julian-carla.env`; nunca se publica ni se copia al artefacto de Pages.
 
-## Actualizar código
+## Cadena obligatoria de publicación
 
-En el VPS, el helper actual copia sólo backend/admin, hace backup, reinicia únicamente `boda-wedding`, verifica salud desde Caddy y revierte código si falla:
+`.github/workflows/deploy-vps.yml` es **Validate and publish wedding release**:
+
+1. Comprueba sintaxis, contratos, pruebas unitarias y pruebas de persistencia/seguridad.
+2. Ejecuta navegadores Chromium, Firefox y WebKit contra una API local y una SQLite temporal. Incluye BODA, almacenamiento denegado, API caída, recuperación, confirmación persistida y respuestas inválidas.
+3. Verifica en producción que el hash del backend en ejecución coincide con el código probado. Un cambio pendiente de backend bloquea la publicación pública.
+4. Construye `_site` desde una lista cerrada de archivos públicos. El artefacto no incluye administrador, servidor, tests ni secretos. `release.json` registra el commit y el SHA-256 de cada archivo.
+5. Publica **ese mismo artefacto**, únicamente después de todos los controles anteriores.
+6. Reabre el dominio con la y, compara archivos servidos y commit, verifica API/SQLite/CORS y ejecuta pruebas de navegador contra producción sin modificar invitados.
+
+Pages debe tener `build_type: workflow`. No volver al despliegue automático de la raíz de `main`, que publicaba aunque la validación independiente fallara. El dominio personalizado y HTTPS obligatorio se conservan en la configuración de Pages.
+
+## Cambios del backend
+
+El workflow no recibe credenciales administrativas ni reemplaza datos. Para un cambio de servidor, usar la conexión SSH autorizada y desplegar la revisión probada **antes** de que el pipeline publique el cliente correspondiente:
 
 ```bash
 sudo /usr/local/sbin/deploy-boda-julian-carla /ruta/al/checkout
 ```
 
-El frontend público se publica con GitHub Pages al hacer push a `main`. El repositorio técnico anterior mantiene una redirección hacia el dominio canónico.
+El helper realiza copia de seguridad de código y SQLite. Al actualizar variables o la IP del proxy, instalar la versión revisada de `deploy/recreate-container.sh` y ejecutar `/usr/local/sbin/recreate-boda-wedding`. Reiniciar solamente el contenedor no recarga variables.
 
-## Cambiar variables privadas
+Caddy sobrescribe `X-Wedding-Client-IP` con la IP real de conexión. El backend sólo acepta ese encabezado desde la IP exacta de Caddy en la red privada `web`, declarada en `WEDDING_TRUSTED_PROXIES`. Sin una fuente confiable no se aceptan encabezados suministrados por clientes. Esto evita compartir entre todos los invitados el límite de envíos del proxy.
 
-Editar `/etc/boda-julian-carla.env` y luego **recrear** el contenedor; un simple `docker restart` no recarga variables:
+El bloque de la boda está delimitado por `BEGIN BODA JULIAN CARLA` y `END BODA JULIAN CARLA` en `/opt/apps/_proxy/Caddyfile`. Copiarlo con respaldo, validar y recargar sin alterar otros servicios. El registro DNS `A boda-api` apunta al VPS y Caddy administra su certificado HTTPS.
 
-```bash
-sudo /usr/local/sbin/recreate-boda-wedding
-```
+## Acceso y errores de conexión
 
-Para cambiar usuario/contraseña administrativa puede usarse `deploy/configure-admin.sh`, que guarda sólo PBKDF2 y recrea el contenedor.
+BODA es una puerta social, no una credencial de administración. Una clave BODA válida abre la tarjeta sin esperar la API. Si aún no llegaron datos actuales, no se inventan precios ni datos bancarios: se ocultan y se muestra el estado de actualización con reintento. Una falla de configuración no vuelve a cerrar la tarjeta.
 
-## Caddy
+El envío de RSVP sólo se anuncia como confirmado después de recibir `ok: true` y un identificador del servidor. La misma respuesta conserva su `request_id` al reintentar; el servidor serializa duplicados. Cuando el navegador impide persistir una respuesta, la interfaz lo dice y conserva el formulario y una cola en memoria mientras permanezca abierta la página.
 
-El bloque canónico está en `deploy/Caddyfile.boda`. Debe integrarse en el Caddyfile general sin alterar otros hosts. El upstream es `boda-wedding:8787`; no se publica ningún puerto del contenedor.
+## Caché y versiones
 
-## Backups
+Todo cambio en archivos públicos debe actualizar `wedding-release` y las versiones de assets de `index.html`; `actualizar.html` debe usar la misma release. El actualizador conserva borradores durante cambios de release. `js/public-pista.js` recupera HTML retirado que todavía solicite ese archivo. No puede ejecutarse código nuevo dentro de una pestaña antigua que no haga ninguna solicitud de red.
 
-`boda-wedding-backup.timer` corre diariamente y usa `sqlite3.backup`. Antes de cada deploy también se ejecuta un backup. Retención configurada: 45 días.
+La redirección histórica del dominio sin la y no es la causa de este incidente, ni sustituye ninguna prueba del dominio oficial. No crear otra aplicación allí.
 
-## Checks
+## Diagnóstico y backups
 
-```bash
-docker ps --filter name=boda-wedding
-docker exec caddy wget -qO- http://boda-wedding:8787/healthz
-systemctl is-active boda-wedding-backup.timer
-```
+`Wedding production diagnostic` es manual y no necesita secretos SSH: verifica los bytes publicados, el backend en ejecución, lectura real de SQLite, CORS y apertura BODA con navegador. Las pruebas no envían RSVP a producción. El endpoint `/healthz` devuelve 503 si SQLite no está disponible y expone sólo salud y huella de código, nunca invitados ni credenciales.
 
-`Validate wedding release` valida sintaxis/tests y no despliega. `VPS diagnostic` ejecuta smoke tests públicos siempre; si existen los secretos SSH del repositorio añade diagnóstico interno del VPS, pero su ausencia ya no convierte en fallo una producción pública sana.
-
-## Versiones del frontend
-Cada cambio público debe actualizar wedding-release y las versiones de assets en index.html. updates.js comprueba esa versión cada minuto y al volver a la pestaña; conserva temporalmente el formulario durante la recarga. Los textos del administrador se consultan también cada minuto sin recargar. Una pestaña que ejecuta código anterior a este mecanismo necesita cargar la página una vez para incorporarlo.
-
-## Recuperación de acceso
-
-`https://bodajulianycarla.bpm.red/actualizar.html` abre el dominio oficial con una URL de carga nueva, sin borrar respuestas guardadas. Las rutas antiguas y los scripts retirados la utilizan automáticamente para recuperar HTML anterior al actualizador. Las rutas inexistentes de Pages redirigen a esa entrada. El acceso BODA tolera almacenamiento restringido y no depende de structuredClone. Un BODA válido abre la invitación después de una espera breve aunque la API esté temporalmente inaccesible; en ese caso usa el fallback público sin precio ni datos bancarios y sincroniza la configuración vigente al recuperar conexión, al volver a la pestaña o en el refresco periódico.
-
-
-## Alias de dominio tolerante
-
-El dominio oficial sigue siendo `bodajulianycarla.bpm.red`. Para tolerar el error frecuente `bodajuliancarla.bpm.red`, Namecheap mantiene un registro A de ese host a `13.140.183.198` y Caddy responde 308 hacia el dominio oficial. No convertir ese alias en otro sitio ni duplicar la app.
+El timer `boda-wedding-backup.timer` utiliza la API de backup de SQLite; la retención configurada es de 45 días. Una prueba local o un workflow exitoso no sustituyen la comparación posterior con producción.

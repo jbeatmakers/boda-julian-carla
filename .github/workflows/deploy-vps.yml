@@ -1,4 +1,4 @@
-name: Validate wedding release
+name: Validate and publish wedding release
 on:
   push:
     branches: [main]
@@ -7,27 +7,114 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boda-validation-${{ github.ref }}
-  cancel-in-progress: true
+  group: boda-release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-      - name: Validate syntax and tests
+          node-version: '22'
+      - name: Validate syntax and all unit/integration tests
         run: |
-          python -m py_compile server/app.py server/backup.py
+          set -euo pipefail
+          python -m py_compile server/app.py server/backup.py tools/build_public.py tools/check_production.py
           node --check assets/app.js
           node --check assets/admin.js
+          node --check assets/updates.js
+          node --check js/public-pista.js
           node tests/test_config_loading.cjs
           node tests/test_gate_access.cjs
           node tests/test_legacy_recovery.cjs
           node tests/test_updates.cjs
           python -m unittest discover -s tests -v
+          bash -n deploy/deploy-release.sh deploy/deploy-boda-julian-carla deploy/recreate-container.sh
+          python tools/build_public.py --output _site
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser test dependencies
+        run: |
+          python -m pip install playwright==1.54.0
+          python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Exercise actual gate, failure recovery, and persistent RSVP
+        run: python tests/browser_access.py --browser ${{ matrix.browser }} --output browser-results-${{ matrix.browser }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results-${{ matrix.browser }}
+          path: browser-results-${{ matrix.browser }}.json
+          retention-days: 7
+  build:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [validate, browsers]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require live backend to match this tested release
+        run: python tools/check_production.py --backend-only
+      - uses: actions/configure-pages@v5
+      - name: Build public-only immutable artifact and checksums
+        run: python tools/build_public.py --output _site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish exactly the validated artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compare public bytes, source SHA, backend, database and CORS
+        run: python tools/check_production.py --wait 180
+      - name: Install production browser verifier
+        run: |
+          python -m pip install playwright==1.54.0
+          python -m playwright install --with-deps chromium
+      - name: Verify canonical BODA in production (read-only)
+        run: python tests/browser_access.py --base https://bodajulianycarla.bpm.red --output browser-results-production.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-browser-evidence
+          path: browser-results-production.json
+          retention-days: 7

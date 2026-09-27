@@ -18,7 +18,7 @@ Sitio, RSVP y wedding planner para el casamiento del **18 de diciembre de 2026**
 ## Funciones
 
 - RSVP persistente en SQLite y cola local de emergencia.
-- Cupos por invitación, confirmados, mesas, dietas y canciones.
+- Invitados, respuestas pendientes de conciliación, confirmados, mesas, dietas y canciones.
 - Wedding planner: bebidas, comida, stock, compras, aportes, proveedores, gastos y tareas.
 - Editor de textos de la invitación desde el administrador.
 - Precios de referencia y lectura de código de barras cuando la fuente está disponible.
@@ -28,7 +28,8 @@ Sitio, RSVP y wedding planner para el casamiento del **18 de diciembre de 2026**
 
 ```text
 bodajulianycarla.bpm.red                -> GitHub Pages (única URL pública)
-boda-api.13-140-183-198.sslip.io         -> Caddy HTTPS
+boda-api.bpm.red (API pública)          -> Caddy HTTPS
+boda-api.13-140-183-198.sslip.io (admin) -> Caddy HTTPS
                                            -> boda-wedding (Docker, red web)
                                            -> Python stdlib :8787
                                            -> SQLite WAL + backups

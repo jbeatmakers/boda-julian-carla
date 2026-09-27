@@ -2,9 +2,9 @@
   "use strict";
   const ACCESS_CODE = "BODA";
   const ACCESS_KEY = "boda_access_v2";
-  const GATE_CONFIG_GRACE_MS = 800;
   const OUTBOX_KEY = "boda_rsvp_outbox_v2";
   const API_BASE = (document.querySelector('meta[name="wedding-api"]')?.content || "").replace(/\/+$/,"");
+  const PUBLIC_API_BASE = (document.querySelector('meta[name="wedding-public-api"]')?.content || API_BASE).replace(/\/+$/, "");
   const DEFAULTS = {
     event_at:"2026-12-18T17:00:00-03:00",
     location_display:"San Pablo de Reyes · Jujuy",
@@ -27,13 +27,19 @@
   let config = cloneConfig(DEFAULTS);
   let opening = false;
   let accessGranted = false;
+  let configReady = false;
+  let configRequest = null;
+  let flushingOutbox = false;
+  let memoryOutbox = [];
+  let pendingSubmission = null;
   const $ = id => document.getElementById(id);
   const safeText = (id,v) => { const el=$(id); if(el && v!==undefined && v!==null) el.textContent=v; };
   const money = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(n)||0);
 
   document.addEventListener("DOMContentLoaded", () => {
     $("gateForm").addEventListener("submit", onGate);
-    $("configRetry")?.addEventListener("click",()=>unlock(false));
+    $("configRetry")?.addEventListener("click",()=>{ if(accessGranted) refreshPublicConfig(); });
+    $("configRetryInline")?.addEventListener("click",()=>refreshPublicConfig());
     document.querySelectorAll('input[name="attendance"]').forEach(x=>x.addEventListener("change", syncAttendance));
     $("rsvpForm").addEventListener("submit", onRsvp);
     ["fullName","phone","email"].forEach(id=>$(id).addEventListener("blur",syncSeatLimit));
@@ -44,18 +50,13 @@
       if(e.origin===API_BASE && e.data?.type==="wedding-admin-preview") unlock(false);
     });
     window.addEventListener("online", flushOutbox);
-    let refreshing = false;
-    async function refreshCurrentConfig(){
-      if(refreshing || opening || document.hidden) return;
-      if($("site").classList.contains("hidden")){
-        if(accessGranted && navigator.onLine) await unlock(false);
-        return;
-      }
-      refreshing = true;
-      try{ await loadPublicConfig(); }catch(_){}finally{ refreshing = false; }
+    function refreshCurrentConfig(){
+      if(document.hidden || !accessGranted) return;
+      refreshPublicConfig();
     }
     setInterval(refreshCurrentConfig,60000);
-    setInterval(()=>{if($("site").classList.contains("hidden")) refreshCurrentConfig();},15000);
+    setInterval(()=>{ if(!configReady) refreshCurrentConfig(); },15000);
+    setInterval(()=>{ if(accessGranted && !document.hidden) flushOutbox().catch(()=>{}); },30000);
     window.addEventListener("online",refreshCurrentConfig);
     window.addEventListener("pageshow",refreshCurrentConfig);
     document.addEventListener("visibilitychange",refreshCurrentConfig);
@@ -88,33 +89,50 @@
     unlock(true);
   }
 
+  // The social access code is independent of remote configuration availability.
+  // Never keep a guest outside because a separate network request is slow/down.
   async function unlock(withCelebration){
     if(opening || !$("site").classList.contains("hidden")) return;
     accessGranted = true;
     opening = true;
-    $("configRetry")?.classList.add("hidden");
-    $("gateError").textContent="Cargando la invitación actual…";
-
-    let configLoaded = false;
-    const configLoad = loadPublicConfig()
-      .then(()=>{ configLoaded = true; return true; })
-      .catch(()=>false);
-    await Promise.race([
-      configLoad,
-      new Promise(resolve=>setTimeout(resolve,GATE_CONFIG_GRACE_MS))
-    ]);
-    if(!configLoaded) applyConfig(config);
-
+    if(!configReady){
+      ["ceremonyTime","celebrationTime","rsvpDeadline"].forEach(id=>safeText(id,"Actualizando…"));
+      $("ticketCard")?.classList.add("hidden");
+      $("paymentCard")?.classList.add("hidden");
+    }
     $("gateError").textContent="";
     $("gate").classList.add("hidden");
     $("site").classList.remove("hidden");
     document.body.classList.remove("locked");
     opening = false;
+    refreshPublicConfig();
     if(withCelebration) requestAnimationFrame(()=>celebrate(42));
     startCountdown();
-    loadInstagram();
-    flushOutbox();
+    loadInstagram().catch(()=>{});
+    flushOutbox().catch(()=>{});
+  }
 
+  function configNotice(state){
+    const box=$("configStatus"), retry=$("configRetryInline");
+    if(box) box.classList.toggle("hidden",state==="ready");
+    if(retry) retry.classList.toggle("hidden",state!=="error");
+    safeText("configStatusText",state==="error"
+      ? "La invitación está abierta. No pudimos actualizar los datos; volveremos a intentarlo automáticamente."
+      : "Estamos cargando los horarios y datos actualizados de la invitación…");
+  }
+
+  function refreshPublicConfig(){
+    if(configRequest) return configRequest;
+    if(!configReady) configNotice("loading");
+    configRequest=loadPublicConfig().then(()=>{
+      configReady=true;
+      configNotice("ready");
+      return true;
+    }).catch(()=>{
+      configNotice("error");
+      return false;
+    }).finally(()=>{ configRequest=null; });
+    return configRequest;
   }
 
   function celebrate(count=32){
@@ -144,11 +162,16 @@
       const timer=setTimeout(()=>ctrl.abort(),timeout);
       try{
         const res=await fetch(url,{...options,signal:ctrl.signal});
-        const body=await res.json().catch(()=>({}));
-        if(!res.ok) throw new Error(body.error||`HTTP ${res.status}`);
+        const body=await res.json();
+        if(!res.ok){
+          const error=new Error(body.error||`HTTP ${res.status}`);
+          error.status=res.status;
+          throw error;
+        }
         return body;
       }catch(err){
         lastError=err;
+        if(err.status>=400 && err.status<500) throw err;
         if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
       }finally{ clearTimeout(timer); }
     }
@@ -156,8 +179,8 @@
   }
 
   async function loadPublicConfig(){
-    if(!API_BASE) throw new Error("missing_config_source");
-    const remote=await fetchJson(`${API_BASE}/api/public/config`,{cache:"no-store"},15000);
+    if(!PUBLIC_API_BASE) throw new Error("missing_config_source");
+    const remote=await fetchJson(`${PUBLIC_API_BASE}/api/public/config`,{cache:"no-store"},15000);
     if(!remote || typeof remote!=="object" || !remote.ticket ||
        typeof remote.ticket.enabled!=="boolean" ||
        (remote.ticket.enabled && (typeof remote.ticket.price!=="number" || !Number.isFinite(remote.ticket.price))) ||
@@ -166,6 +189,7 @@
     }
     config=merge(DEFAULTS,remote);
     applyConfig(config);
+    configReady=true;
   }
 
   function merge(base, extra){
@@ -270,7 +294,7 @@
     const yes=document.querySelector('input[name="attendance"]:checked')?.value==="yes";
     $("attendingFields").classList.toggle("hidden",!yes);
     $("declineMessage").classList.toggle("hidden",yes);
-    $("ticketCard").classList.toggle("hidden",!yes || config.ticket?.enabled===false);
+    $("ticketCard").classList.toggle("hidden",!configReady || !yes || config.ticket?.enabled===false);
     if(yes) syncSeatLimit();
   }
 
@@ -296,31 +320,44 @@
 
   async function onRsvp(e){
     e.preventDefault();
-    const p=payloadFromForm(), status=$("rsvpStatus"), btn=$("rsvpSubmit");
+    let p=payloadFromForm();
+    const signature=({request_id,submitted_at,...fields})=>JSON.stringify(fields);
+    if(pendingSubmission && signature(pendingSubmission)===signature(p)) p=pendingSubmission;
+    const status=$("rsvpStatus"), btn=$("rsvpSubmit");
+    if(btn.disabled) return;
     if(!p.name){ showStatus("Decinos tu nombre y apellido para guardar la respuesta.",false); $("fullName").focus(); return; }
     if(p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)){ showStatus("Revisá el email: parece incompleto.",false); $("email").focus(); return; }
     if(p.attendance==="yes" && (!$("seats").checkValidity() || !Number.isSafeInteger(p.seats))){ showStatus("Ingresá una cantidad entera de personas, desde 1.",false); return; }
+    pendingSubmission=p;
     btn.disabled=true; btn.textContent="Enviando…";
     try{
-      if(!API_BASE) throw new Error("API no configurada");
-      await fetchJson(`${API_BASE}/api/public/rsvp`,{
+      if(!PUBLIC_API_BASE) throw new Error("API no configurada");
+      const receipt=await fetchJson(`${PUBLIC_API_BASE}/api/public/rsvp`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(p)
       },5500);
+      if(receipt?.ok!==true || typeof receipt.id!=="string" || !receipt.id) throw new Error("invalid_receipt");
+      removeFromOutbox(new Set([p.request_id]));
+      pendingSubmission=null;
       showStatus(p.attendance==="yes" ? "Listo. Quedó confirmada tu asistencia. ¡Nos vemos el 18!" : "Listo. Gracias por avisarnos; quedó registrada tu respuesta.",true);
       if(p.attendance==="yes") celebrate(34);
       $("rsvpForm").reset(); syncAttendance();
     }catch(err){
-      enqueue(p);
+      if(err.status>=400 && err.status<500 && err.status!==429){
+        showStatus("El servidor no aceptó la respuesta. Revisá los datos y volvé a enviarla; todavía no está confirmada.",false);
+        return;
+      }
+      const persisted=enqueue(p);
       const phone=(config.fallback_whatsapp||"").replace(/\D/g,"");
+      showStatus(persisted
+        ? "Todavía no recibimos la confirmación del servidor. La respuesta quedó pendiente en este dispositivo y la reintentaremos automáticamente."
+        : "Todavía no recibimos la confirmación del servidor. Este navegador no permite guardar la respuesta: dejá esta página abierta y reintentaremos sin borrar el formulario.",false);
       if(phone){
-        const wa=whatsappText(p);
-        showStatus(`No pudimos conectar con el servidor en este momento. Guardamos tu respuesta en este dispositivo y podés asegurarla por WhatsApp: `,false);
-        const a=document.createElement("a"); a.href=`https://wa.me/${phone}?text=${encodeURIComponent(wa)}`; a.target="_blank"; a.rel="noopener"; a.textContent="enviar confirmación"; a.style.fontWeight="600";
+        const a=document.createElement("a");
+        a.href=`https://wa.me/${phone}?text=${encodeURIComponent(whatsappText(p))}`;
+        a.target="_blank";a.rel="noopener";a.textContent=" Enviar por WhatsApp";
         status.appendChild(a);
-      }else{
-        showStatus("No pudimos conectar en este momento. Guardamos la respuesta en este dispositivo y la reintentaremos automáticamente cuando vuelva la conexión.",false);
       }
     }finally{
       btn.disabled=false; btn.textContent="Enviar confirmación";
@@ -331,26 +368,46 @@
     const el=$("rsvpStatus"); el.textContent=text; el.className=`form-status ${ok?"ok":"err"}`;
   }
 
+  function readOutbox(){
+    let saved=[];
+    try{const value=JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]");if(Array.isArray(value)) saved=value;}catch(_){}
+    const byId=new Map();
+    [...saved,...memoryOutbox].forEach(p=>{if(p && typeof p.request_id==="string") byId.set(p.request_id,p);});
+    return Array.from(byId.values());
+  }
+
+  function writeOutbox(items){
+    memoryOutbox=items;
+    try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(items));return true;}catch(_){return false;}
+  }
+
   function enqueue(p){
-    try{
-      const q=JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]");
-      if(!q.some(x=>x.request_id===p.request_id)) q.push(p);
-      localStorage.setItem(OUTBOX_KEY,JSON.stringify(q.slice(-20)));
-    }catch(_){}
+    const items=readOutbox();
+    if(!items.some(x=>x.request_id===p.request_id)) items.push(p);
+    return writeOutbox(items);
+  }
+
+  function removeFromOutbox(ids){
+    // Re-read after network waits so a newer submission is never overwritten.
+    writeOutbox(readOutbox().filter(p=>!ids.has(p.request_id)));
   }
 
   async function flushOutbox(){
-    if(!API_BASE || !navigator.onLine) return;
-    let q=[];
-    try{ q=JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]"); }catch(_){}
-    if(!q.length) return;
-    const remaining=[];
-    for(const p of q){
-      try{
-        await fetchJson(`${API_BASE}/api/public/rsvp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)},4000);
-      }catch(_){ remaining.push(p); }
-    }
-    localStorage.setItem(OUTBOX_KEY,JSON.stringify(remaining));
+    if(flushingOutbox || !PUBLIC_API_BASE || !navigator.onLine) return;
+    const items=readOutbox();
+    if(!items.length) return;
+    flushingOutbox=true;
+    try{
+      for(const p of items){
+        try{
+          const receipt=await fetchJson(`${PUBLIC_API_BASE}/api/public/rsvp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)},4000);
+          if(receipt?.ok!==true || typeof receipt.id!=="string" || !receipt.id) throw new Error("invalid_receipt");
+          removeFromOutbox(new Set([p.request_id]));
+          if(pendingSubmission?.request_id===p.request_id) pendingSubmission=null;
+          showStatus("La conexión se recuperó y el servidor guardó tu respuesta.",true);
+        }catch(_){}
+      }
+    }finally{flushingOutbox=false;}
   }
 
   function whatsappText(p){
@@ -364,9 +421,9 @@
 
   async function loadInstagram(){
     const section=$("instagramSection");
-    if(!section || !API_BASE) return;
+    if(!section || !PUBLIC_API_BASE) return;
     try{
-      const feed=await fetchJson(`${API_BASE}/api/public/instagram`,{cache:"no-store"},4000);
+      const feed=await fetchJson(`${PUBLIC_API_BASE}/api/public/instagram`,{cache:"no-store"},4000);
       const items=Array.isArray(feed.items)?feed.items:[];
       const username=String(feed.username||"juli.y.carli").replace(/^@/,"");
       const profileUrl=feed.profile_url||`https://www.instagram.com/${username}/`;

@@ -4,9 +4,12 @@ set -euo pipefail
 ENV=/etc/boda-julian-carla.env
 [[ -f "$ENV" ]] || { echo "Falta $ENV" >&2; exit 3; }
 docker network inspect web >/dev/null
+PROXY_IP=$(docker inspect caddy --format '{{with index .NetworkSettings.Networks "web"}}{{.IPAddress}}{{end}}')
+[[ -n "$PROXY_IP" ]] || { echo "Caddy no está en la red web" >&2; exit 4; }
 docker rm -f boda-wedding >/dev/null 2>&1 || true
 docker run -d --name boda-wedding --restart unless-stopped --network web \
   --env-file "$ENV" \
+  --env "WEDDING_TRUSTED_PROXIES=$PROXY_IP/32" \
   -v /var/lib/boda-julian-carla:/var/lib/boda-julian-carla \
   -v /opt/boda-julian-carla/server:/opt/boda-julian-carla/server:ro \
   -v /opt/boda-julian-carla/admin:/opt/boda-julian-carla/admin:ro \
