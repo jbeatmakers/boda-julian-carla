@@ -15,8 +15,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsS https://bodajulianycarla.bpm.red/ | grep -q 'name="wedding-release"'
-          curl -fsS https://boda-api.13-140-183-198.sslip.io/healthz | grep -q '"ok":true'
+          curl -fsS -o /tmp/site.html https://bodajulianycarla.bpm.red/
+          grep -q 'name="wedding-release"' /tmp/site.html
+          curl -fsS -o /tmp/health.json https://boda-api.13-140-183-198.sslip.io/healthz
+          grep -q '"ok":true' /tmp/health.json
           curl -fsS -D /tmp/config.headers -o /tmp/config.json \
             -H 'Origin: https://bodajulianycarla.bpm.red' \
             https://boda-api.13-140-183-198.sslip.io/api/public/config
@@ -29,7 +31,8 @@ jobs:
           assert isinstance(data.get('layout'),dict)
           assert isinstance(data['layout'].get('sections'),list)
           PY
-          location="$(curl -fsSI https://bodajuliancarla.bpm.red/ | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^location:/{print $2; exit}')"
+          curl -fsSI -D /tmp/alias.headers -o /dev/null https://bodajuliancarla.bpm.red/
+          location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}' /tmp/alias.headers)"
           test "$location" = 'https://bodajulianycarla.bpm.red/'
 
       - name: Detect optional SSH diagnostics
