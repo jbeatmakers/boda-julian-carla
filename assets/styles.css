@@ -165,11 +165,12 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
 .frame{inset:8px;border:1px solid rgba(74,88,68,.32);border-radius:18px}
 #site:before,#site:after{
   position:absolute;top:0;bottom:0;height:auto;width:clamp(82px,18vw,190px);
-  opacity:.20;transform:none;background-image:url("botanical-frame.webp");
-  background-repeat:repeat-y;background-size:480px 640px
+  opacity:.32;background-image:url("botanical-vine.webp");
+  background-repeat:repeat-y;background-size:300px 450px;
+  mask-image:linear-gradient(to right,#000 0%,#000 65%,transparent 100%)
 }
-#site:before{left:0;background-position:left top}
-#site:after{right:0;background-position:right top}
+#site:before{left:0;background-position:left top;transform:none}
+#site:after{right:0;background-position:left top;transform:scaleX(-1)}
 @media(max-width:760px){
   .gate-box{padding-left:23%;padding-right:23%;min-height:510px}
   .gate-monogram{font-size:clamp(2.2rem,9vw,3.2rem)}
@@ -177,7 +178,7 @@ main>section:nth-child(even){background:linear-gradient(90deg,transparent,rgba(2
   .gate-help{font-size:.88rem}
   .gate-code{font-size:.92rem}
   .gate-submit{font-size:.6rem;letter-spacing:.06em}
-  #site:before,#site:after{width:72px;opacity:.14;background-size:330px 440px}
+  #site:before,#site:after{width:100px;opacity:.24;background-size:170px 255px}
 }
 @media(max-height:640px){
   #gate{overflow:auto;align-items:start}
