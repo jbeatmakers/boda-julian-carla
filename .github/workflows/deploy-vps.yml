@@ -53,12 +53,16 @@ jobs:
           python -m pip install playwright==1.54.0
           python -m playwright install --with-deps ${{ matrix.browser }}
       - name: Exercise actual gate, failure recovery, and persistent RSVP
-        run: python tests/browser_access.py --browser ${{ matrix.browser }} --output browser-results-${{ matrix.browser }}.json
+        run: |
+          python tests/browser_access.py --browser ${{ matrix.browser }} --output browser-results-${{ matrix.browser }}.json
+          python tests/browser_lifecycle.py --browser ${{ matrix.browser }} --output browser-results-lifecycle-${{ matrix.browser }}.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-results-${{ matrix.browser }}
-          path: browser-results-${{ matrix.browser }}.json
+          path: |
+            browser-results-${{ matrix.browser }}.json
+            browser-results-lifecycle-${{ matrix.browser }}.json
           retention-days: 7
   build:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

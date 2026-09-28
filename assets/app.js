@@ -251,9 +251,15 @@
     const byId=new Map(configured.map(x=>[x.id,x]));
     const sections=defaults.map(x=>byId.get(x.id)||x);
     configured.forEach(x=>{if(!sections.some(s=>s.id===x.id))sections.push(x);});
+    const nodes=sections.map(item=>document.getElementById(item.id)).filter(Boolean);
+    const current=Array.from(main.children).filter(node=>nodes.includes(node));
+    // Moving an existing section detaches its inputs and closes mobile keyboards.
+    // Preserve the DOM when the layout order did not actually change.
+    if(nodes.some((node,index)=>current[index]!==node || node.parentNode!==main)){
+      nodes.forEach(node=>main.appendChild(node));
+    }
     sections.forEach(item=>{
       const section=document.getElementById(item.id); if(!section)return;
-      main.appendChild(section);
       const hidden=item.visible===false;
       section.dataset.layoutHidden=hidden?"true":"false";
       section.classList.toggle("hidden",hidden || (section.id==="instagramSection" && !section.dataset.hasInstagram));
@@ -265,7 +271,8 @@
     const q=`${Number(lat)},${Number(lng)}`;
     const iframe=$(prefix+"Map"), link=$(prefix+"Directions"), address=$(prefix+"Address");
     const directions=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`;
-    if(iframe) iframe.src=`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=17&output=embed`;
+    const embed=`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=17&output=embed`;
+    if(iframe && iframe.getAttribute("src")!==embed) iframe.src=embed;
     if(link) link.href=directions;
     if(address && address.tagName==="A") address.href=directions;
   }
@@ -321,8 +328,9 @@
   async function onRsvp(e){
     e.preventDefault();
     let p=payloadFromForm();
-    const signature=({request_id,submitted_at,...fields})=>JSON.stringify(fields);
-    if(pendingSubmission && signature(pendingSubmission)===signature(p)) p=pendingSubmission;
+    const matching=entry=>submissionSignature(entry)===submissionSignature(p);
+    if(pendingSubmission && matching(pendingSubmission)) p=pendingSubmission;
+    else p=readOutbox().find(matching)||p;
     const status=$("rsvpStatus"), btn=$("rsvpSubmit");
     if(btn.disabled) return;
     if(!p.name){ showStatus("Decinos tu nombre y apellido para guardar la respuesta.",false); $("fullName").focus(); return; }
@@ -338,11 +346,8 @@
         body:JSON.stringify(p)
       },5500);
       if(receipt?.ok!==true || typeof receipt.id!=="string" || !receipt.id) throw new Error("invalid_receipt");
-      removeFromOutbox(new Set([p.request_id]));
-      pendingSubmission=null;
-      showStatus(p.attendance==="yes" ? "Listo. Quedó confirmada tu asistencia. ¡Nos vemos el 18!" : "Listo. Gracias por avisarnos; quedó registrada tu respuesta.",true);
+      acknowledgeSubmission(p,p.attendance==="yes" ? "Listo. Quedó confirmada tu asistencia. ¡Nos vemos el 18!" : "Listo. Gracias por avisarnos; quedó registrada tu respuesta.");
       if(p.attendance==="yes") celebrate(34);
-      $("rsvpForm").reset(); syncAttendance();
     }catch(err){
       if(err.status>=400 && err.status<500 && err.status!==429){
         showStatus("El servidor no aceptó la respuesta. Revisá los datos y volvé a enviarla; todavía no está confirmada.",false);
@@ -362,6 +367,23 @@
     }finally{
       btn.disabled=false; btn.textContent="Enviar confirmación";
     }
+  }
+
+  function submissionSignature(p){
+    return JSON.stringify([p.name,p.phone,p.email,p.attendance,p.seats,p.diet,p.song,p.message]);
+  }
+
+  function acknowledgeSubmission(p,message){
+    const current=payloadFromForm();
+    const unchanged=submissionSignature(current)===submissionSignature(p);
+    const hasDraft=Boolean(current.name || current.phone || current.email || current.diet || current.song || current.message || current.seats!==1 || current.attendance!=="yes");
+    removeFromOutbox(new Set([p.request_id]));
+    if(pendingSubmission?.request_id===p.request_id) pendingSubmission=null;
+    if(unchanged){ $("rsvpForm").reset(); syncAttendance(); }
+    // A delayed receipt belongs to the submitted snapshot, not subsequent typing.
+    showStatus(!unchanged && hasDraft
+      ? "La respuesta enviada quedó guardada. Los cambios actuales del formulario todavía no se enviaron."
+      : message,unchanged || !hasDraft);
   }
 
   function showStatus(text,ok){
@@ -402,9 +424,7 @@
         try{
           const receipt=await fetchJson(`${PUBLIC_API_BASE}/api/public/rsvp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)},4000);
           if(receipt?.ok!==true || typeof receipt.id!=="string" || !receipt.id) throw new Error("invalid_receipt");
-          removeFromOutbox(new Set([p.request_id]));
-          if(pendingSubmission?.request_id===p.request_id) pendingSubmission=null;
-          showStatus("La conexión se recuperó y el servidor guardó tu respuesta.",true);
+          acknowledgeSubmission(p,"La conexión se recuperó y el servidor guardó tu respuesta.");
         }catch(_){}
       }
     }finally{flushingOutbox=false;}
@@ -450,7 +470,7 @@
       }
       const profile=$("instagramProfile");
       if(profileUrl){profile.href=profileUrl;profile.textContent=`Abrir @${username} en Instagram \u2197`;profile.classList.remove("hidden");}
-      section.classList.remove("hidden");
+      section.classList.toggle("hidden",section.dataset.layoutHidden==="true");
     }catch(_){}
   }
 
