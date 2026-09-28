@@ -248,9 +248,11 @@
     const main=document.querySelector("#site main"),defaults=DEFAULTS.layout.sections;
     if(!main)return;
     const configured=Array.isArray(layout?.sections)?layout.sections:[];
-    const byId=new Map(configured.map(x=>[x.id,x]));
-    const sections=defaults.map(x=>byId.get(x.id)||x);
-    configured.forEach(x=>{if(!sections.some(s=>s.id===x.id))sections.push(x);});
+    const allowed=new Set(defaults.map(item=>item.id)),seen=new Set(),sections=[];
+    [...configured,...defaults].forEach(item=>{
+      if(!item || !allowed.has(item.id) || seen.has(item.id)) return;
+      seen.add(item.id);sections.push(item);
+    });
     const nodes=sections.map(item=>document.getElementById(item.id)).filter(Boolean);
     const current=Array.from(main.children).filter(node=>nodes.includes(node));
     // Moving an existing section detaches its inputs and closes mobile keyboards.

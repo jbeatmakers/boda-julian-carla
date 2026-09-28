@@ -23,3 +23,7 @@
 Cubre conservación del foco al actualizar configuración, visibilidad de Instagram definida por el administrador, recibos tardíos sin borrar borradores nuevos, vaciado del formulario confirmado desde la cola, reutilización del identificador persistido, recuperación del borrador durante una actualización de release, login/conciliación/altas/editor/vista previa/logout administrativos y navegación a 320/390/768/1280 píxeles con respuesta de no asistencia.
 
 Las comprobaciones de producción siguen siendo de sólo lectura. Un resultado exitoso documenta los escenarios probados, no promete ausencia absoluta de errores en dispositivos o redes ajenos.
+
+El control de orden de secciones también comprueba que el orden guardado en el administrador se conserve tanto al abrir la tarjeta como después de reiniciar el backend. `test_layout_order.py` cubre esa persistencia sin usar datos reales.
+
+La administración se prueba con HTTPS nativo sobre loopback y un certificado efímero de un día. Se mantiene la cookie real `HttpOnly; Secure; SameSite=Strict`; no se inyectan sesiones ni se relajan las cookies del producto. El certificado autofirmado sólo se acepta en ese contexto de prueba local. El verificador contra producción continúa validando TLS normalmente.

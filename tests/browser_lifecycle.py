@@ -1,6 +1,6 @@
 """Hermetic end-to-end admin and guest lifecycle tests; never uses production data."""
 from __future__ import annotations
-import argparse, importlib.util, json, pathlib, re, tempfile, threading
+import argparse, importlib.util, shutil, ssl, subprocess, json, pathlib, re, tempfile, threading
 from contextlib import contextmanager
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlsplit
@@ -11,24 +11,38 @@ ADMIN='https://wedding-admin.test'
 
 @contextmanager
 def environment(browser):
+ global ADMIN
  with tempfile.TemporaryDirectory(prefix='wedding-lifecycle-') as tmp:
   spec=importlib.util.spec_from_file_location('lifecycle_backend',ROOT/'server/app.py')
   app=importlib.util.module_from_spec(spec);spec.loader.exec_module(app)
   app.DB_PATH=pathlib.Path(tmp)/'qa.sqlite3';app.ADMIN_ROOT=ROOT
   app.ADMIN_USER='qa';app.ADMIN_HASH=app.hash_password('sandbox-test-password-only');app.ADMIN_ENTRY_HASH=''
-  app.ALLOWED_ORIGINS={PUBLIC,ADMIN};app.Handler.log_message=lambda *args:None;app.init_db()
+  app.Handler.log_message=lambda *args:None;app.init_db()
   server=ThreadingHTTPServer(('127.0.0.1',0),app.Handler)
+  openssl=shutil.which('openssl') or str(pathlib.Path('C:/Program Files/Git/usr/bin/openssl.exe'))
+  cert=pathlib.Path(tmp)/'certificate.pem';key=pathlib.Path(tmp)/'key.pem'
+  subprocess.run([openssl,'req','-x509','-newkey','rsa:2048','-nodes','-keyout',str(key),'-out',str(cert),'-days','1','-subj','/CN=localhost','-addext','subjectAltName=DNS:localhost,IP:127.0.0.1'],check=True,capture_output=True)
+  tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);tls.load_cert_chain(cert,key)
+  server.socket=tls.wrap_socket(server.socket,server_side=True)
   threading.Thread(target=server.serve_forever,daemon=True).start()
-  api='http://127.0.0.1:'+str(server.server_port)
-  ctx=browser.new_context(viewport={'width':1280,'height':900})
+  api=ADMIN='https://localhost:'+str(server.server_port)
+  app.ALLOWED_ORIGINS={PUBLIC,ADMIN}
+  # Only the ephemeral loopback certificate is self-signed. Production tests
+  # continue to verify real certificate chains without ignoring HTTPS errors.
+  ctx=browser.new_context(viewport={'width':1280,'height':900},ignore_https_errors=True)
   html=(ROOT/'index.html').read_text(encoding='utf-8')
-  html=re.sub(r'(<meta name="wedding-(?:public-)?api" content=")[^"]*',lambda m:m[1]+ADMIN,html)
+  html=re.sub(r'(<meta name="wedding-api" content=")[^"]*',lambda m:m[1]+ADMIN,html)
+  html=re.sub(r'(<meta name="wedding-public-api" content=")[^"]*',lambda m:m[1]+PUBLIC,html)
   def intercept(route):
    u=urlsplit(route.request.url)
-   if u.netloc=='wedding-admin.test':
-    route.fulfill(response=route.fetch(url=api+u.path+('?' +u.query if u.query else '')))
+   if u.netloc==urlsplit(ADMIN).netloc:
+    route.continue_()  # Native HTTPS/cookies, no Set-Cookie emulation.
    elif u.netloc=='bodajulianycarla.bpm.red':
-    if u.path in ('/','/index.html'):
+    # Keep browser public requests out of loopback/private-network permission
+    # checks; admin auth is still exercised over native HTTPS, not mocked.
+    if u.path.startswith('/api/public/'):
+     route.fulfill(response=route.fetch(url=api+u.path+('?' +u.query if u.query else '')))
+    elif u.path in ('/','/index.html'):
      route.fulfill(status=200,content_type='text/html',body=html)
     else:
      relative=u.path.lstrip('/');path=(ROOT/relative).resolve()
@@ -126,7 +140,12 @@ def release_keeps_draft(env):
 
 def admin_full_roundtrip(env):
  ctx,app,api,html,errors=env;page=ctx.new_page();page.goto(ADMIN+'/',wait_until='domcontentloaded')
- page.locator('#loginUser').fill('qa');page.locator('#loginPassword').fill('sandbox-test-password-only');page.locator('#loginForm button[type=submit]').click();expect(page.locator('#appView')).to_be_visible()
+ events=[]
+ page.on('response',lambda response:events.append([urlsplit(response.url).path,response.status]) if '/api/admin/' in response.url else None)
+ page.locator('#loginUser').fill('qa');page.locator('#loginPassword').fill('sandbox-test-password-only');page.locator('#loginForm button[type=submit]').click()
+ try:expect(page.locator('#appView')).to_be_visible()
+ except AssertionError:
+  raise AssertionError(json.dumps({'login_status':page.locator('#loginStatus').inner_text(),'responses':events,'cookies':[{'name':c['name'],'domain':c['domain']} for c in ctx.cookies()], 'errors':errors}))
  for tab in page.locator('#tabs [data-tab]').all():tab.click()
  page.locator('#tabs [data-tab="guests"]').click();page.locator('#addGuestBtn').click()
  page.locator('#gName').fill('Lifecycle Guest');page.locator('#gGroup').fill('QA group');page.locator('#gStatus').select_option('invited');page.locator('#gSeatsAllowed').fill('2')
@@ -188,9 +207,20 @@ def responsive_navigation(env):
   row=c.execute("SELECT attendance,seats FROM rsvp_submissions WHERE reported_name='Declining Guest'").fetchone()
   assert tuple(row)==('no',0)
 
+def configured_order_survives_restart(env):
+ ctx,app,api,html,errors=env
+ with app.db() as c:
+  layout=app.read_settings(c)['layout'];layout['sections'].reverse()
+  c.execute("UPDATE settings SET value=? WHERE key='layout'",(json.dumps(layout),))
+ app.init_db()
+ page=enter(ctx)
+ expected=[item['id'] for item in layout['sections']]
+ actual=page.locator('#site main > section').evaluate_all('(els)=>els.map(e=>e.id)')
+ assert actual==expected,('Configured order ignored',actual,expected)
+
 def main():
  p=argparse.ArgumentParser();p.add_argument('--browser',default='chromium');p.add_argument('--executable');p.add_argument('--output',default='browser-results-lifecycle.json');args=p.parse_args()
- tests=[refresh_preserves_typing,hidden_instagram_stays_hidden,success_does_not_erase_new_draft,reconnect_clears_only_saved_form,persisted_request_id_reused,release_keeps_draft,admin_full_roundtrip,responsive_navigation]
+ tests=[refresh_preserves_typing,hidden_instagram_stays_hidden,success_does_not_erase_new_draft,reconnect_clears_only_saved_form,persisted_request_id_reused,release_keeps_draft,admin_full_roundtrip,responsive_navigation,configured_order_survives_restart]
  results=[]
  with sync_playwright() as pw:
   options={'headless':True}

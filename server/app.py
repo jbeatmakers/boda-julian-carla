@@ -195,10 +195,13 @@ def init_db() -> None:
                 merged={**default,**current}
             elif k=="layout" and isinstance(current,dict):
                 wanted=default.get("sections",[]); configured=current.get("sections",[])
-                by_id={x.get("id"):x for x in configured if isinstance(x,dict) and x.get("id")}
-                merged={"sections":[by_id.get(x["id"],x) for x in wanted]}
-                wanted_ids={y["id"] for y in wanted}
-                merged["sections"] += [x for x in configured if isinstance(x,dict) and x.get("id") not in wanted_ids]
+                configured=configured if isinstance(configured,list) else []
+                seen=set(); sections=[]
+                for item in configured+wanted:
+                    if not isinstance(item,dict) or not isinstance(item.get("id"),str) or item["id"] in seen:
+                        continue
+                    sections.append(item);seen.add(item["id"])
+                merged={"sections":sections}
             else:
                 continue
             if merged!=current or legacy_layout:
