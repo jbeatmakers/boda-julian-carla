@@ -161,6 +161,7 @@ def admin_full_roundtrip(env):
  with page.expect_response(lambda res:res.request.method=='POST' and '/rsvp-submissions/' in res.url and res.url.endswith('/resolve')) as response:
   page.locator('[data-action="rsvp-match"]').first.click()
  assert response.value.status==200
+ expect(page.locator('#globalStatus')).to_have_text('Respuesta vinculada al invitado de la lista.')
  with app.db() as c:
   saved=c.execute('select status,attendance,seats,group_name from guests where id=?',(guest['id'],)).fetchone()
   assert tuple(saved)==('confirmed','yes',2,'QA group')

@@ -37,7 +37,10 @@ jobs:
           bash -n deploy/deploy-release.sh deploy/deploy-boda-julian-carla deploy/recreate-container.sh
           python tools/build_public.py --output _site
   browsers:
-    runs-on: ubuntu-24.04 # Playwright 1.54 requires a supported Ubuntu image.
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.54.0-noble
+      options: --ipc=host
     timeout-minutes: 12
     strategy:
       fail-fast: false
@@ -45,13 +48,8 @@ jobs:
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install pinned browser test dependencies
-        run: |
-          python -m pip install playwright==1.54.0
-          python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Install Playwright matching the browser image
+        run: python -m pip install playwright==1.54.0
       - name: Exercise actual gate, failure recovery, and persistent RSVP
         run: |
           python tests/browser_access.py --browser ${{ matrix.browser }} --output browser-results-${{ matrix.browser }}.json
