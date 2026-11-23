@@ -37,7 +37,7 @@ jobs:
           bash -n deploy/deploy-release.sh deploy/deploy-boda-julian-carla deploy/recreate-container.sh
           python tools/build_public.py --output _site
   browsers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.54 requires a supported Ubuntu image.
     timeout-minutes: 12
     strategy:
       fail-fast: false
@@ -101,7 +101,7 @@ jobs:
         uses: actions/deploy-pages@v4
   verify:
     needs: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
