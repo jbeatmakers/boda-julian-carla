@@ -81,8 +81,10 @@ def main():
       if label in ('normal','lowercase') and (not args.base or page.locator('#dressLink').is_visible()):
        page.locator('#dressLink').click()
        assert page.locator('#dress').is_visible()
-       assert page.locator('.dress-photos').count()==4
-       assert page.locator('.dress-photos a').count()==19
+       for heading in ('Ideas para trajes y sacos','Ideas para vestidos','Ideas para combinar'):
+        assert page.get_by_role('heading',name=heading,exact=True).is_visible()
+       assert page.locator('.dress-photos').count()==5
+       assert page.locator('.dress-photos a').count()==21
        gallery=page.locator('.dress-photos--vestidos')
        assert gallery.evaluate('el => el.scrollWidth > el.clientWidth')==mobile
        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')

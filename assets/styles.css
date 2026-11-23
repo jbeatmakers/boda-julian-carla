@@ -105,6 +105,7 @@ section{padding:64px 0}
 .dress-photos--vestidos{--columns:5;--photo-ratio:1 / 2.65}
 .dress-photos--bordados{--photo-ratio:1 / 1.85}
 .dress-photos--accesorios{--columns:6;--photo-ratio:1}
+.dress-photos--combinaciones{--columns:2;--photo-ratio:1.8}
 .dress-photos a{display:block;border-radius:12px;overflow:hidden;background:var(--parchment)}
 .dress-photos a:focus-visible{outline:2px solid var(--olive);outline-offset:-3px}
 .dress-photos img{display:block;width:100%;height:auto;aspect-ratio:var(--photo-ratio);object-fit:cover;object-position:center top}
@@ -117,7 +118,7 @@ section{padding:64px 0}
 body:has(.dress-lightbox[open]){overflow:hidden}
 .dress-lightbox-actions{display:flex;justify-content:flex-end;margin-bottom:8px}
 .dress-lightbox figure{margin:0;pointer-events:none;text-align:center}
-.dress-lightbox img{display:block;width:100%;height:min(65dvh,540px);object-fit:contain;margin:auto}
+.dress-lightbox img{display:block;width:100%;height:auto;max-height:min(65dvh,540px);object-fit:contain;margin:auto}
 .dress-lightbox figcaption{margin:.6rem .25rem 0;line-height:1.25}
 
 @media(max-width:620px){
@@ -130,6 +131,7 @@ body:has(.dress-lightbox[open]){overflow:hidden}
   }
   .dress-photos li{scroll-snap-align:start}
   .dress-photos--vestidos{grid-auto-columns:37%}
+  .dress-photos--combinaciones{grid-auto-columns:86%}
 }
 .rsvp-card{padding:28px}
 .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}

@@ -24,6 +24,8 @@ PUBLIC += [
  'assets/eden/recogido-pedreria.webp',
  'assets/eden/recogido-perlas.webp',
  'assets/eden/tocado.webp',
+ 'assets/eden/conjuntos-ceremonia.webp',
+ 'assets/eden/conjuntos-en-grupo.webp',
 ]
 def build(destination:pathlib.Path)->dict:
  html=(ROOT/'index.html').read_text(encoding='utf-8')
