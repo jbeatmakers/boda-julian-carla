@@ -78,6 +78,29 @@ def main():
        page.locator('#configRetryInline').click()
       page.wait_for_function("document.getElementById('configStatus').classList.contains('hidden')",timeout=20000)
       assert page.locator('#ticketPrice').inner_text().strip()
+      if label in ('normal','lowercase') and (not args.base or page.locator('#dressLink').is_visible()):
+       page.locator('#dressLink').click()
+       assert page.locator('#dress').is_visible()
+       assert page.locator('.dress-photos').count()==4
+       assert page.locator('.dress-photos a').count()==19
+       gallery=page.locator('.dress-photos--vestidos')
+       assert gallery.evaluate('el => el.scrollWidth > el.clientWidth')==mobile
+       assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+       photo=gallery.locator('a').last
+       if mobile:
+        gallery.evaluate('el => { el.scrollLeft = el.scrollWidth; }')
+        page.wait_for_function("document.querySelector('.dress-photos--vestidos').scrollLeft > 0")
+       photo.click()
+       lightbox=page.locator('#dressLightbox')
+       assert lightbox.is_visible()
+       assert lightbox.locator('figcaption').inner_text()==photo.locator('img').get_attribute('alt')
+       page.wait_for_function("document.getElementById('dressPhoto').naturalWidth > 0")
+       if mobile:
+        lightbox.get_by_role('button',name='Cerrar').click()
+       else:
+        page.keyboard.press('Escape')
+       assert not lightbox.is_visible()
+       assert photo.evaluate('el => el === document.activeElement')
       if rsvp:
        hits=[]
        if rsvp=='network':

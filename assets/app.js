@@ -45,6 +45,7 @@
     ["fullName","phone","email"].forEach(id=>$(id).addEventListener("blur",syncSeatLimit));
     document.querySelectorAll(".celebrate-link").forEach(a=>a.addEventListener("click",()=>celebrate(20)));
     document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>copyField(b.dataset.copy,b)));
+    initDressGallery();
     try{ if(sessionStorage.getItem(ACCESS_KEY)==="ok") unlock(false); }catch(_){}
     window.addEventListener("message",e=>{
       if(e.origin===API_BASE && e.data?.type==="wedding-admin-preview") unlock(false);
@@ -61,6 +62,28 @@
     window.addEventListener("pageshow",refreshCurrentConfig);
     document.addEventListener("visibilitychange",refreshCurrentConfig);
   });
+
+  function initDressGallery(){
+    const dialog=$("dressLightbox");
+    if(typeof dialog?.showModal!=="function") return;
+    const photo=$("dressPhoto"), caption=$("dressPhotoCaption");
+    let trigger;
+    $("dressGallery").addEventListener("click",event=>{
+      const link=event.target.closest(".dress-photos a");
+      if(!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      trigger=link;
+      caption.textContent=link.querySelector("img").alt;
+      photo.src=link.href;
+      dialog.showModal();
+    });
+    dialog.addEventListener("click",event=>{
+      if(event.target===dialog) dialog.close();
+    });
+    dialog.addEventListener("close",()=>{
+      trigger?.focus({preventScroll:true});
+    });
+  }
 
   async function onGate(e){
     e.preventDefault();
@@ -265,6 +288,7 @@
       const hidden=item.visible===false;
       section.dataset.layoutHidden=hidden?"true":"false";
       section.classList.toggle("hidden",hidden || (section.id==="instagramSection" && !section.dataset.hasInstagram));
+      if(section.id==="dress") $("dressLink")?.classList.toggle("hidden",hidden);
     });
   }
 

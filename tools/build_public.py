@@ -3,6 +3,28 @@ from __future__ import annotations
 import argparse, hashlib, json, os, pathlib, re, shutil, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 PUBLIC=['index.html','actualizar.html','404.html','robots.txt','CNAME','assets/app.js','assets/updates.js','assets/styles.css','assets/botanical-frame.webp','assets/botanical-vine.webp','js/public-pista.js']
+PUBLIC += [
+ 'assets/eden/estetica-eden.webp',
+ 'assets/eden/traje-petroleo.webp',
+ 'assets/eden/traje-oliva.webp',
+ 'assets/eden/traje-arena.webp',
+ 'assets/eden/traje-cuadros.webp',
+ 'assets/eden/vestido-negro-floral.webp',
+ 'assets/eden/vestido-rosa.webp',
+ 'assets/eden/vestido-azul.webp',
+ 'assets/eden/vestido-negro-capa.webp',
+ 'assets/eden/vestido-plisado.webp',
+ 'assets/eden/espalda-transparencias.webp',
+ 'assets/eden/espalda-bordada.webp',
+ 'assets/eden/espalda-lazo.webp',
+ 'assets/eden/espalda-flores.webp',
+ 'assets/eden/prendedores.webp',
+ 'assets/eden/botones.webp',
+ 'assets/eden/broche.webp',
+ 'assets/eden/recogido-pedreria.webp',
+ 'assets/eden/recogido-perlas.webp',
+ 'assets/eden/tocado.webp',
+]
 def build(destination:pathlib.Path)->dict:
  html=(ROOT/'index.html').read_text(encoding='utf-8')
  release=re.search(r'<meta name="wedding-release" content="([^"]+)"',html).group(1)

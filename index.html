@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="wedding-release" content="20260927-canonical-4">
+  <meta name="wedding-release" content="20261123-estetica-eden">
   <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
   <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
   <meta name="bingbot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20260927-canonical-4">
+  <link rel="stylesheet" href="assets/styles.css?v=20261123-estetica-eden">
 </head>
 <body class="locked">
 <div id="gate">
@@ -54,6 +54,7 @@
     <div class="hero-actions">
       <a class="btn primary" href="#rsvp" data-site-copy="hero_confirm_btn">Confirmar asistencia</a>
       <a class="btn" href="#lugares" data-site-copy="hero_maps_btn">Horarios y mapas</a>
+      <a class="btn" id="dressLink" href="#dress">Código de vestimenta</a>
     </div>
   </header>
 
@@ -97,16 +98,122 @@
       </div>
     </section>
 
-    <section id="dress">
-      <div class="narrow">
+    <section id="dress" aria-labelledby="dressTitle">
+      <div class="wrap dress-wrap">
         <div class="section-title">
           <div class="eyebrow" data-site-copy="dress_eyebrow">Dress code</div>
           <h2 class="display" id="dressTitle">Estética Edén</h2>
         </div>
-        <div class="note-box card">
-          <p id="dressConcept"><em>Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.</em></p>
-          <p class="small muted" id="dressDetails">Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche.</p>
+        <div class="dress-overview card">
+          <div class="dress-intro">
+            <p id="dressConcept">Una gala fresca, sofisticada y luminosa, inspirada en la naturaleza al atardecer.</p>
+            <p class="muted" id="dressDetails">Formal elegante. No hace falta comprar de nuevo: un buen accesorio puede terminar de llevar el conjunto al tono de la noche.</p>
+            <p class="eyebrow dress-palette-label">Paleta de inspiración</p>
+            <ul class="dress-palette" aria-label="Paleta de inspiración">
+              <li><span style="--swatch:#e9d9bc"></span>Arena</li>
+              <li><span style="--swatch:#78804b"></span>Oliva</li>
+              <li><span style="--swatch:#434f38"></span>Musgo</li>
+              <li><span style="--swatch:#e7b2ac"></span>Rosa</li>
+              <li><span style="--swatch:#e9c882"></span>Dorado suave</li>
+              <li><span style="--swatch:#b6a5c4"></span>Lila</li>
+              <li><span style="--swatch:#292e27"></span>Negro</li>
+            </ul>
+          </div>
+          <img class="dress-hero-image" src="assets/eden/estetica-eden.webp" width="410" height="435" loading="lazy" decoding="async" alt="Traje verde y vestido con flores bordadas en la referencia Estética Edén">
         </div>
+        <div class="dress-gallery" id="dressGallery">
+          <p class="dress-hint"><span class="dress-swipe">Deslizá para ver más. </span>Tocá una foto para ampliarla.</p>
+          <div class="dress-group">
+            <h3 class="display" id="dress-trajes">Trajes y sacos</h3>
+            <p class="muted">Verde oliva, tonos arena, cuadros suaves y solapas con un detalle floral.</p>
+            <ul class="dress-photos dress-photos--trajes" aria-labelledby="dress-trajes">
+              <li><a href="assets/eden/traje-petroleo.webp">
+                <img src="assets/eden/traje-petroleo.webp" width="143" height="283" loading="lazy" decoding="async" alt="Traje verde petróleo con flores en la solapa">
+              </a></li>
+              <li><a href="assets/eden/traje-oliva.webp">
+                <img src="assets/eden/traje-oliva.webp" width="141" height="283" loading="lazy" decoding="async" alt="Saco verde oliva con bordado botánico">
+              </a></li>
+              <li><a href="assets/eden/traje-arena.webp">
+                <img src="assets/eden/traje-arena.webp" width="146" height="283" loading="lazy" decoding="async" alt="Traje arena con corbata verde suave">
+              </a></li>
+              <li><a href="assets/eden/traje-cuadros.webp">
+                <img src="assets/eden/traje-cuadros.webp" width="141" height="283" loading="lazy" decoding="async" alt="Traje a cuadros con corbata rosa bordada">
+              </a></li>
+            </ul>
+          </div>
+          <div class="dress-group">
+            <h3 class="display" id="dress-vestidos">Vestidos</h3>
+            <p class="muted">Telas con movimiento, drapeados, flores bordadas y tonos que van del rosa al azul noche.</p>
+            <ul class="dress-photos dress-photos--vestidos" aria-labelledby="dress-vestidos">
+              <li><a href="assets/eden/vestido-negro-floral.webp">
+                <img src="assets/eden/vestido-negro-floral.webp" width="134" height="356" loading="lazy" decoding="async" alt="Vestido negro con flores celestes">
+              </a></li>
+              <li><a href="assets/eden/vestido-rosa.webp">
+                <img src="assets/eden/vestido-rosa.webp" width="112" height="356" loading="lazy" decoding="async" alt="Vestido rosa drapeado con flores">
+              </a></li>
+              <li><a href="assets/eden/vestido-azul.webp">
+                <img src="assets/eden/vestido-azul.webp" width="112" height="356" loading="lazy" decoding="async" alt="Vestido azul noche de un hombro">
+              </a></li>
+              <li><a href="assets/eden/vestido-negro-capa.webp">
+                <img src="assets/eden/vestido-negro-capa.webp" width="105" height="356" loading="lazy" decoding="async" alt="Vestido negro con capa y bordado floral">
+              </a></li>
+              <li><a href="assets/eden/vestido-plisado.webp">
+                <img src="assets/eden/vestido-plisado.webp" width="105" height="356" loading="lazy" decoding="async" alt="Vestido plisado con aplique floral en el hombro">
+              </a></li>
+            </ul>
+          </div>
+          <div class="dress-group">
+            <h3 class="display" id="dress-bordados">Espaldas y bordados</h3>
+            <p class="muted">Si te gustan los detalles, también pueden ir en la espalda, en un lazo o en una transparencia.</p>
+            <ul class="dress-photos dress-photos--bordados" aria-labelledby="dress-bordados">
+              <li><a href="assets/eden/espalda-transparencias.webp">
+                <img src="assets/eden/espalda-transparencias.webp" width="158" height="283" loading="lazy" decoding="async" alt="Espalda con transparencias y flores bordadas">
+              </a></li>
+              <li><a href="assets/eden/espalda-bordada.webp">
+                <img src="assets/eden/espalda-bordada.webp" width="136" height="283" loading="lazy" decoding="async" alt="Espalda negra con bordado botánico">
+              </a></li>
+              <li><a href="assets/eden/espalda-lazo.webp">
+                <img src="assets/eden/espalda-lazo.webp" width="134" height="283" loading="lazy" decoding="async" alt="Espalda con lazo y flores">
+              </a></li>
+              <li><a href="assets/eden/espalda-flores.webp">
+                <img src="assets/eden/espalda-flores.webp" width="145" height="283" loading="lazy" decoding="async" alt="Espalda translúcida con flores y lazo">
+              </a></li>
+            </ul>
+          </div>
+          <div class="dress-group">
+            <h3 class="display" id="dress-accesorios">Accesorios y peinados</h3>
+            <p class="muted">Un prendedor, una horquilla o unas perlas pueden darle ese toque a un conjunto que ya tengas.</p>
+            <ul class="dress-photos dress-photos--accesorios" aria-labelledby="dress-accesorios">
+              <li><a href="assets/eden/prendedores.webp">
+                <img src="assets/eden/prendedores.webp" width="195" height="166" loading="lazy" decoding="async" alt="Prendedores de abeja y margarita en una solapa">
+              </a></li>
+              <li><a href="assets/eden/botones.webp">
+                <img src="assets/eden/botones.webp" width="176" height="166" loading="lazy" decoding="async" alt="Botones celestes en forma de flor">
+              </a></li>
+              <li><a href="assets/eden/broche.webp">
+                <img src="assets/eden/broche.webp" width="204" height="166" loading="lazy" decoding="async" alt="Broche de libélula en un saco oliva">
+              </a></li>
+              <li><a href="assets/eden/recogido-pedreria.webp">
+                <img src="assets/eden/recogido-pedreria.webp" width="204" height="188" loading="lazy" decoding="async" alt="Recogido con pedrería de colores">
+              </a></li>
+              <li><a href="assets/eden/recogido-perlas.webp">
+                <img src="assets/eden/recogido-perlas.webp" width="194" height="188" loading="lazy" decoding="async" alt="Recogido con hilos de perlas">
+              </a></li>
+              <li><a href="assets/eden/tocado.webp">
+                <img src="assets/eden/tocado.webp" width="177" height="188" loading="lazy" decoding="async" alt="Tocado de fibras claras en un recogido">
+              </a></li>
+            </ul>
+          </div>
+        </div>
+        <dialog class="dress-lightbox" id="dressLightbox" aria-labelledby="dressPhotoCaption">
+          <form method="dialog" class="dress-lightbox-actions">
+            <button class="btn soft" autofocus>Cerrar</button>
+          </form>
+          <figure>
+            <img id="dressPhoto" alt="">
+            <figcaption id="dressPhotoCaption"></figcaption>
+          </figure>
+        </dialog>
       </div>
     </section>
 
@@ -225,7 +332,7 @@
   </footer>
 </div>
 
-<script src="assets/app.js?v=20260927-canonical-4" defer></script>
-<script src="assets/updates.js?v=20260927-canonical-4" defer></script>
+<script src="assets/app.js?v=20261123-estetica-eden" defer></script>
+<script src="assets/updates.js?v=20261123-estetica-eden" defer></script>
 </body>
 </html>
