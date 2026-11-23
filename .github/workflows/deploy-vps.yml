@@ -38,9 +38,6 @@ jobs:
           python tools/build_public.py --output _site
   browsers:
     runs-on: ubuntu-24.04
-    container:
-      image: mcr.microsoft.com/playwright/python:v1.54.0-noble
-      options: --ipc=host
     timeout-minutes: 12
     strategy:
       fail-fast: false
@@ -48,12 +45,18 @@ jobs:
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
-      - name: Install Playwright matching the browser image
-        run: python -m pip install playwright==1.54.0
       - name: Exercise actual gate, failure recovery, and persistent RSVP
+        env:
+          TEST_BROWSER: ${{ matrix.browser }}
         run: |
-          python tests/browser_access.py --browser ${{ matrix.browser }} --output browser-results-${{ matrix.browser }}.json
-          python tests/browser_lifecycle.py --browser ${{ matrix.browser }} --output browser-results-lifecycle-${{ matrix.browser }}.json
+          docker run --rm --init --ipc=host \
+            --volume "$GITHUB_WORKSPACE:/workspace" --workdir /workspace \
+            --env TEST_BROWSER mcr.microsoft.com/playwright/python:v1.54.0-noble \
+            bash -euc '
+              python -m pip install playwright==1.54.0
+              python tests/browser_access.py --browser "$TEST_BROWSER" --output "browser-results-$TEST_BROWSER.json"
+              python tests/browser_lifecycle.py --browser "$TEST_BROWSER" --output "browser-results-lifecycle-$TEST_BROWSER.json"
+            '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
